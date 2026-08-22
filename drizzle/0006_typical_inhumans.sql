@@ -1,0 +1,1 @@
+ALTER TABLE `one_on_one_meetings` ADD `meeting_link` text;
