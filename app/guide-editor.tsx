@@ -1,0 +1,40 @@
+"use client";
+
+import { FormEvent, useMemo, useState } from "react";
+
+type Row=Record<string,unknown>;
+type GuideRow={exerciseName?:string;cells?:string[]};
+type GuideNode={type?:string;text?:string;name?:string;prescription?:string;rows?:GuideRow[]};
+type GuideDay={title?:string;nodes?:GuideNode[]};
+type Guide={days?:GuideDay[]};
+type Item={locator:string;name:string;prescription:string};
+
+function parseGuide(row:Row):Guide{try{return JSON.parse(String(row.content_json||"{}")) as Guide}catch{return {days:[]}}}
+function cleanName(value:string){return value.replace(/^\d+[.)]\s*/,"").replace(/[.]$/,"").trim()}
+function itemsFor(day?:GuideDay){
+  const items:Item[]=[]; let warmup=false;
+  for(const [nodeIndex,node] of (day?.nodes||[]).entries()){
+    if(node.type==="heading")warmup=/calentamiento/i.test(node.text||"");
+    if(warmup&&node.type==="paragraph"&&node.text&&!/(:$|cada ejercicio|cada uno|vueltas?|minutos? continuos|descanso|transici[oó]n)/i.test(node.text))items.push({locator:`node:${nodeIndex}`,name:cleanName(node.text),prescription:"30 s"});
+    if((node.type==="exercise"||node.type==="exerciseHeading")&&node.name)items.push({locator:`node:${nodeIndex}`,name:node.name,prescription:node.prescription||""});
+    for(const [rowIndex,row] of (node.rows||[]).entries())if(row.exerciseName)items.push({locator:`row:${nodeIndex}:${rowIndex}`,name:row.exerciseName,prescription:row.cells?.[1]||""});
+  }
+  return items;
+}
+
+export function GuideEditor({guideRow,exercises,act}:{guideRow:Row;exercises:Row[];act:(payload:Row)=>Promise<unknown>}){
+  const guide=useMemo(()=>parseGuide(guideRow),[guideRow]); const days=guide.days||[];
+  const [dayIndex,setDayIndex]=useState(0); const [busy,setBusy]=useState("");
+  const items=itemsFor(days[dayIndex]);
+  async function submit(event:FormEvent<HTMLFormElement>){event.preventDefault();const form=new FormData(event.currentTarget);setBusy("add");try{await act({action:"program.guide.exercise.add",programId:guideRow.program_id,dayIndex,exerciseId:String(form.get("exerciseId")||""),prescription:String(form.get("prescription")||"")})}finally{setBusy("")}}
+  return <section className="guide-editor"><div className="guide-editor-heading"><div><span className="eyebrow">EDITOR DE RUTINA</span><h2>Ejercicios por día</h2><p>Agrega, modifica o retira ejercicios. Los cambios quedan pendientes de aprobación para los alumnos asignados.</p></div></div>
+    <div className="guide-day-tabs">{days.map((day,index)=><button key={`${index}-${day.title}`} className={index===dayIndex?"active":""} onClick={()=>setDayIndex(index)}><span>Día {index+1}</span><b>{String(day.title||`Entrenamiento ${index+1}`).replace(/^[^—]+—\s*/,"")}</b></button>)}</div>
+    <div className="guide-edit-list">{items.map((item,index)=><GuideItem key={`${item.locator}-${item.name}`} item={item} number={index+1} busy={busy} save={async(name,prescription)=>{setBusy(item.locator);try{await act({action:"program.guide.exercise.update",programId:guideRow.program_id,dayIndex,locator:item.locator,name,prescription})}finally{setBusy("")}}} remove={async()=>{if(!confirm(`¿Retirar ${item.name} de este día?`))return;setBusy(item.locator);try{await act({action:"program.guide.exercise.remove",programId:guideRow.program_id,dayIndex,locator:item.locator})}finally{setBusy("")}}}/>)}</div>
+    <form className="guide-add-exercise" onSubmit={submit}><label>Ejercicio de la biblioteca<select name="exerciseId" required defaultValue=""><option value="" disabled>Selecciona un ejercicio…</option>{exercises.map(exercise=><option value={String(exercise.id)} key={String(exercise.id)}>{String(exercise.name)}</option>)}</select></label><label>Indicación<input name="prescription" placeholder="Ej. 3 × 12 · 60 s descanso" required/></label><button className="primary" disabled={busy==="add"}>{busy==="add"?"Agregando…":"＋ Agregar al día"}</button></form>
+  </section>;
+}
+
+function GuideItem({item,number,busy,save,remove}:{item:Item;number:number;busy:string;save:(name:string,prescription:string)=>Promise<void>;remove:()=>Promise<void>}){
+  const [name,setName]=useState(item.name);const [prescription,setPrescription]=useState(item.prescription);
+  return <article><span className="guide-edit-number">{number}</span><label>Ejercicio<input value={name} onChange={event=>setName(event.target.value)}/></label><label>Series, repeticiones o tiempo<input value={prescription} onChange={event=>setPrescription(event.target.value)} placeholder="Ej. 30 s"/></label><button className="secondary" disabled={busy===item.locator||!name.trim()} onClick={()=>save(name,prescription)}>{busy===item.locator?"Guardando…":"Guardar"}</button><button className="danger-link" disabled={busy===item.locator} onClick={remove}>Retirar</button></article>;
+}

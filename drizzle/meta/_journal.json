@@ -1,55 +1,5 @@
 {
   "version": "7",
   "dialect": "sqlite",
-  "entries": [
-    {
-      "idx": 0,
-      "version": "6",
-      "when": 1787059692131,
-      "tag": "0001_community_features",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1787060468035,
-      "tag": "0001_vengeful_whizzer",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1787172228464,
-      "tag": "0002_workable_killer_shrike",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "6",
-      "when": 1787173259325,
-      "tag": "0003_next_energizer",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "6",
-      "when": 1787258860256,
-      "tag": "0004_perfect_piledriver",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "6",
-      "when": 1787270127133,
-      "tag": "0005_lowly_blob",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "6",
-      "when": 1787274485968,
-      "tag": "0006_typical_inhumans",
-      "breakpoints": true
-    }
-  ]
+  "entries": []
 }
