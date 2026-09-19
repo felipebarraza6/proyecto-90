@@ -7,7 +7,7 @@ import globals from "globals";
 import tseslint from "typescript-eslint";
 
 const eslintConfig = defineConfig([
-  globalIgnores(["dist/**", "build/**"]),
+  globalIgnores(["dist/**", "build/**", "deploy-90dias/**"]),
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   react.configs.flat.recommended,

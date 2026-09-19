@@ -1,4 +1,5 @@
 import { FormEvent, useState } from "react";
+import { apiUrl } from "../api";
 
 interface LoginProps {
   onLogin: (token: string) => void;
@@ -16,7 +17,7 @@ export function Login({ onLogin, onBack }: LoginProps) {
     setError("");
     setSubmitting(true);
     try {
-      const res = await fetch("/api/accounts/users/login_complete/", {
+      const res = await fetch(apiUrl("/api/accounts/users/login_complete/"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),

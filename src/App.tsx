@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Login } from "./pages/Login";
 import { Landing } from "../app/landing";
 import { FunctionalApp } from "../app/functional-app";
+import { apiUrl } from "./api";
 
 type ViewerRole = "admin" | "professional" | "participant" | "reviewer";
 type Viewer = { id: string; role: ViewerRole; name: string; email: string; status: string };
@@ -11,7 +12,7 @@ type AppInitialData = any;
 const TOKEN_KEY = "p90_token";
 
 async function apiFetch<T>(path: string, token: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(path, {
+  const res = await fetch(apiUrl(path), {
     ...init,
     headers: {
       Authorization: `Token ${token}`,
@@ -63,7 +64,7 @@ export function App() {
 
   async function handleLogout() {
     try {
-      await fetch("/api/accounts/users/logout/", {
+      await fetch(apiUrl("/api/accounts/users/logout/"), {
         method: "POST",
         headers: { Authorization: `Token ${token ?? ""}` },
       });
