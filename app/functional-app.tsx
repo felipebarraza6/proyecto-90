@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
-import type { Viewer } from "../db/access";
 import { IntakeConfig, IntakeForm, IntakeResponses } from "./intake-ui";
 import { RoutineGuide } from "./routine-guide";
 import { MeetingRequest, NutritionAssessmentPanel, NutritionWorkspace, ParticipantDirectory, SessionWorkspace } from "./restored-panels";
@@ -14,6 +13,8 @@ import { ProgressMilestones } from "./progress-milestones";
 import { ProfessionalTracking } from "./professional-tracking";
 
 type Row = Record<string, unknown>;
+type ViewerRole = "admin" | "professional" | "participant" | "reviewer";
+type Viewer = { id: string; role: ViewerRole; name: string; email: string; status: string };
 type AppData = { viewer: Viewer; professionalSpecialty?:string; preview?:{role:string;label:string;targetId?:string}; participants?: Row[]; professionals?:Row[]; administrators?:Row[]; habitDaily?:Row[]; nutritionDaily?:Row[]; adherenceOutreach?:Row[]; programs?: Row[]; programGuides?:Row[]; exercises?: Row[]; workouts?: Row[]; workoutExercises?: Row[]; content?: Row[]; sessions?: Row[]; meetingRequests?:Row[]; profile?: Row; nutrition?: Row | null; checkpoints?: Row[]; metrics?: Row[]; adherence?:Row|null; intakeQuestions?:Row[]; intakeResponses?:Row[] };
 type Modal = null | "participant" | "professional" | "professional-edit" | "admin" | "admin-edit" | "program" | "workout" | "workout-edit" | "exercise" | "exercise-edit" | "attach" | "attach-edit" | "nutrition" | "content" | "session" | "meeting-review" | "participant-edit" | "intake-view" | "professional-student";
 
@@ -23,7 +24,12 @@ const iconMap: Record<string,string> = { Resumen:"⌂",Participantes:"◎",Adher
 const appNow=Date.now();
 const appToday=new Date(appNow);
 
-export function FunctionalApp({ initialViewer,initialData }: { initialViewer: Viewer;initialData?:AppData }) {
+const authHeaders = () => ({
+  "Authorization": `Token ${localStorage.getItem("p90_token") || ""}`,
+  "X-Branch-ID": localStorage.getItem("p90_branch") || "",
+});
+
+export function FunctionalApp({ initialViewer,initialData,onLogout }: { initialViewer: Viewer;initialData?:AppData;onLogout?:()=>void }) {
   const [data,setData]=useState<AppData|null>(initialData||null); const [screen,setScreen]=useState(initialViewer.role==="participant"?"Inicio":"Resumen");
   const [loading,setLoading]=useState(!initialData); const [modal,setModal]=useState<Modal>(null); const [context,setContext]=useState<Row>({});
   const [toast,setToast]=useState(""); const [error,setError]=useState(""); const [selected,setSelected]=useState<string[]>([]);
@@ -31,10 +37,10 @@ export function FunctionalApp({ initialViewer,initialData }: { initialViewer: Vi
   const firstLoad=useRef(true);
   const activeRole=data?.viewer.role||initialViewer.role;
   const nav=activeRole==="participant"?participantNav:(activeRole==="admin"||activeRole==="reviewer")?adminNav:data?.professionalSpecialty==="nutrition"?["Resumen","Participantes","Nutrición","Seguimiento"]:["Resumen","Participantes","Seguimiento","Programas","Sesiones"];
-  async function load(){setLoading(true);const params=new URLSearchParams();if(previewTarget==="coach"||previewTarget==="nutrition")params.set("viewAs",previewTarget);else if(previewTarget.startsWith("participant:")){params.set("viewAs","participant");params.set("participantId",previewTarget.slice(12))}const res=await fetch(`/api/app${params.size?`?${params}`:""}`,{cache:"no-store"});const json=await res.json();if(!res.ok)setError(json.error||"No fue posible cargar");else setData(json);setLoading(false)}
+  async function load(){setLoading(true);const params=new URLSearchParams();if(previewTarget==="coach"||previewTarget==="nutrition")params.set("viewAs",previewTarget);else if(previewTarget.startsWith("participant:")){params.set("viewAs","participant");params.set("participantId",previewTarget.slice(12))}const res=await fetch(`/api/app${params.size?`?${params}`:""}`,{headers:authHeaders(),cache:"no-store"});const json=await res.json();if(!res.ok)setError(json.error||"No fue posible cargar");else setData(json);setLoading(false)}
   // Initial synchronization with the durable Sites database.
   useEffect(()=>{if(firstLoad.current){firstLoad.current=false;if(initialData)return}load()},[previewTarget]);
-  async function act(payload:Row){setError("");const res=await fetch("/api/app",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(payload)});const json=await res.json();if(!res.ok){setError(json.error||"No fue posible guardar");throw new Error(json.error)}setToast(json.message||"Guardado");setTimeout(()=>setToast(""),2600);await load();return json}
+  async function act(payload:Row){setError("");const res=await fetch("/api/app",{method:"POST",headers:{"content-type":"application/json",...authHeaders()},body:JSON.stringify(payload)});const json=await res.json();if(!res.ok){setError(json.error||"No fue posible guardar");throw new Error(json.error)}setToast(json.message||"Guardado");setTimeout(()=>setToast(""),2600);await load();return json}
   function changePreview(value:string){setModal(null);setSelected([]);setError("");setScreen(value.startsWith("participant:")?"Inicio":"Resumen");setPreviewTarget(value)}
   function open(next:Modal,row:Row={}){setContext(row);setError("");setModal(next)}
   function nextNutrition(currentId:string){const next=(data?.participants||[]).find(x=>!x.nutrition_id&&String(x.id)!==currentId);if(next)setContext(next);else setModal(null)}
@@ -42,7 +48,7 @@ export function FunctionalApp({ initialViewer,initialData }: { initialViewer: Vi
   if(!data)return <div className="app-loading"><p>{error||"No fue posible cargar la plataforma."}</p><button className="primary" onClick={load}>Reintentar</button></div>;
   return <div className={`app-shell ${data.viewer.role==="participant"?"participant-shell":"admin-shell"} role-${data.professionalSpecialty||data.viewer.role} ${data.viewer.role==="reviewer"?"reviewer-shell":""} ${data.preview?"admin-preview-shell":""} ${data.preview?.role==="participant"?"admin-preview-participant":""}`}>
     <aside className="sidebar"><button className="brand" onClick={()=>setScreen(nav[0])}><img className="brand-wordmark" src="/proyecto90-logo.jpg" alt="Proyecto 90" width="384" height="384"/><small>90 DÍAS · GENERACIÓN 01</small></button><nav>{nav.map(x=><button key={x} className={screen===x?"active":""} onClick={()=>setScreen(x)}><span className="nav-icon">{iconMap[x]}</span>{x}</button>)}</nav><div className="sidebar-spacer"/><div className="side-quote"><span>“</span><p>No buscamos hacerlo perfecto.<br/>Buscamos hacerlo parte de tu vida.</p></div><div className="profile-mini"><span className="avatar">{initials(data.viewer.name)}</span><span><strong>{data.viewer.name}</strong><small>{roleLabel(data.viewer.role)}</small></span></div></aside>
-    <main><header className="topbar"><div className="mobile-brand"><img className="brand-wordmark" src="/proyecto90-logo.jpg" alt="Proyecto 90" width="384" height="384"/></div><div className="top-actions">{initialViewer.role==="admin"&&<label className="view-as-control"><span>Ver como</span><select value={previewTarget} onChange={e=>changePreview(e.target.value)}><option value="admin">Administrador</option><option value="coach">Coach</option><option value="nutrition">Nutricionista</option>{(previewTarget==="admin"?data.participants||[]:[]).length>0&&<optgroup label="Alumnos">{(data.participants||[]).map(p=><option key={String(p.id)} value={`participant:${String(p.id)}`}>{`${p.first_name||""} ${p.last_name||""}`.trim()||String(p.email)}</option>)}</optgroup>}{previewTarget.startsWith("participant:")&&<option value={previewTarget}>{data.preview?.label||"Alumno"}</option>}</select></label>}<span className="secure-pill">● Datos guardados</span><span className="user-email">{initialViewer.email}</span><a className="logout" href="/signout-with-chatgpt?return_to=/">Salir</a></div></header>{data.viewer.role==="reviewer"&&<div className="reviewer-banner">Modo Revisor · Navegación de solo lectura. No puedes guardar, aprobar ni eliminar información.</div>}{data.preview&&<div className="preview-banner"><div><b>Vista de prueba: {data.preview.label}</b><span>{data.preview.role==="participant"?"Estás revisando el perfil real de este alumno.":"Como administrador puedes probar, editar y aprobar desde esta vista profesional."}</span></div><button onClick={()=>changePreview("admin")}>Volver a Administrador</button></div>}<div className="page-wrap">
+    <main><header className="topbar"><div className="mobile-brand"><img className="brand-wordmark" src="/proyecto90-logo.jpg" alt="Proyecto 90" width="384" height="384"/></div><div className="top-actions">{initialViewer.role==="admin"&&<label className="view-as-control"><span>Ver como</span><select value={previewTarget} onChange={e=>changePreview(e.target.value)}><option value="admin">Administrador</option><option value="coach">Coach</option><option value="nutrition">Nutricionista</option>{(previewTarget==="admin"?data.participants||[]:[]).length>0&&<optgroup label="Alumnos">{(data.participants||[]).map(p=><option key={String(p.id)} value={`participant:${String(p.id)}`}>{`${p.first_name||""} ${p.last_name||""}`.trim()||String(p.email)}</option>)}</optgroup>}{previewTarget.startsWith("participant:")&&<option value={previewTarget}>{data.preview?.label||"Alumno"}</option>}</select></label>}<span className="secure-pill">● Datos guardados</span><span className="user-email">{initialViewer.email}</span><a className="logout" onClick={()=>onLogout?onLogout():window.location.reload()}>Salir</a></div></header>{data.viewer.role==="reviewer"&&<div className="reviewer-banner">Modo Revisor · Navegación de solo lectura. No puedes guardar, aprobar ni eliminar información.</div>}{data.preview&&<div className="preview-banner"><div><b>Vista de prueba: {data.preview.label}</b><span>{data.preview.role==="participant"?"Estás revisando el perfil real de este alumno.":"Como administrador puedes probar, editar y aprobar desde esta vista profesional."}</span></div><button onClick={()=>changePreview("admin")}>Volver a Administrador</button></div>}<div className="page-wrap">
       {data.viewer.role==="participant"
         ? <ParticipantArea data={data} screen={screen} setScreen={setScreen} act={act}/>
         : data.viewer.role==="professional"

@@ -1,4 +1,3 @@
-import { chatGPTSignInPath } from "./chatgpt-auth";
 import { LandingPreview } from "./landing-preview";
 
 const planItems = [
@@ -23,13 +22,12 @@ const teamMembers = [
   {type:"habits",role:"ADHERENCIA · CONTACTO · HÁBITOS",name:"Tu Amigo el Moya",title:"Seguimiento humano",description:"Acompañamiento cercano para ayudarte a sostener este proceso.",icon:"◎",handle:"@tuamigoelmoya",url:"https://www.instagram.com/tuamigoelmoya/"},
 ];
 
-export function Landing() {
-  const signIn = chatGPTSignInPath("/");
+export function Landing({ onLogin }: { onLogin: () => void }) {
   return <main className="p90-landing" id="inicio">
     <header className="p90-nav">
       <a className="p90-brand" href="#inicio"><img src="/proyecto90-logo.jpg" alt="Proyecto 90"/><span><b>PROYECTO 90</b><small>Tu Amigo el Moya</small></span></a>
       <nav><a href="#programa">El programa</a><a href="#incluye">Qué incluye</a><a href="#recorrido">Los 90 días</a><a href="#precios">Precios</a></nav>
-      <div><a className="p90-login" href={signIn}>Ingresar a mi perfil</a><a className="p90-button" href="#matricula">Matricúlate</a></div>
+      <div><a className="p90-login" onClick={(e) => { e.preventDefault(); onLogin(); }} href="#login">Ingresar a mi perfil</a><a className="p90-button" href="#matricula">Matricúlate</a></div>
     </header>
 
     <section className="p90-hero">
@@ -49,7 +47,7 @@ export function Landing() {
 
     <section className="p90-section p90-pricing" id="precios"><div className="p90-section-title"><span className="p90-kicker"><i/> Inversión</span><h2>Un programa de 90 días.<br/><em>Dos formas de pagarlo.</em></h2><p>El objetivo es completar el recorrido. Puedes dividir el valor en tres pagos mensuales o resolverlo con un único pago.</p></div><div className="price-layout dynamic-pricing"><article className="installment-plan"><header><span>FORMA 01</span><b>3 PAGOS MENSUALES</b></header><div><small>$</small><strong>29.990</strong></div><b>$29.990 CADA MES · TOTAL $89.970</b><p>Cada pago mantiene tu acceso por 30 días. Puedes detener los cobros futuros, pero para completar el programa necesitas realizar los tres pagos.</p><ol className="installment-steps"><li><b>1</b><span>Días 01—30</span></li><li><b>2</b><span>Días 31—60</span></li><li><b>3</b><span>Días 61—90</span></li></ol><a className="p90-outline" href="#matricula">Elegir 3 pagos</a></article><article className="price-featured full-plan"><header><span>FORMA 02</span><b>RECOMENDADO</b></header><div><small>$</small><strong>69.990</strong></div><b>PAGO ÚNICO · 90 DÍAS COMPLETOS</b><p>Todo el recorrido queda habilitado desde el inicio, sin cuotas ni renovaciones durante el programa.</p><ul><li>Acceso completo a los 90 días</li><li>90 días para construir hábitos que puedas sostener</li><li>Ahorras $19.980 frente a las cuotas</li></ul><a className="p90-button" href="#matricula">Elegir pago único</a><em>LA FORMA MÁS SIMPLE DE COMPLETAR EL PROCESO</em></article></div><div className="program-duration-note"><div><span>EL OBJETIVO</span><strong>Completar los 90 días</strong><p>Ambas opciones corresponden al mismo programa completo. Solo cambia la forma de pago.</p></div><ol><li><b>01—30</b><small>Empezar</small></li><li><b>31—60</b><small>Consolidar</small></li><li><b>61—90</b><small>Sostener</small></li></ol></div></section>
 
-    <section className="p90-final" id="matricula"><img src="/proyecto90-logo.jpg" alt="Proyecto 90"/><span className="p90-kicker"><i/> Proyecto 90</span><h2>El programa termina.<br/><em>Los hábitos continúan.</em></h2><p>Entrenamiento, alimentación y seguimiento conectados para ayudarte a sostener el proceso.</p><div className="final-recommended-offer"><span>OPCIÓN RECOMENDADA</span><div><small>$</small><strong>69.990</strong></div><b>PAGO ÚNICO · ACCESO COMPLETO A LOS 90 DÍAS</b><p>También disponible en 3 pagos mensuales de $29.990.</p></div><div className="p90-actions centered"><a className="p90-button" href={signIn}>Matricúlate en Proyecto 90</a><a className="p90-outline" href={signIn}>Ingresar a mi perfil</a></div></section>
+    <section className="p90-final" id="matricula"><img src="/proyecto90-logo.jpg" alt="Proyecto 90"/><span className="p90-kicker"><i/> Proyecto 90</span><h2>El programa termina.<br/><em>Los hábitos continúan.</em></h2><p>Entrenamiento, alimentación y seguimiento conectados para ayudarte a sostener el proceso.</p><div className="final-recommended-offer"><span>OPCIÓN RECOMENDADA</span><div><small>$</small><strong>69.990</strong></div><b>PAGO ÚNICO · ACCESO COMPLETO A LOS 90 DÍAS</b><p>También disponible en 3 pagos mensuales de $29.990.</p></div><div className="p90-actions centered"><a className="p90-button" onClick={(e) => { e.preventDefault(); onLogin(); }} href="#login">Matricúlate en Proyecto 90</a><a className="p90-outline" onClick={(e) => { e.preventDefault(); onLogin(); }} href="#login">Ingresar a mi perfil</a></div></section>
 
     <footer className="p90-footer"><span>PROYECTO 90 · TU AMIGO EL MOYA</span><p>WhatsApp acompaña, pero no reemplaza diagnósticos ni consultas profesionales.</p></footer>
   </main>;
