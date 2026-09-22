@@ -152,3 +152,15 @@
 .login-error{padding:10px 12px;border:1px solid #5a3030;border-radius:9px;background:#1f1212;color:#ff9b9b;font-size:10px}
 .login-btn{margin-top:6px}
 @media(max-width:420px){.login-card{padding:24px 18px}}
+
+.enroll-status{max-width:720px;margin:0 auto 28px;color:#c5d0c8;text-align:center}
+.enroll-form{max-width:520px;margin:42px auto 0;padding:28px;border:1px solid #223029;border-radius:20px;background:#0c110e;display:flex;flex-direction:column;gap:12px}
+.enroll-form h3{margin:0;font-size:1.6rem}
+.enroll-form p{margin:0;color:#9aa49e}
+.enroll-form label{display:flex;flex-direction:column;gap:6px;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:#8f9993;font-weight:700}
+.enroll-form input,.enroll-form select{min-height:46px;padding:0 14px;border-radius:10px;border:1px solid #303a34;background:#0a0e0b;color:#f6f8f6;font-size:.95rem}
+.enroll-picked{color:#f6f8f6!important}
+.enroll-honeypot{position:absolute;left:-9999px;height:0;overflow:hidden}
+.enroll-form .p90-button,.enroll-form .p90-outline{width:100%}
+.enroll-login{background:transparent;color:#f6f8f6;cursor:pointer}
+.enroll-return{display:grid;min-height:100vh;place-items:center}

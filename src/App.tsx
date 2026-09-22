@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Login } from "./pages/Login";
 import { Landing } from "../app/landing";
+import { CheckoutReturn } from "../app/enroll";
 import { FunctionalApp } from "../app/functional-app";
 import { apiUrl } from "./api";
 
@@ -89,6 +90,9 @@ export function App() {
   if (!token || !viewer) {
     if (page === "login") {
       return <Login onLogin={handleLogin} onBack={() => setPage("landing")} />;
+    }
+    if (window.location.pathname.startsWith("/checkout/result")) {
+      return <CheckoutReturn onLogin={() => { window.history.replaceState({}, "", "/"); setPage("login"); }} />;
     }
     return <Landing onLogin={() => setPage("login")} />;
   }
