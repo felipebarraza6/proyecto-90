@@ -15,7 +15,7 @@ function itemsFor(day?:GuideDay){
   const items:Item[]=[]; let warmup=false;
   for(const [nodeIndex,node] of (day?.nodes||[]).entries()){
     if(node.type==="heading")warmup=/calentamiento/i.test(node.text||"");
-    if(warmup&&node.type==="paragraph"&&node.text&&!/(:$|cada ejercicio|cada uno|vueltas?|minutos? continuos|descanso|transici[oó]n)/i.test(node.text))items.push({locator:`node:${nodeIndex}`,name:cleanName(node.text),prescription:"30 s"});
+    if(warmup&&node.type==="paragraph"&&node.text&&!/(:$|cada ejercicio|cada uno|vueltas?|minutos? continuos|descanso|transici[oó]n)/i.test(node.text))items.push({locator:`node:${nodeIndex}`,name:cleanName(node.text),prescription:node.prescription||"30 s"});
     if((node.type==="exercise"||node.type==="exerciseHeading")&&node.name)items.push({locator:`node:${nodeIndex}`,name:node.name,prescription:node.prescription||""});
     for(const [rowIndex,row] of (node.rows||[]).entries())if(row.exerciseName)items.push({locator:`row:${nodeIndex}:${rowIndex}`,name:row.exerciseName,prescription:row.cells?.[1]||""});
   }

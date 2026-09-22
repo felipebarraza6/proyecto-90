@@ -70,6 +70,7 @@ export function App() {
       });
     } catch { /* best effort */ }
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem("p90_branch");
     setToken(null);
     setViewer(null);
     setInitialData(null);
