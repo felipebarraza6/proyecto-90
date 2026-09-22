@@ -28,7 +28,7 @@ export function NutritionDailyTracker({records,plan,startDate,act}:{records:Row[
 }
 
 export function NutritionDailyReview({records,person}:{records:Row[];person:Row}){
-  const start=useMemo(()=>dateAt(person.assigned_at||person.created_at),[person.assigned_at,person.created_at]);const [week,setWeek]=useState(()=>initialWeek(start));
+  const start=useMemo(()=>dateAt(person.challenge_start||person.assigned_at||person.created_at),[person.challenge_start,person.assigned_at,person.created_at]);const [week,setWeek]=useState(()=>initialWeek(start));
   const days=useMemo(()=>Array.from({length:7},(_,index)=>addDays(start,(week-1)*7+index)).filter(day=>day<addDays(start,90)),[start,week]);
   const own=records.filter(row=>String(row.user_id)===String(person.id));
   const target=(key:typeof metrics[number]["key"])=>Number(person[key]||0),entry=(date:string)=>own.find(row=>String(row.log_date)===date);

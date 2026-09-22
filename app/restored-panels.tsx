@@ -17,7 +17,7 @@ async function downloadCsv(participantId?:string){const params=participantId?`?p
 function nameOf(row: Row) { return `${row.first_name || ""} ${row.last_name || ""}`.trim() || String(row.email || "Participante"); }
 function initials(row: Row) { return nameOf(row).split(" ").slice(0,2).map(x=>x[0]?.toUpperCase()).join("") || "90"; }
 function pct(value: unknown) { return value == null || value === "" ? "—" : `${Math.round(Number(value))}%`; }
-function dayOf(row: Row) { const start = row.assigned_at ? new Date(String(row.assigned_at)).getTime() : 0; return start ? Math.max(1,Math.min(90,Math.floor((clientNow-start)/86400000)+1)) : null; }
+function dayOf(row: Row) { const raw=row.challenge_start||row.assigned_at; if(!raw)return null; const start=new Date(`${String(raw).slice(0,10)}T12:00:00Z`).getTime(); const days=Math.floor((clientNow-start)/86400000); return days<0?0:Math.max(1,Math.min(90,days+1)); }
 function nutritionState(row: Row) { if (!row.nutrition_id) return "uncalculated"; const status=String(row.nutrition_status || "approved"); return status==="pending_review"?"review":status; }
 const stateCopy:Record<string,string>={uncalculated:"Sin calcular",review:"Por revisar",approved:"Aprobado",rejected:"Por revisar"};
 function assessmentOf(row:Row):Assessment|null{try{return row.nutrition_assessment?JSON.parse(String(row.nutrition_assessment)) as Assessment:null}catch{return null}}

@@ -4,13 +4,13 @@ import { useMemo, useState } from "react";
 
 type Row=Record<string,unknown>;
 type Guide={days?:Array<{title?:string}>};
-const programStart=new Date("2026-09-28T12:00:00Z");
 const addDays=(date:Date,days:number)=>new Date(date.getTime()+days*86400000);
-const initialWeek=()=>Math.max(1,Math.min(13,Math.floor((Date.now()-programStart.getTime())/(7*86400000))+1));
+const dateAt=(value:unknown)=>new Date(`${String(value||new Date().toISOString()).slice(0,10)}T12:00:00Z`);
 function parseDays(guideRow?:Row){try{return (JSON.parse(String(guideRow?.content_json||"{}")) as Guide).days||[]}catch{return []}}
 
-export function ParticipantWeekOverview({guideRow,program,workouts=[],sessions,onOpenTraining,children}:{guideRow?:Row;program?:Row;workouts?:Row[];sessions:Row[];onOpenTraining:()=>void;children:React.ReactNode}){
-  const [week,setWeek]=useState(initialWeek);
+export function ParticipantWeekOverview({guideRow,program,workouts=[],sessions,startDate,onOpenTraining,children}:{guideRow?:Row;program?:Row;workouts?:Row[];sessions:Row[];startDate?:unknown;onOpenTraining:()=>void;children:React.ReactNode}){
+  const programStart=useMemo(()=>dateAt(startDate),[startDate]);
+  const [week,setWeek]=useState(()=>Math.max(1,Math.min(13,Math.floor((Date.now()-programStart.getTime())/(7*86400000))+1)));
   const guideDays=useMemo(()=>parseDays(guideRow),[guideRow]);
   const days=guideDays.length?guideDays:workouts.map((workout,index)=>({title:String(workout.name||`Entrenamiento ${index+1}`)}));
   const from=addDays(programStart,(week-1)*7),to=addDays(from,7);

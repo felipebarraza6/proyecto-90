@@ -13,7 +13,7 @@ const chileToday=()=>new Intl.DateTimeFormat("en-CA",{timeZone:"America/Santiago
 const mondayOf=(date:Date)=>{const copy=new Date(`${iso(date)}T12:00:00Z`),day=copy.getUTCDay();return addDays(copy,-(day===0?6:day-1))};
 const weekLabel=(offset:number,start:Date)=>`${offset===0?"Semana actual":offset===1?"Semana anterior":`Hace ${offset} semanas`} · ${start.toLocaleDateString("es-CL",{day:"numeric",month:"short",timeZone:"UTC"})}–${addDays(start,6).toLocaleDateString("es-CL",{day:"numeric",month:"short",timeZone:"UTC"})}`;
 const nameOf=(row:Row)=>`${row.first_name||""} ${row.last_name||""}`.trim()||String(row.email||"Alumno");
-const personStart=(row:Row)=>String(row.assigned_at||row.created_at||"").slice(0,10);
+const personStart=(row:Row)=>String(row.challenge_start||row.assigned_at||row.created_at||"").slice(0,10);
 function hasThreeConsecutiveMisses(lookup:Map<string,string>,userId:string,habit:string,days:Date[],start:string){let streak=0;for(const day of days){const date=iso(day);if(start&&date<start)continue;streak=lookup.get(`${userId}:${habit}:${date}`)==="missed"?streak+1:0;if(streak>=3)return true}return false}
 
 export function AdherencePanel({people,records,nutritionRecords,outreach,act}:{people:Row[];records:Row[];nutritionRecords:Row[];outreach:Row[];act:Act}){
