@@ -12,7 +12,9 @@ function optionsOf(question: Row) {
   try { return question.options_json ? JSON.parse(String(question.options_json)) as string[] : []; } catch { return []; }
 }
 function answerOf(response: Row | undefined) {
-  try { return response?.answer_json ? JSON.parse(String(response.answer_json)) : ""; } catch { return ""; }
+  if (response?.answer_json == null || response.answer_json === "") return "";
+  const raw = String(response.answer_json);
+  try { return JSON.parse(raw); } catch { return raw; }
 }
 function hasValue(value: unknown) { return !(value == null || value === "" || (Array.isArray(value) && value.length === 0)); }
 
