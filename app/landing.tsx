@@ -28,7 +28,7 @@ export function Landing({ onLogin }: { onLogin: () => void }) {
     <header className="p90-nav">
       <a className="p90-brand" href="#inicio"><img src="/proyecto90-logo.jpg" alt="Proyecto 90"/><span><b>PROYECTO 90</b><small>Tu Amigo el Moya</small></span></a>
       <nav><a href="#programa">El programa</a><a href="#incluye">Qué incluye</a><a href="#recorrido">Los 90 días</a><a href="#precios">Precios</a></nav>
-      <div><a className="p90-login" onClick={(e) => { e.preventDefault(); onLogin(); }} href="#login">Ingresar a mi perfil</a><a className="p90-button" href="#matricula">Matricúlate</a></div>
+      <div><a className="p90-login" onClick={(e) => { e.preventDefault(); onLogin(); }} href="#login"><span className="p90-login-full">Ingresar a mi perfil</span><span className="p90-login-short">Ingresar</span></a><a className="p90-button" href="#matricula">Matricúlate</a></div>
     </header>
 
     <section className="p90-hero">

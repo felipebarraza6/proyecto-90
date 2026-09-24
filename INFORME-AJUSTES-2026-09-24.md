@@ -1,0 +1,135 @@
+# Informe de ajustes — Plataforma Proyecto 90
+
+**Fecha:** 24-09-2026 · **Origen:** documento "Ajustes plataforma 90 días" (Marcelo, equipo cliente)
+**Alcance:** SPA `proyecto-90` (dev) + backend Yggdra `apps.coaching` (dev) — ambos repos con cambios aplicados y validados, sin commitear.
+
+---
+
+## 1. Lo que pidió Marcelo vs. lo que se hizo
+
+### Perfil Admin
+
+**1) "No me da contraseñas provisorias para los profesionales" + "no alcanzo a copiar la contraseña"**
+- **Hecho (backend):** `professional.create` y `admin.create` ahora **envían la contraseña temporal por correo** al profesional (nuevo `send_professional_credentials` en `credentials_email.py`, usa la misma plantilla HTML que los alumnos) y devuelven `tempPassword` en la respuesta.
+- **Hecho (SPA):** al crear participante, profesional o administrador aparece un **diálogo persistente "Accesos Proyecto 90"** con el correo y la contraseña temporal, botones **Copiar** por campo, **"Copiar mensaje para WhatsApp"** y aviso si el correo no pudo enviarse. Ya no depende de un toast de 2,6 segundos.
+- **Hecho:** botón **"Restablecer acceso"** en la pantalla Profesionales (admins y coach/nutricionista): genera contraseña nueva y la envía por correo — nueva acción `credentials.resend` (solo admin; rechaza participantes).
+
+**2) "Por la fecha no puedo probar que quienes ingresan después del 01-10-2026 tengan 90 días desde ese día"**
+- Verificado: el reloj ya funciona así (`resolve_challenge_start`: matrícula en septiembre → día 1 = 1 de octubre; matrícula posterior → día 1 = fecha de alta). Test `test_resolve_challenge_start_rules` lo cubre.
+- Lo que faltaba era poder **mover la fecha para probar**: resuelto en el punto siguiente.
+
+**3) "Debería poder modificar la fecha de inicio de los alumnos (día 1)"**
+- **Hecho (backend):** `participant.update` acepta `challengeStart` (solo admin; valida formato AAAA-MM-DD). Test: fecha futura → alumno queda en día 0; fecha inválida → rechazada.
+- **Hecho (SPA):** en la ficha del alumno (modal "Ficha") hay un bloque **"Fecha de inicio del desafío (día 1)"** con selector de fecha y botón guardar. Además el "Día actual" de la ficha ahora usa `challenge_start` (antes usaba `assigned_at`, inconsistente).
+
+**4) "0% cumplimiento pero no ha empezado el plan"**
+- **Hecho (SPA):** en Seguimiento → Cumplimiento individual, los alumnos con día 0 entran a una banda nueva **"Aún no inicia"** (neutra) y **ya no aparecen como "Necesita apoyo"**. El héroe muestra "—" con "aún no inicia" + nota explicando cuándo parte su desafío. La tabla de participantes muestra "Sin iniciar" en lugar de 0% rojo. Las alertas de riesgo ya excluían días previos al inicio (verificado).
+- El cálculo backend (`enrich_adherence`) ya marcaba `adherence_elapsed_days: 0`; ahora la SPA lo usa.
+
+**5) "Crear sesión me exige link de YouTube y conferencia"**
+- Auditado: el backend y la SPA actuales **no exigen** enlaces (el test `test_coach_can_delete_a_session` ya creaba sesiones sin ellos); probablemente lo vio en el build antiguo.
+- **Hecho:** etiquetas ahora dicen **"Enlace en vivo (opcional)"** y **"Grabación YouTube (opcional)"** con placeholder "Puedes agregarlo después", y hay test de regresión nuevo: crear sin enlaces → 200, agregarlos después con `session.update` → guardados.
+
+**6) "Registro de quiénes no tienen actividades cargadas al cierre del día"**
+- **Hecho (SPA):** nuevo panel **"Cierre del día"** en Adherencia (admin) y Seguimiento (coach/nutricionista): elige una fecha y ve por alumno, dentro de su reloj de 90 días, si reportó **entreno** y/o **macros** (✓ Reportado / ✗ No cumplió / — Sin registrar), filtro "Solo sin registrar", contadores y botón **"Copiar resumen"** (lista lista para pegar en WhatsApp). Usa los registros diarios que ya carga la API; no requiere backend nuevo.
+
+### Perfil Nutricionista
+
+**7) "Agregar la estatura al lado del peso en la ficha"**
+- **Hecho:** la estatura (`ClientFitnessProfile.height`, pedida en el intake) ahora se muestra en: ficha del profesional (junto a Peso inicial/Último peso), modal de nutrición, tarjeta nutricional (NutritionCard) y ficha del admin. No hizo falta tocar el backend (ya lo enviaba).
+
+### Perfil Coach
+
+**8) "Asignar más de una rutina por persona (gym + casa básica), primaria y emergencia"**
+- **Hecho (backend):** nuevo campo `ClientEnrollment.kind` (`primary` / `emergency`, migración `0003_clientenrollment_kind`). `program.assign` acepta `kind:"emergency"`: **la de emergencia reemplaza solo a la emergencia anterior y convive con la principal** (no resetea la aprobación del coach). El bootstrap del staff expone `emergency_program_id/name` y el del alumno entrega ambas guías con `kind`.
+- **Hecho (SPA):** en la ficha del coach hay **dos selectores** (Rutina principal + Rutina de emergencia) y pestañas para ver cada guía. El alumno ve en Entrenamiento las pestañas **"Mi rutina principal"** y **"Emergencia · para entrenar en casa"** cuando tiene ambas asignadas (siempre que su plan esté aprobado, igual que hoy).
+
+### Versión celular
+
+**9) "En la parte superior de la Landing no sale para iniciar sesión"**
+- **Hecho:** el CSS ocultaba `.p90-login` bajo 720px. Ahora el header móvil muestra **"Ingresar"** junto a "Matricúlate" (etiqueta corta en móvil, larga en escritorio). **Validado con captura del build de producción a 390×844.**
+
+### Fórmula matemática
+
+**10) "A la alumna (caso Ljubica) le dejaron las calorías del GET siendo su objetivo bajar grasa"**
+- **Causa encontrada:** si la alumna marca "Disminuir porcentaje de grasa" **y** "Aumentar masa muscular" (objetivo combinado), el motor aplicaba **0% de ajuste** → las calorías quedaban exactamente en el GET.
+- **Hecho (backend):** `goal_adjustment_pct` ahora es `loss: -15%, gain: +10%, combined: -10%` → bajar grasa **siempre** produce déficit; el objetivo combinado sigue marcando revisión de la nutricionista y ella puede ajustar a mano como siempre.
+- **Para el caso puntual:** los planes ya calculados no se recalculan solos. Correr en producción: `python manage.py recalculate_nutrition_proposals` (crea propuesta nueva pendiente de aprobar; no toca planes aprobados).
+
+### Perfil alumno (móvil)
+
+**11) "El calentamiento y los circuitos no se ajustan a la pantalla"**
+- **Causa:** las tablas de rutina tenían `min-width: 620px` con scroll horizontal en móvil.
+- **Hecho:** en la vista del alumno, bajo 900px la tabla se ajusta al ancho completo; bajo 620px calentamiento y circuitos se transforman en **tarjetas apiladas** con el rótulo de cada columna (datos `data-label` agregados a `GuideTable`). Sin scroll horizontal. La vista admin/coach mantiene su formato de tabla.
+
+---
+
+## 2. Validación de las correcciones
+
+| Validación | Resultado |
+|---|---|
+| `pytest apps/coaching/tests/test_coaching.py` en Docker (BD de test recreada) | **43/43 pasan** (incluye 13 tests nuevos de este informe) |
+| Migración `0003_clientenrollment_kind` aplicada en la BD del stack light | OK (columna `kind` verificada) |
+| `npm run build` (Vite) | OK |
+| `npm run lint` | 3 errores + 3 warnings **todos preexistentes** (idénticos a HEAD; este trabajo no agrega ninguno) |
+| `npx tsc --noEmit` | 8 errores **preexistentes** (idénticos a HEAD; el build de producción no ejecuta tsc) |
+| Preview del build de producción a 390×844 | "Ingresar" visible en el header de la landing (captura verificada) |
+| Paquete de despliegue `deploy-90dias/` | Resincronizado con el build nuevo (`VITE_API_BASE=https://api.yggdra.cl`, igual que el paquete anterior) |
+
+**Tests nuevos:** `TestCredencialesProfesionales` (4), `TestFechaInicioEditable` (3), `TestRutinaEmergencia` (4), `TestSesionesSinEnlaceObligatorio` (1), `TestObjetivoCombinado` (2). Archivo: `api/apps/coaching/tests/test_coaching.py`.
+
+---
+
+## 3. Archivos modificados
+
+**SPA `proyecto-90` (branch `dev`):**
+- `app/functional-app.tsx` — diálogo de credenciales, restablecer acceso, fecha de inicio editable, estatura, rutina primaria/emergencia (coach y alumno), "Sin iniciar" en tabla, etiquetas de sesión opcionales, copy del formulario de participante, Cierre del día montado en Adherencia/Seguimiento.
+- `app/professional-tracking.tsx` — banda "Aún no inicia" ≠ "Necesita apoyo".
+- `app/daily-closure.tsx` — **nuevo**, panel Cierre del día.
+- `app/routine-guide.tsx` — `data-label` para las tarjetas móviles.
+- `app/restored-panels.tsx` — estatura en NutritionCard.
+- `app/landing.tsx` — etiqueta corta de login en móvil.
+- `app/globals.css` — landing móvil, tablas de rutina en móvil, estilos de componentes nuevos.
+- `deploy-90dias/` — paquete reconstruido (no versionado en git).
+
+**Backend `yggdra_infra` (branch `dev`):**
+- `api/apps/coaching/services/actions.py` — credenciales por correo + `tempPassword`, `credentials.resend`, `challengeStart` en `participant.update`, `kind` en asignación de programas.
+- `api/apps/coaching/services/credentials_email.py` — `send_professional_credentials`.
+- `api/apps/coaching/services/bootstrap.py` — rutina de emergencia en bootstrap staff y `kind` en bootstrap alumno.
+- `api/apps/coaching/services/nutrition_engine.py` — déficit para objetivo combinado.
+- `api/apps/coaching/models/coaching.py` + `migrations/0003_clientenrollment_kind.py` — campo `kind`.
+- `api/apps/coaching/tests/test_coaching.py` — 13 tests nuevos.
+
+No se tocó nada de los cambios pendientes de inventory/recipes que existían en el workspace.
+
+---
+
+## 4. Deuda / pasos pendientes para producción
+
+**Despliegue (operación, no código):**
+1. Backend: deploy de Yggdra y aplicar migración en producción → `python manage.py migrate coaching` (aditiva, sin riesgo para datos).
+2. Reiniciar/recargar la API para servir el código nuevo.
+3. Subir el paquete `deploy-90dias/` por FTP (ya quedó construido y apuntando a `api.yggdra.cl`).
+4. Caso Ljubica: correr `python manage.py recalculate_nutrition_proposals` para que la nutricionista revise la propuesta con déficit.
+5. Verificar que el SMTP/Resend de producción esté enviando (si un correo falla, la contraseña queda visible y copiable en el diálogo, con aviso).
+
+**Deuda técnica real (para el backlog):**
+1. **Quitar rutina de emergencia**: hoy se puede reemplazar pero no retirar. Falta acción `program.unassign` (backend) + botón (SPA).
+2. **Aprobación separada por tipo de rutina**: la emergencia se publica junto con la aprobación del plan principal; no existe aprobación independiente por rutina.
+3. **Cierre del día es un reporte en la SPA**: no hay snapshot nocturno ni notificaciones automáticas (WhatsApp/push) de quién no cargó. Si Marcelo quiere aviso automático, es un job backend nuevo.
+4. **Historial de contraseñas entregadas**: el diálogo no registra quién copió/reenvió; solo queda el correo enviado y el `updated_by` del usuario.
+5. **SPA:** 8 errores de TypeScript y 3 de ESLint preexistentes (no bloquean el build); conviene limpiarlos y agregar `tsc --noEmit` al pipeline.
+6. **Motor nutricional:** el déficit del objetivo combinado (−10%) es una decisión clínica por defecto; la nutricionista puede ajustarlo caso a caso. Si Marcelo quiere otro porcentaje, es una línea en `nutrition_engine.py`.
+
+---
+
+## 5. Commits sugeridos (sin ejecutar)
+
+**proyecto-90:**
+- `feat(app): credenciales copiables por correo y restablecer acceso para profesionales`
+- `feat(app): rutina primaria + emergencia, fecha de inicio editable y cierre del día`
+- `fix(movil): login visible en landing y rutinas ajustadas a pantalla`
+
+**yggdra_infra:**
+- `feat(coaching): credenciales de profesionales por correo, fecha de inicio editable y rutina de emergencia`
+- `fix(coaching): déficit calórico para objetivos combinados (no GET)`
