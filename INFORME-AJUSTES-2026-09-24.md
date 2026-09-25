@@ -145,3 +145,30 @@ No se tocó nada de los cambios pendientes de inventory/recipes que existían en
 **Pendiente para el backlog (no bloquea a Marcelo):** quitar rutina de emergencia (solo reemplazar hoy), aprobación independiente por tipo de rutina, notificaciones automáticas del Cierre del día, corregir el healthcheck de celery en compose, limpiar los 8 errores TS preexistentes de la SPA.
 
 **CI/CD del front (agregado el 25-09-2026):** workflow `.github/workflows/deploy-front.yml` — al pushear/mergear a `main` (con cambios de front), GitHub Actions construye con `VITE_API_BASE=https://api.yggdra.cl` y sube por FTP con `lftp` (assets primero, `index.html` al final, sin borrar bundles viejos = rollback inmediato), y verifica el sitio con un curl al terminar. Credenciales en los secretos `FTP_HOST`/`FTP_USER`/`FTP_PASS`. Corrida inicial en verde (run 36091228054). Costo: ~2-3 min por deploy en la capa gratis de Actions. `dev` no deploya: main es producción.
+
+---
+
+## 6. Auditoría final de entrega (25-09-2026)
+
+| # | Requerimiento de Marcelo | Estado | Verificación |
+|---|---|---|---|
+| 1 | Contraseñas provisorias de profesionales | ✅ Entregado | Correo automático + diálogo copiable + "Restablecer acceso"; tests backend; en producción |
+| 2 | Copiar la contraseña al crear / ¿llega al correo? | ✅ Entregado | Diálogo persistente con copia por campo y mensaje WhatsApp; aviso si el correo falla |
+| 3 | Probar que tras el 01-10-2026 cuentan 90 días desde ese día | ✅ Entregado | Regla verificada con tests (`resolve_challenge_start`); ahora puede mover la fecha a mano (ítem 5) |
+| 4 | "Necesita apoyo" con 0% sin haber empezado | ✅ Entregado | Banda "Aún no inicia" en Seguimiento; "Sin iniciar" en tablas; alertas excluyen días pre-inicio |
+| 5 | Modificar la fecha de inicio del alumno | ✅ Entregado | Editor de fecha en la ficha (solo admin); el día 1 automático sigue la regla de matrícula y se ajusta a mano |
+| 6 | Sesiones sin YouTube/conferencia obligatorio | ✅ Entregado | Nunca fue obligatorio en el código actual; etiquetas "(opcional)" + test; se ven agendadas sin link |
+| 7 | Registro de quiénes no cargaron al cierre del día | ✅ Entregado | Panel "Cierre del día" (Adherencia/Seguimiento) con filtro y copiar resumen |
+| 8 | Estatura junto al peso (nutricionista) | ✅ Entregado | Ficha profesional, tarjeta nutricional, ficha admin y modal nutrición; responsive 2×2 en móvil |
+| 9 | Rutina primaria + emergencia, alumno ve ambas | ✅ Entregado | Backend `kind` + migración en prod; selectores y pestañas para coach; pestañas para alumno |
+| 10 | Login visible arriba en landing móvil | ✅ Entregado | "Ingresar" en el header móvil; verificado con captura en producción (390×844) |
+| 11 | Ljubica: calorías quedaban en el GET sin déficit | ✅ Entregado | Causa: objetivo combinado aplicaba 0%; ahora −10% (loss −15%). Propuesta nueva en producción: 2200 kcal |
+| 12 | Calentamiento y circuitos no ajustan en móvil | ✅ Entregado* | Tarjetas apiladas bajo 620px, sin scroll horizontal; verificado por build/CSS — **pendiente prueba visual con un alumno real en celular** |
+
+**Acciones operativas antes de cerrar la entrega:**
+1. La nutricionista debe abrir la ficha de Ljubica y **aprobar la propuesta nueva (2200 kcal)** — el sistema no publica planes sin aprobación profesional (diseño intencional).
+2. Pedir a Marcelo (o un alumno beta) revisar la rutina en el celular (ítem 12), único ítem sin verificación visual end-to-end.
+
+**Decisiones conscientes (no son incumplimientos):** el día 1 se ajusta a mano (Marcelo lo autorizó); automatizarlo al aprobar rutina+macros queda en backlog junto con: quitar rutina de emergencia, aprobación independiente por rutina y avisos automáticos del cierre del día.
+
+**CI/CD validado end-to-end:** el último push a `main` disparó el deploy automático (run 36091706824, verde) y el sitio sirvió el bundle nuevo sin intervención manual.
