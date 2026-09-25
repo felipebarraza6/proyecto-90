@@ -123,13 +123,23 @@ No se tocó nada de los cambios pendientes de inventory/recipes que existían en
 
 ---
 
-## 5. Commits sugeridos (sin ejecutar)
+## 5. Despliegue a producción — ejecutado 24/25-09-2026
 
-**proyecto-90:**
-- `feat(app): credenciales copiables por correo y restablecer acceso para profesionales`
-- `feat(app): rutina primaria + emergencia, fecha de inicio editable y cierre del día`
-- `fix(movil): login visible en landing y rutinas ajustadas a pantalla`
+**Backend (api.yggdra.cl, VPS 137.184.152.245):**
+- Commits en `dev` (`e4b575fe`, `1e6dbfb5`) y backport a `production` (`8c8a2d37`, `f931747d`, `14aedff0` con Black para el gate de CI).
+- Suite de coaching validada contra el árbol de production antes del push: **43/43**.
+- CI de GitHub (`backend-baseline` + `ai-agents-quality`) en verde para `production`.
+- VPS: `git pull` a `14aedff0` → build de imágenes (api, celery_worker, celery_beat) → **migración `0003_clientenrollment_kind` aplicada** (verificada: columna `kind`) → contenedores recreados.
+- Backup previo a la migración: `/opt/backups/p90-deploy-20260924/yggdra_prod_pre0003.sql.gz` (22 MB).
+- Salud: `/health/` → `healthy` (db, redis, celery, storage); `/ping/` → 200.
+- Nota: `api-prod-celery-*` muestran `unhealthy` cosmético por un healthcheck mal definido (curl a puerto 8000 dentro del worker); la salud real vía `/health/` es `celery: healthy, workers:1`.
 
-**yggdra_infra:**
-- `feat(coaching): credenciales de profesionales por correo, fecha de inicio editable y rutina de emergencia`
-- `fix(coaching): déficit calórico para objetivos combinados (no GET)`
+**Front (90dias.habitofirme.app):**
+- Repo: commit `9a39b38` en `dev` y `main` sincronizada (fast-forward).
+- Paquete `deploy-90dias/` (build con `VITE_API_BASE=https://api.yggdra.cl`) subido por FTP a la carpeta `90dias.habitofirme.app` del hosting (primero assets, al final `index.html`). El `.htaccess` remoto se dejó intacto; los bundles antiguos quedan en el servidor como rollback inmediato.
+- Verificación: `https://90dias.habitofirme.app` sirve el bundle nuevo (`index-CG8U3Dny.js` + `index-Bu6AE6rX.css`), assets por HTTPS 200 y **captura en móvil 390×844 confirmó "Ingresar" visible en el header**.
+
+**Recalculo nutricional (caso Ljubica):**
+- `recalculate_nutrition_proposals --branch "Proyecto 90" --force` ejecutado en producción: **propuesta nueva para Ljubica con 2200 kcal (déficit aplicado)**, queda pendiente de aprobación de la nutricionista. Los planes aprobados/editados no se tocaron (1 omitido, 1 sin cálculo por menor de edad — correcto).
+
+**Pendiente para el backlog (no bloquea a Marcelo):** quitar rutina de emergencia (solo reemplazar hoy), aprobación independiente por tipo de rutina, notificaciones automáticas del Cierre del día, corregir el healthcheck de celery en compose, limpiar los 8 errores TS preexistentes de la SPA, y (opcional) un GitHub Action de FTP para deployar el front automáticamente.
