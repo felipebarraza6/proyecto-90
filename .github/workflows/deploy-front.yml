@@ -1,0 +1,69 @@
+# Deploy automático del front de Proyecto 90 a 90dias.habitofirme.app (cPanel FTP).
+# Barato: 1 job Linux de ~2-3 min por corrida (capa gratis de Actions lo cubre).
+# Sin acciones de terceros: build de Vite + lftp (preinstalado en el runner).
+#
+# Cómo deployar: pushear/mergear a `main` (o correrlo a mano desde Actions).
+# `dev` no deploya; main es lo que vive en producción.
+# El índice se sube al final para que nadie cargue un index.html que
+# referencia assets aún no subidos. Los bundles viejos quedan en el
+# servidor como rollback inmediato (no se borran).
+
+name: Deploy Front (90dias)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "app/**"
+      - "src/**"
+      - "public/**"
+      - "index.html"
+      - "vite.config.ts"
+      - "package.json"
+      - "package-lock.json"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-front
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Build de producción
+        run: npm run build
+        env:
+          VITE_API_BASE: https://api.yggdra.cl
+
+      - name: Subir a FTP (assets primero, index al final)
+        env:
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USER: ${{ secrets.FTP_USER }}
+          FTP_PASS: ${{ secrets.FTP_PASS }}
+        run: |
+          lftp -e "
+            set ssl:verify-certificate no;
+            set net:max-retries 3;
+            mirror -R --only-newer --exclude-glob index.html dist/client /90dias.habitofirme.app;
+            put -O /90dias.habitofirme.app dist/client/index.html;
+            bye" -u "$FTP_USER","$FTP_PASS" "$FTP_HOST"
+
+      - name: Verificar despliegue
+        run: |
+          sleep 5
+          code=$(curl -s -o /tmp/live.html -w "%{http_code}" https://90dias.habitofirme.app/)
+          echo "HTTP $code"
+          grep -o "assets/index[^\"]*" /tmp/live.html | head -2
+          test "$code" = "200"
