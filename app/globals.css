@@ -202,6 +202,9 @@
 .closure-cell.unlogged{background:#2b2415;color:#f2c961}
 .daily-closure tr.closure-missing td:first-child b{color:#ffd2d2}
 .daily-closure-note{font-size:8px;color:var(--muted);margin:10px 2px 0}
-.nutrition-overview{grid-template-columns:repeat(4,1fr)}
+@media(min-width:721px){.nutrition-overview{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:720px){.nutrition-overview{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:1000px){.response-modal .participant-file-summary{grid-template-columns:repeat(5,1fr)}}
+@media(min-width:1100px){.professional-student-modal .professional-file-summary{grid-template-columns:repeat(5,1fr)}}
 @media(max-width:760px){.daily-closure-head{align-items:stretch;flex-direction:column}.daily-closure-summary{grid-template-columns:repeat(3,1fr);gap:7px}.start-challenge-editor{flex-direction:column;align-items:stretch;margin:0 16px 16px}.start-challenge-controls{flex-wrap:wrap}.start-challenge-controls input{flex:1}.credentials-actions{flex-direction:column-reverse}.credentials-actions .primary,.credentials-actions .secondary{width:100%}}
 @media(max-width:620px){.daily-closure-summary{grid-template-columns:1fr}.tracking-band-filters{grid-template-columns:1fr}}
