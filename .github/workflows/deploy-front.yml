@@ -50,18 +50,19 @@ jobs:
       - name: Instalar lftp
         run: sudo apt-get update -qq && sudo apt-get install -y -qq lftp
 
-      - name: Subir a FTP (assets primero, index al final)
+      - name: Subir assets (sin index.html)
         env:
           FTP_HOST: ${{ secrets.FTP_HOST }}
           FTP_USER: ${{ secrets.FTP_USER }}
           FTP_PASS: ${{ secrets.FTP_PASS }}
-        run: |
-          lftp -e "
-            set ssl:verify-certificate no;
-            set net:max-retries 3;
-            mirror -R --only-newer --exclude-glob index.html dist/client /90dias.habitofirme.app;
-            put -O /90dias.habitofirme.app dist/client/index.html;
-            bye" -u "$FTP_USER","$FTP_PASS" "$FTP_HOST"
+        run: lftp -e "set ssl:verify-certificate no; set net:max-retries 3; mirror -R --only-newer --exclude-glob index.html dist/client /90dias.habitofirme.app; bye" -u "$FTP_USER","$FTP_PASS" "$FTP_HOST"
+
+      - name: Subir index.html al final
+        env:
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USER: ${{ secrets.FTP_USER }}
+          FTP_PASS: ${{ secrets.FTP_PASS }}
+        run: lftp -e "set ssl:verify-certificate no; put -O /90dias.habitofirme.app dist/client/index.html; bye" -u "$FTP_USER","$FTP_PASS" "$FTP_HOST"
 
       - name: Verificar despliegue
         run: |
