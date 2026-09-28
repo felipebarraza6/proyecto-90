@@ -16,7 +16,7 @@ function tone(value:string,target:number){const actual=Number(value);if(!value||
 function recordValues(row?:Row):Values{return {calories:String(row?.calories??""),protein:String(row?.protein??""),fats:String(row?.fats??""),carbs:String(row?.carbs??"")}}
 
 export function NutritionDailyTracker({records,plan,startDate,act}:{records:Row[];plan?:Row|null;startDate:unknown;act:(payload:Row)=>Promise<unknown>}){
-  const start=useMemo(()=>dateAt(startDate),[startDate]);const [week,setWeek]=useState(()=>initialWeek(start));
+  const start=useMemo(()=>dateAt(startDate),[startDate]);const [week,setWeek]=useState(()=>initialWeek(start));useEffect(()=>{setWeek(initialWeek(start))},[start]);
   const days=useMemo(()=>Array.from({length:7},(_,index)=>addDays(start,(week-1)*7+index)).filter(day=>day<addDays(start,90)),[start,week]);
   const [values,setValues]=useState<Record<string,Values>>({});const [saving,setSaving]=useState(false);
   useEffect(()=>{const next:Record<string,Values>={};for(const day of days){const date=iso(day);next[date]=recordValues(records.find(row=>String(row.log_date)===date))}setValues(next)},[records,days]);
@@ -28,7 +28,7 @@ export function NutritionDailyTracker({records,plan,startDate,act}:{records:Row[
 }
 
 export function NutritionDailyReview({records,person}:{records:Row[];person:Row}){
-  const start=useMemo(()=>dateAt(person.challenge_start||person.assigned_at||person.created_at),[person.challenge_start,person.assigned_at,person.created_at]);const [week,setWeek]=useState(()=>initialWeek(start));
+  const start=useMemo(()=>dateAt(person.challenge_start||person.assigned_at||person.created_at),[person.challenge_start,person.assigned_at,person.created_at]);const [week,setWeek]=useState(()=>initialWeek(start));useEffect(()=>{setWeek(initialWeek(start))},[start]);
   const days=useMemo(()=>Array.from({length:7},(_,index)=>addDays(start,(week-1)*7+index)).filter(day=>day<addDays(start,90)),[start,week]);
   const own=records.filter(row=>String(row.user_id)===String(person.id));
   const target=(key:typeof metrics[number]["key"])=>Number(person[key]||0),entry=(date:string)=>own.find(row=>String(row.log_date)===date);

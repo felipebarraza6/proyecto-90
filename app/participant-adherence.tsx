@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type Row=Record<string,unknown>;
 const habits={training:{label:"Entrenamiento",icon:"↗"},macros:{label:"Macros",icon:"◒"},water:{label:"Consumo de agua",icon:"◉"}} as const;
@@ -10,7 +10,7 @@ const chileToday=()=>new Intl.DateTimeFormat("en-CA",{timeZone:"America/Santiago
 const dateAt=(value:unknown)=>new Date(`${String(value||new Date().toISOString()).slice(0,10)}T12:00:00Z`);const initialWeek=(start:Date)=>Math.max(1,Math.min(13,Math.floor((Date.now()-start.getTime())/(7*86400000))+1));
 
 export function ParticipantHabitMatrix({records,nutritionRecords,plan,startDate,act}:{records:Row[];nutritionRecords:Row[];plan?:Row|null;startDate:unknown;act:(payload:Row)=>Promise<unknown>}){
-  const start=useMemo(()=>dateAt(startDate),[startDate]);const [week,setWeek]=useState(()=>initialWeek(start));
+  const start=useMemo(()=>dateAt(startDate),[startDate]);const [week,setWeek]=useState(()=>initialWeek(start));useEffect(()=>{setWeek(initialWeek(start))},[start]);
   const days=useMemo(()=>Array.from({length:7},(_,index)=>addDays(start,(week-1)*7+index)).filter(day=>day<addDays(start,90)),[start,week]);
   const lookup=useMemo(()=>new Map(records.map(row=>[`${row.habit}:${row.habit_date}`,String(row.status)])),[records]);const nutrition=useMemo(()=>new Map(nutritionRecords.map(row=>[String(row.log_date),row])),[nutritionRecords]);
   function statusFor(habit:keyof typeof habits,date:string){if(habit!=="macros")return lookup.get(`${habit}:${date}`)||"empty";const row=nutrition.get(date),calories=Number(row?.calories||0),protein=Number(row?.protein||0),targetCalories=Number(plan?.calories||0),targetProtein=Number(plan?.protein||0);if(!row||!targetCalories||!targetProtein)return "empty";return calories>targetCalories*1.1||protein<targetProtein*.9?"missed":"met"}
@@ -21,7 +21,7 @@ export function ParticipantHabitMatrix({records,nutritionRecords,plan,startDate,
 }
 
 export function TrainingDailyReview({records,person}:{records:Row[];person:Row}){
-  const start=useMemo(()=>dateAt(person.challenge_start||person.assigned_at||person.created_at),[person.challenge_start,person.assigned_at,person.created_at]);const [week,setWeek]=useState(()=>initialWeek(start));const days=useMemo(()=>Array.from({length:7},(_,index)=>addDays(start,(week-1)*7+index)).filter(day=>day<addDays(start,90)),[start,week]);
+  const start=useMemo(()=>dateAt(person.challenge_start||person.assigned_at||person.created_at),[person.challenge_start,person.assigned_at,person.created_at]);const [week,setWeek]=useState(()=>initialWeek(start));useEffect(()=>{setWeek(initialWeek(start))},[start]);const days=useMemo(()=>Array.from({length:7},(_,index)=>addDays(start,(week-1)*7+index)).filter(day=>day<addDays(start,90)),[start,week]);
   const own=new Map(records.filter(row=>String(row.user_id)===String(person.id)&&row.habit==="training").map(row=>[String(row.habit_date),String(row.status)]));const met=days.filter(day=>own.get(iso(day))==="met").length,missed=days.filter(day=>own.get(iso(day))==="missed").length;
   return <section className="professional-file-section training-review"><div className="professional-file-heading"><div><span className="eyebrow">SEGUIMIENTO DEL ALUMNO</span><h3>Entrenamientos registrados</h3><p>Vacío significa sin registrar; ✓ cumplido y × no cumplido.</p></div><label>Semana<select value={week} onChange={event=>setWeek(Number(event.target.value))}>{Array.from({length:13},(_,index)=><option value={index+1} key={index}>Semana {index+1}</option>)}</select></label></div><div className="tracking-summary"><span><small>Cumplidos</small><b className="green-text">{met}</b></span><span><small>No cumplidos</small><b className="red-text">{missed}</b></span><span><small>Sin registrar</small><b>{days.length-met-missed}</b></span></div><div className="training-review-grid">{days.map(day=>{const status=own.get(iso(day))||"empty";return <article className={status} key={iso(day)}><small>{dayNames[day.getUTCDay()]}</small><b>{day.toLocaleDateString("es-CL",{day:"2-digit",month:"2-digit",timeZone:"UTC"})}</b><strong>{status==="met"?"✓":status==="missed"?"×":"·"}</strong><span>{status==="met"?"Cumplido":status==="missed"?"No cumplido":"Sin registrar"}</span></article>})}</div></section>;
 }
