@@ -236,3 +236,13 @@
 @media(max-width:900px){.guide-text-row{grid-template-columns:48px 1fr}.guide-add-text{grid-template-columns:1fr 1fr}.guide-add-text-input{grid-column:1/-1}}
 @media(max-width:620px){.guide-add-text{grid-template-columns:1fr}}
 .logout{background:transparent;cursor:pointer;font-family:inherit}
+/* Ajuste 29-09: indicaciones editables en la vista de la rutina + guía PDF */
+.guide-inline-actions{display:inline-flex;gap:4px;margin-left:8px;vertical-align:middle;white-space:nowrap}
+.guide-inline-actions .guide-inline-edit{font-size:9px;padding:3px 6px;cursor:pointer}
+.guide-inline-actions .guide-inline-remove{font-size:9px;padding:3px 6px}
+.guide-inline-add{display:block;margin:6px 0 12px;font-size:10px!important;padding:6px 10px!important;border:1px dashed #3b4840!important;border-radius:8px;cursor:pointer}
+.guide-inline-form{display:grid;gap:8px;margin:8px 0 12px}
+.guide-inline-form textarea{width:100%;background:#0b0f0c;border:1px solid #2c352f;border-radius:8px;color:var(--text);padding:9px;font:inherit;font-size:11px;resize:vertical}
+.guide-inline-form textarea:focus{border-color:var(--green);outline:none}
+.guide-inline-form>div{display:flex;gap:8px}
+.upload-error{color:#ff7d7d;font-size:11px;margin:6px 0 0}
