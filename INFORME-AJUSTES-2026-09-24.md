@@ -172,3 +172,27 @@ No se tocó nada de los cambios pendientes de inventory/recipes que existían en
 **Decisiones conscientes (no son incumplimientos):** el día 1 se ajusta a mano (Marcelo lo autorizó); automatizarlo al aprobar rutina+macros queda en backlog junto con: quitar rutina de emergencia, aprobación independiente por rutina y avisos automáticos del cierre del día.
 
 **CI/CD validado end-to-end:** el último push a `main` disparó el deploy automático (run 36091706824, verde) y el sitio sirvió el bundle nuevo sin intervención manual.
+
+---
+
+## 7. Auditoría documento 28-09-2026 ("últimos gaps")
+
+**Ya estaban entregados por los ajustes 25-09 (verificados en producción):**
+| Ítem del doc | Estado |
+|---|---|
+| Comentarios a alumnos (fichas + sección Comentarios del alumno con autor/rol/fecha) | ✅ en prod |
+| Pausar macros (deferred): alumno no los ve, 50% entreno / 50% agua, liberar reactiva | ✅ en prod |
+| Guía nutricional PDF visible para el alumno (Aprender + Alimentación, permisos de descarga) | ✅ en prod |
+| Recordatorio diario: aviso in-app + correo (`notify_missing_daily`) | ✅ comando listo |
+
+**Gaps reales encontrados y corregidos el 28-09 (todo desplegado):**
+1. **Comentarios y pausa en Seguimiento**: el comentario y el botón Pausar/Liberar macros estaban solo dentro de las fichas. Ahora también aparecen **al fondo del alumno seleccionado en Seguimiento** (admin con ambas; nutri con pausa; coach con comentarios).
+2. **Contenido/Herramientas**: la sección admin se renombró y **coach y nutricionista ganaron su propia sección** para publicar links, PDFs y videos (el backend ya lo permitía; faltaba la UI).
+3. **Móvil**: el nav inferior cortaba en 5 secciones — Aprender y Comentarios quedaban invisibles en el celular. Ahora se muestran **todas** (scroll horizontal si no caben).
+4. **Textos de rutinas editables**: nuevo bloque "Textos e indicaciones del día" en el editor de rutinas (títulos de bloque y notas). Además se corrigió un bug del backend que **convertía los títulos en ejercicios** al editarlos.
+5. **Recordatorio 22:30 programado**: tarea Celery + entrada de beat `p90-notify-missing-daily` (22:30 hora Chile), registrada en el scheduler y cargada por el worker (`apps.coaching.tasks` en el include de Celery).
+6. **Filtro de semana**: el default ya era la semana actual según el día del alumno; se endureció para resincronizar si la fecha de inicio cambia (p. ej. día 1 fijado tras aprobar).
+
+**CI de production**: venía rojo desde el backport 25-09 (un test de plan_checkout esperaba `challenge_start` al crear, comportamiento que ese ajuste cambió a propósito). Test alineado con la nueva semántica. Además se relanzó un fallo puntual de un test de suppliers (ajeno a estos cambios).
+
+**Validación**: coaching 50/50 (dev y árbol production), plan_checkout 17/17, build+lint SPA en baseline, VPS healthy, beat con crontab `30 22 * * * America/Santiago`, front auto-desplegado (run verde del Action).
