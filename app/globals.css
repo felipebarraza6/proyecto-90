@@ -228,3 +228,11 @@
 .guide-text-kind{font-size:7px;font-weight:850;letter-spacing:.08em;color:var(--green);text-align:center}
 .guide-text-row input{width:100%;padding:9px 10px;border:1px solid #303d35;border-radius:7px;background:#101511;color:var(--text);font-size:9px}
 @media(max-width:900px){.guide-text-row{grid-template-columns:48px 1fr}.guide-text-row button{grid-column:1/-1}}
+/* Textos e indicaciones nuevos en el editor de rutinas */
+.guide-text-row{grid-template-columns:56px 1fr auto auto}
+.guide-add-text{display:grid;grid-template-columns:minmax(120px,.6fr) minmax(200px,1.6fr) minmax(150px,.9fr) auto;gap:9px;align-items:end;margin-top:10px;padding:12px;border:1px dashed #41624c;border-radius:10px;background:#101712}
+.guide-add-text label{font-size:7px;color:#89948d;text-transform:uppercase;letter-spacing:.05em}
+.guide-add-text input,.guide-add-text select{display:block;width:100%;margin-top:5px;padding:9px 10px;border:1px solid #303d35;border-radius:7px;background:#101511;color:var(--text);font-size:9px}
+@media(max-width:900px){.guide-text-row{grid-template-columns:48px 1fr}.guide-add-text{grid-template-columns:1fr 1fr}.guide-add-text-input{grid-column:1/-1}}
+@media(max-width:620px){.guide-add-text{grid-template-columns:1fr}}
+.logout{background:transparent;cursor:pointer;font-family:inherit}

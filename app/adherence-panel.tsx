@@ -77,9 +77,16 @@ export function AdherencePanel({
     | "training"
     | "macros"
   )[];
+  const alertKey = alertHabits.join("|");
   const alerts = useMemo(
-    () => computeAdherenceAlerts(people, records, nutritionRecords, alertHabits),
-    [people, records, nutritionRecords, alertHabits.join("|")],
+    () =>
+      computeAdherenceAlerts(
+        people,
+        records,
+        nutritionRecords,
+        alertKey.split("|").filter(Boolean) as ("training" | "macros")[],
+      ),
+    [people, records, nutritionRecords, alertKey],
   );
   const effectiveRecords = useMemo(
     () => buildEffectiveRecords(people, records, nutritionRecords),
