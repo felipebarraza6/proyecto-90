@@ -196,3 +196,5 @@ No se tocó nada de los cambios pendientes de inventory/recipes que existían en
 **CI de production**: venía rojo desde el backport 25-09 (un test de plan_checkout esperaba `challenge_start` al crear, comportamiento que ese ajuste cambió a propósito). Test alineado con la nueva semántica. Además se relanzó un fallo puntual de un test de suppliers (ajeno a estos cambios).
 
 **Validación**: coaching 50/50 (dev y árbol production), plan_checkout 17/17, build+lint SPA en baseline, VPS healthy, beat con crontab `30 22 * * * America/Santiago`, front auto-desplegado (run verde del Action).
+
+**Nota CI (fuera del alcance P90):** tras alinear el test de plan_checkout, el CI de production quedó revelando un fallo preexistente de `suppliers` (`test_mark_completed_from_received`, HTTP 500) introducido con el feature de recepción de OC del 24-09 — verificado que falla en un commit anterior a todos los cambios de Proyecto 90. Se deja como trabajo separado del equipo; no afecta a Proyecto 90 ni a su despliegue.
