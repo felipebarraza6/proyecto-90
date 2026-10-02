@@ -41,7 +41,7 @@ export function IntakeForm({questions,responses,act}:{questions:Row[];responses:
 
 function QuestionField({question,value,setValue}:{question:Row;value:unknown;setValue:(value:unknown)=>void}) {
   const id=String(question.id), type=String(question.type), opts=optionsOf(question), selected=Array.isArray(value)?value.map(String):[];
-  return <fieldset className="intake-question"><legend>{String(question.prompt)}{Boolean(question.required)&&<sup>*</sup>}</legend>{question.help_text&&<p>{String(question.help_text)}</p>}
+  return <fieldset className="intake-question"><legend>{String(question.prompt)}{Boolean(question.required)&&<sup>*</sup>}</legend>{Boolean(question.help_text)&&<p>{String(question.help_text)}</p>}
     {(type==="text"||type==="number"||type==="date")&&<input id={id} type={type} value={String(value??"")} min={type==="number"?0:undefined} onChange={e=>setValue(e.target.value)}/>} 
     {type==="textarea"&&<textarea value={String(value??"")} rows={4} onChange={e=>setValue(e.target.value)}/>} 
     {(type==="single"||type==="yesno")&&<div className="choice-grid">{(type==="yesno"?["Sí","No"]:opts).map(option=><label key={option} className={value===option?"selected":""}><input type="radio" name={id} checked={value===option} onChange={()=>setValue(option)}/><span>{option}</span></label>)}</div>}

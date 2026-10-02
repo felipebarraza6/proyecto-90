@@ -246,3 +246,43 @@
 .guide-inline-form textarea:focus{border-color:var(--green);outline:none}
 .guide-inline-form>div{display:flex;gap:8px}
 .upload-error{color:#ff7d7d;font-size:11px;margin:6px 0 0}
+/* Ajuste 01-10: corrección admin de datos, recálculo/TMB manual y estatura en la evaluación */
+.calculation-story>span.calc-get{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.calc-get>span{display:block;min-width:0}
+.calc-get>.calc-height{flex:0 0 auto;text-align:right;padding-left:10px;border-left:1px solid var(--line)}
+.calc-height b{color:var(--green)}
+.screening-badges{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.screening-decision.proposal{background:#2b2a14;color:#f0d77a;border:1px solid #5b5326}
+.body-data-editor{margin:0 24px 20px;padding:14px 16px;border:1px solid #31513e;border-radius:11px;background:#101a14}
+.body-data-editor>header{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.body-data-editor>header b{font-size:10px;color:var(--green)}
+.body-data-editor>header p{font-size:9px;margin:4px 0 0;color:#9daaa2}
+.body-data-editor>header .secondary{flex:0 0 auto}
+.body-data-editor .form-grid{margin-top:14px}
+.body-data-editor label.changed input,.body-data-editor label.changed select{border-color:#7a6d2c}
+.body-data-editor label.invalid input{border-color:var(--red)}
+.body-data-editor label em{display:block;margin-top:5px;font-style:normal;font-size:8px;color:#ff9a9a}
+.body-data-hint{font-size:9px;color:#9daaa2;margin:0 0 8px;line-height:1.5}
+.body-data-hint b{color:#f0d77a}
+.body-data-result{margin:8px 0;padding:10px 12px;border:1px solid #2b5a3b;border-radius:9px;background:#122017;font-size:10px}
+.body-data-result b{color:var(--green)}
+.body-data-result ul,.body-data-result p{margin:6px 0 0;padding-left:16px;color:#c5d0c9;font-size:9px}
+.body-data-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:10px}
+.body-modal-actions{padding:0 24px 8px}
+.nutrition-recalc{margin:0 0 12px;padding:14px 16px;border:1px solid #2f4a39;border-radius:11px;background:#0f1612}
+.nutrition-recalc>header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.nutrition-recalc h4{margin:6px 0 0;font-size:14px}
+.nutrition-recalc>header p{font-size:9px;margin:5px 0 0;color:#9daaa2;line-height:1.5}
+.nutrition-recalc>header .primary{flex:0 0 auto}
+.nutrition-recalc-bmr{display:flex;align-items:flex-end;flex-wrap:wrap;gap:9px;margin-top:12px}
+.editor-modal .nutrition-recalc-bmr label{flex:0 1 220px;margin-bottom:0}
+.bmr-tag{display:inline-block;padding:2px 7px;border-radius:99px;background:#1b2520;color:#9fb0a6;font-size:8px}
+.bmr-tag.manual{background:#2b2a14;color:#f0d77a}
+.nutrition-recalc-note{font-size:8px;color:#89948d;margin:8px 0 0;line-height:1.5}
+.nutrition-proposal-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding:11px 13px;border:1px solid #5b5326;border-radius:9px;background:#1d1c10}
+.nutrition-proposal-banner b{color:#f0d77a;font-size:11px}
+.nutrition-proposal-banner p{margin:4px 0 0;font-size:9px;color:#d9d3b0;line-height:1.5}
+.nutrition-proposal-banner .secondary{flex:0 0 auto}
+.editor-modal label.proposal-field input{border-color:#7a6d2c;background:#16150c}
+.editor-modal label.proposal-field em{display:block;margin-top:5px;font-style:normal;font-size:8px;color:#f0d77a}
+@media(max-width:720px){.body-data-editor{margin:0 16px 16px}.body-data-editor>header,.nutrition-recalc>header,.nutrition-proposal-banner{flex-direction:column;align-items:stretch}.calculation-story>span.calc-get{flex-direction:row}.editor-modal .nutrition-recalc-bmr label{flex:1 1 100%}.body-modal-actions{padding:0 16px 8px}}
