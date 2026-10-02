@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Login } from "./pages/Login";
+import { ResetPassword } from "./pages/ResetPassword";
 import { Landing } from "../app/landing";
 import { CheckoutReturn } from "../app/enroll";
 import { FunctionalApp } from "../app/functional-app";
@@ -11,6 +12,18 @@ type Viewer = { id: string; role: ViewerRole; name: string; email: string; statu
 type AppInitialData = any;
 
 const TOKEN_KEY = "p90_token";
+const RESET_PREFIX = "/reset-password";
+
+// Enlace del correo de recuperación: /reset-password/<token>.
+function resetTokenFromPath(pathname: string): string | null {
+  if (pathname !== RESET_PREFIX && !pathname.startsWith(`${RESET_PREFIX}/`)) return null;
+  const raw = pathname.slice(RESET_PREFIX.length).replace(/^\/+|\/+$/g, "");
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return "";
+  }
+}
 
 async function apiFetch<T>(path: string, token: string, init?: RequestInit): Promise<T> {
   const res = await fetch(apiUrl(path), {
@@ -31,6 +44,8 @@ export function App() {
   const [loading, setLoading] = useState(true);
   const [initialData, setInitialData] = useState<unknown>(null);
   const [page, setPage] = useState<"landing" | "login">("landing");
+  const [resetToken, setResetToken] = useState<string | null>(() => resetTokenFromPath(window.location.pathname));
+  const [loginNotice, setLoginNotice] = useState("");
 
   useEffect(() => {
     if (!token) { setLoading(false); return; }
@@ -78,6 +93,24 @@ export function App() {
     setPage("landing");
   }
 
+  function leaveReset(message: string) {
+    window.history.replaceState({}, "", "/");
+    setResetToken(null);
+    setLoginNotice(message);
+    setPage("login");
+    if (message) {
+      // El reset invalida las sesiones en el backend: volver al login limpio.
+      setToken(null);
+      setViewer(null);
+      setInitialData(null);
+      setLoading(false);
+    }
+  }
+
+  if (resetToken !== null) {
+    return <ResetPassword token={resetToken} onDone={leaveReset} onCancel={() => leaveReset("")} />;
+  }
+
   if (loading) {
     return (
       <div className="app-loading">
@@ -89,7 +122,7 @@ export function App() {
 
   if (!token || !viewer) {
     if (page === "login") {
-      return <Login onLogin={handleLogin} onBack={() => setPage("landing")} />;
+      return <Login notice={loginNotice} onLogin={handleLogin} onBack={() => { setLoginNotice(""); setPage("landing"); }} />;
     }
     if (window.location.pathname.startsWith("/checkout/result")) {
       return <CheckoutReturn onLogin={() => { window.history.replaceState({}, "", "/"); setPage("login"); }} />;
