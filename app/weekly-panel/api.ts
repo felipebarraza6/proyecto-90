@@ -3,6 +3,9 @@ import type {
   AnalysisResponse,
   CommentItem,
   CommentsResponse,
+  HabitPlanResponse,
+  HabitPlanSaveBody,
+  HabitPlanSaveResponse,
   PanelConfig,
   PanelFilter,
   StudentWeekResponse,
@@ -164,4 +167,23 @@ export function postComment(
 
 export function deleteComment(commentId: number, signal?: AbortSignal): Promise<void> {
   return panelFetch(`/comments/${commentId}`, { method: "DELETE", signal });
+}
+
+export function fetchHabitPlan(
+  clientId: number,
+  signal?: AbortSignal,
+): Promise<HabitPlanResponse> {
+  return panelFetch<HabitPlanResponse>(`/participants/${clientId}/habit-plan`, { signal });
+}
+
+export function saveHabitPlan(
+  clientId: number,
+  body: HabitPlanSaveBody,
+  signal?: AbortSignal,
+): Promise<HabitPlanSaveResponse> {
+  return panelFetch<HabitPlanSaveResponse>(`/participants/${clientId}/habit-plan`, {
+    method: "POST",
+    body: JSON.stringify(body),
+    signal,
+  });
 }

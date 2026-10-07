@@ -371,6 +371,22 @@
 .wp-facts-grid dt{font-size:7px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px}
 .wp-facts-grid dd{margin:4px 0 0;font-size:11px}
 .wp-facts-grid small{display:block;color:var(--muted);font-size:8px;margin-top:3px}
+.wp-weight-card{grid-column:1/-1}
+.wp-weight-cols{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 0}
+.wp-weight-col{flex:1 1 88px;min-width:72px;background:#0e120f;border:1px solid #242b27;border-radius:8px;padding:8px}
+.wp-weight-col dt{font-size:7px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px}
+.wp-weight-col dd{margin:4px 0 0;font-size:11px}
+.wp-weight-col small{display:block;color:var(--muted);font-size:8px;margin-top:3px}
+.wp-habit-editor{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:16px;display:grid;gap:12px}
+.wp-habit-editor h2{font-size:16px;margin:0}
+.wp-habit-hint{margin:0;font-size:11px;color:var(--muted)}
+.wp-habit-days{border:0;margin:0;padding:0}
+.wp-habit-days legend{font-size:7px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px}
+.wp-habit-toggles{display:flex;flex-wrap:wrap;gap:6px}
+.wp-habit-toggle{width:36px;height:36px;border-radius:8px;border:1px solid #2a322c;background:#101411;color:var(--text);font-size:12px;font-weight:700;padding:0}
+.wp-habit-toggle.on{background:#1a1f1c;border-color:#5c5c5c;color:#c5d0c9}
+.wp-habit-field{display:grid;gap:6px;font-size:11px;color:var(--muted)}
+.wp-habit-field input,.wp-habit-field select{background:#0b0f0c;border:1px solid #2c352f;border-radius:8px;color:var(--text);padding:9px 11px;font-size:13px}
 .wp-nutrition-targets{margin-top:14px;border:1px solid #2b4132;border-radius:12px;padding:14px;background:#101712}
 .wp-macro-targets{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0}
 .wp-macro-targets span{display:grid;gap:3px;background:#0e120f;border:1px solid var(--line);border-radius:8px;padding:8px}
@@ -395,8 +411,8 @@
 .wp-habit small{font-size:7px;color:var(--muted)}
 .wp-habit.met b{color:var(--green)}
 .wp-habit.missed b{color:var(--red)}
-.wp-habit.missing b{color:var(--amber)}
-.wp-habit.rest b{color:#91bbe8}
+.wp-habit.missing b{color:#c5d0c9;background:#1a1f1c;border-color:#2e3832}
+.wp-habit.rest b{color:#c5d0c9;background:#1a1f1c;border-color:#2e3832}
 .wp-habit.today b{color:var(--green)}
 .wp-macro-cell{display:inline-flex;flex-direction:column;align-items:center;gap:2px;min-width:64px;border:1px solid var(--line);border-radius:8px;padding:6px 6px;background:#101411}
 .wp-macro-cell.in-range{background:#13271a;border-color:#275b38}
@@ -442,6 +458,8 @@
   .wp-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
   .wp-facts-head{flex-direction:column}
   .wp-facts-grid,.wp-macro-targets{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .wp-weight-cols{gap:6px}
+  .wp-weight-col{flex:1 1 64px}
   .wp-drawer-body{padding:14px 14px 96px}
   .wp-error{flex-direction:column;align-items:stretch}
 }

@@ -94,7 +94,7 @@ const HABIT_DISPLAY: Record<string, HabitDisplay> = {
   missing: { icon: "○", text: "Sin reportar", kind: "missing" },
   rest: { icon: "D", text: "Descanso", kind: "rest" },
   not_required: { icon: "—", text: "No aplica", kind: "na" },
-  not_reported: { icon: "—", text: "Sin reportar", kind: "na" },
+  not_reported: { icon: "—", text: "Sin reportar", kind: "missing" },
   not_applicable: { icon: "—", text: "No aplica", kind: "na" },
   not_started: { icon: "◌", text: "No iniciado", kind: "wait" },
   future: { icon: "◌", text: "Día futuro", kind: "wait" },

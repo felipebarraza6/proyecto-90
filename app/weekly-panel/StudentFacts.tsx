@@ -4,17 +4,76 @@ import {
   formatKg,
   formatMlAsLiters,
   formatPct,
+  WEEKDAYS_SHORT,
 } from "./format";
 import { StatusBadges } from "./ui";
-import type { StudentWeekResponse } from "./types";
+import type { StudentWeekResponse, WeightMilestone, WeightPoint } from "./types";
 
-function weightLine(
-  point: StudentWeekResponse["profile"]["weight"]["initial"],
-  fallback: string,
-): string {
-  if (!point || point.kg == null) return fallback;
-  const date = point.date ? ` · ${formatDateShort(point.date)}` : "";
-  return `${formatKg(point.kg)}${date}`;
+function sourceLabel(source?: string | null, type?: string | null): string {
+  if (type === "checkpoint" || source === "checkpoint") return "checkpoint";
+  if (source === "profile") return "perfil";
+  if (type === "control" || source === "measurement" || source === "participant") return "control";
+  if (type === "initial" && source && source !== "profile") return "control";
+  return source || "";
+}
+
+function WeightMini({
+  title,
+  point,
+  pendingHint,
+  emptyLatest,
+}: {
+  title: string;
+  point?: WeightPoint | WeightMilestone | null;
+  pendingHint?: string | null;
+  emptyLatest?: boolean;
+}) {
+  const kg = point?.kg ?? null;
+  const date = point?.date ?? null;
+  const source = point?.source ?? null;
+  const type = point && "type" in point ? point.type : undefined;
+
+  if (emptyLatest) {
+    return (
+      <div className="wp-weight-col">
+        <dt>{title}</dt>
+        <dd>Sin control posterior</dd>
+      </div>
+    );
+  }
+
+  if (kg == null) {
+    return (
+      <div className="wp-weight-col">
+        <dt>{title}</dt>
+        <dd>
+          Pendiente
+          {pendingHint ? <small>se registra el {pendingHint}</small> : <small>—</small>}
+        </dd>
+      </div>
+    );
+  }
+
+  return (
+    <div className="wp-weight-col">
+      <dt>{title}</dt>
+      <dd>
+        {formatKg(kg)}
+        <small>
+          {[date ? formatDateShort(date) : null, sourceLabel(source, type)].filter(Boolean).join(" · ")}
+        </small>
+      </dd>
+    </div>
+  );
+}
+
+function restDaysLabel(days: number[]): string {
+  if (!days.length) return "Sin días de descanso definidos";
+  return days
+    .slice()
+    .sort((a, b) => a - b)
+    .map((d) => WEEKDAYS_SHORT[d] || String(d))
+    .join(", ");
 }
 
 export function StudentFacts({
@@ -28,6 +87,22 @@ export function StudentFacts({
 }) {
   const { profile, weekly, training_progress: progress } = data;
   const changed = profile.nutrition_targets.changed_in_week || [];
+  const weight = profile.weight || { initial: null, milestones: [], latest: null };
+  const milestones = [30, 60, 90].map((day) => {
+    const found = (weight.milestones || []).find((item) => item.day === day);
+    return (
+      found || {
+        day,
+        kg: null,
+        date: null,
+        expected_date: null,
+        source: null,
+        label: `Día ${day}`,
+      }
+    );
+  });
+  const rest = profile.habit_plan.rest_weekdays || [];
+
   return (
     <div className="wp-facts">
       <header className="wp-facts-head">
@@ -43,13 +118,20 @@ export function StudentFacts({
         </div>
       </header>
       <dl className="wp-facts-grid">
-        <div>
-          <dt>Peso inicial</dt>
-          <dd>{weightLine(profile.weight.initial, "No informado")}</dd>
-        </div>
-        <div>
-          <dt>Último peso</dt>
-          <dd>{weightLine(profile.weight.latest, "No informado")}</dd>
+        <div className="wp-weight-card">
+          <dt>Peso</dt>
+          <dd className="wp-weight-cols">
+            <WeightMini title="Inicial" point={weight.initial} />
+            {milestones.map((item) => (
+              <WeightMini
+                key={item.day}
+                title={item.label || `Día ${item.day}`}
+                point={item}
+                pendingHint={item.expected_date ? formatDateShort(item.expected_date) : null}
+              />
+            ))}
+            <WeightMini title="Último" point={weight.latest} emptyLatest={!weight.latest || weight.latest.kg == null} />
+          </dd>
         </div>
         <div>
           <dt>Estatura</dt>
@@ -95,6 +177,10 @@ export function StudentFacts({
         <div>
           <dt>Agua</dt>
           <dd>Meta {formatMlAsLiters(profile.habit_plan.water_goal_ml)} / día</dd>
+        </div>
+        <div>
+          <dt>Descansos</dt>
+          <dd>{restDaysLabel(rest)}</dd>
         </div>
       </dl>
       {showNutrition ? (
