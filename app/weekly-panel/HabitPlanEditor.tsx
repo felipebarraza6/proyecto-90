@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { fetchHabitPlan, saveHabitPlan } from "./api";
+import { formatDateShort } from "./format";
 import type { HabitPlanResponse } from "./types";
 
 const DAY_TOGGLES = [
@@ -153,7 +154,7 @@ export function HabitPlanEditor({
           disabled={loading || saving}
         >
           {!hasPrior ? <option value="start">Inicio del desafío</option> : null}
-          <option value="week">Esta semana</option>
+          <option value="week">Desde la semana del {formatDateShort(weekStart)}</option>
           <option value="date">Fecha</option>
         </select>
       </label>

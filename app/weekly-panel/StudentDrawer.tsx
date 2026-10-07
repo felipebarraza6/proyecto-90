@@ -194,19 +194,22 @@ export function StudentDrawer({
           {data ? (
             <>
               <StudentFacts data={data} showRoutine={showRoutine} showNutrition={showNutrition} />
-              {canEditHabits ? (
-                <HabitPlanEditor
-                  clientId={clientId}
-                  weekStart={weekStart}
-                  challengeStart={data.profile.challenge_start}
-                  onSaved={() => {
-                    analysisRefresh.current = true;
-                    setReload((n) => n + 1);
-                    setAnalysisReload((n) => n + 1);
-                  }}
-                />
-              ) : null}
               <StudentWeekTable data={data} />
+              {canEditHabits ? (
+                <details className="wp-habit-details">
+                  <summary>Editar días de descanso y meta de agua</summary>
+                  <HabitPlanEditor
+                    clientId={clientId}
+                    weekStart={weekStart}
+                    challengeStart={data.profile.challenge_start}
+                    onSaved={() => {
+                      analysisRefresh.current = true;
+                      setReload((n) => n + 1);
+                      setAnalysisReload((n) => n + 1);
+                    }}
+                  />
+                </details>
+              ) : null}
             </>
           ) : null}
           <AnalysisPanel
