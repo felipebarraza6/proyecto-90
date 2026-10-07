@@ -14,6 +14,8 @@ import type { PanelConfig, WeekOption, WeekResponse } from "./types";
 
 export function WeeklyPanel({
   viewerId,
+  role,
+  specialty,
   config,
 }: {
   viewerId: string;
@@ -151,6 +153,8 @@ export function WeeklyPanel({
           currentWeek={currentWeek}
           rows={weekData?.rows || []}
           staffUserId={viewerId}
+          role={role}
+          specialty={specialty}
           canComment={config.can_comment}
           showRoutine={showRoutine}
           showNutrition={showNutrition}

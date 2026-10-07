@@ -16,6 +16,7 @@ export type HabitStatus =
   | "missing"
   | "rest"
   | "not_required"
+  | "not_reported"
   | "not_applicable"
   | "not_started"
   | "future"
@@ -75,8 +76,62 @@ export type WeekResponse = {
 export type WeightPoint = {
   kg: number | null;
   date: string | null;
-  source: string;
+  source: string | null;
+  type?: "initial" | "checkpoint" | "control" | string;
+  label?: string;
 } | null;
+
+export type WeightMilestone = {
+  day: 30 | 60 | 90 | number;
+  kg: number | null;
+  date: string | null;
+  expected_date: string | null;
+  source: "checkpoint" | "measurement" | string | null;
+  label: string;
+};
+
+export type WeightBlock = {
+  initial: WeightPoint;
+  milestones: WeightMilestone[];
+  latest: WeightPoint;
+};
+
+export type HabitPlan = {
+  sessions_per_week: number | null;
+  rest_weekdays: number[];
+  water_goal_ml: number | null;
+  mode: string;
+};
+
+export type HabitPlanRecord = {
+  id: number;
+  effective_from: string | null;
+  rest_weekdays: number[];
+  water_goal_ml: number | null;
+  sessions_per_week: number | null;
+  set_by: string | null;
+  created: string | null;
+  note?: string;
+};
+
+export type HabitPlanResponse = {
+  current: HabitPlanRecord | null;
+  history: HabitPlanRecord[];
+  can_edit: boolean;
+  defaults: { water_goal_ml: number };
+};
+
+export type HabitPlanSaveBody = {
+  rest_weekdays: number[];
+  water_goal_ml: number | null;
+  effective_from: string | null;
+  note?: string;
+};
+
+export type HabitPlanSaveResponse = {
+  plan: HabitPlanRecord;
+  habit_plan: HabitPlan;
+};
 
 export type HabitCell = { status: HabitStatus | string; label: string };
 export type MacroCell = {
@@ -107,7 +162,7 @@ export type StudentWeekResponse = {
   profile: {
     name: string;
     email: string;
-    weight: { initial: WeightPoint; latest: WeightPoint };
+    weight: WeightBlock;
     height_cm: number | null;
     goal: string;
     challenge_start: string | null;
@@ -128,12 +183,7 @@ export type StudentWeekResponse = {
       approved_by: string | null;
       changed_in_week: string[];
     };
-    habit_plan: {
-      sessions_per_week: number | null;
-      rest_weekdays: number[];
-      water_goal_ml: number | null;
-      mode: string;
-    };
+    habit_plan: HabitPlan;
   };
   weekly: {
     pct: number | null;

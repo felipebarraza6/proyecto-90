@@ -3,6 +3,7 @@ import { fetchAnalysis, fetchStudentWeek } from "./api";
 import { AnalysisPanel } from "./AnalysisPanel";
 import { CommentsThread } from "./CommentsThread";
 import { FeedbackBox } from "./FeedbackBox";
+import { HabitPlanEditor } from "./HabitPlanEditor";
 import { StudentFacts } from "./StudentFacts";
 import { StudentWeekTable } from "./StudentWeekTable";
 import { RetryError, SkeletonTable } from "./ui";
@@ -22,6 +23,8 @@ export function StudentDrawer({
   currentWeek,
   rows,
   staffUserId,
+  role,
+  specialty,
   canComment,
   showRoutine,
   showNutrition,
@@ -36,6 +39,8 @@ export function StudentDrawer({
   currentWeek?: string;
   rows: PanelRow[];
   staffUserId: string;
+  role: string;
+  specialty?: string;
   canComment: boolean;
   showRoutine: boolean;
   showNutrition: boolean;
@@ -139,6 +144,8 @@ export function StudentDrawer({
     () => data?.profile.name || rows.find((r) => r.client_id === clientId)?.name || "Alumno",
     [data, rows, clientId],
   );
+  const canEditHabits =
+    role === "admin" || (role === "professional" && specialty === "coach");
 
   return (
     <div className={`wp-drawer-backdrop ${isMobile ? "mobile" : ""}`}>
@@ -188,6 +195,21 @@ export function StudentDrawer({
             <>
               <StudentFacts data={data} showRoutine={showRoutine} showNutrition={showNutrition} />
               <StudentWeekTable data={data} />
+              {canEditHabits ? (
+                <details className="wp-habit-details">
+                  <summary>Editar días de descanso y meta de agua</summary>
+                  <HabitPlanEditor
+                    clientId={clientId}
+                    weekStart={weekStart}
+                    challengeStart={data.profile.challenge_start}
+                    onSaved={() => {
+                      analysisRefresh.current = true;
+                      setReload((n) => n + 1);
+                      setAnalysisReload((n) => n + 1);
+                    }}
+                  />
+                </details>
+              ) : null}
             </>
           ) : null}
           <AnalysisPanel

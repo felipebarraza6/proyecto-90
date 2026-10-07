@@ -91,10 +91,10 @@ export type HabitDisplay = { icon: string; text: string; kind: string };
 const HABIT_DISPLAY: Record<string, HabitDisplay> = {
   met: { icon: "✓", text: "Cumplió", kind: "met" },
   missed: { icon: "✗", text: "No cumplió", kind: "missed" },
-  missing: { icon: "○", text: "Sin reportar", kind: "missing" },
+  missing: { icon: "—", text: "Sin reportar", kind: "missing" },
   rest: { icon: "D", text: "Descanso", kind: "rest" },
   not_required: { icon: "—", text: "No aplica", kind: "na" },
-  not_reported: { icon: "—", text: "Sin reportar", kind: "na" },
+  not_reported: { icon: "—", text: "Sin reportar", kind: "missing" },
   not_applicable: { icon: "—", text: "No aplica", kind: "na" },
   not_started: { icon: "◌", text: "No iniciado", kind: "wait" },
   future: { icon: "◌", text: "Día futuro", kind: "wait" },
