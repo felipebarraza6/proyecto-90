@@ -14,8 +14,6 @@ import type { PanelConfig, WeekOption, WeekResponse } from "./types";
 
 export function WeeklyPanel({
   viewerId,
-  role,
-  specialty,
   config,
 }: {
   viewerId: string;
@@ -35,8 +33,9 @@ export function WeeklyPanel({
   const [reload, setReload] = useState(0);
   const weekGen = useRef(0);
 
-  const showRoutine = role !== "professional" || specialty !== "nutrition";
-  const showNutrition = role !== "professional" || specialty === "nutrition";
+  // Marce 07-10: admin, coach y nutri ven la ficha completa (rutina y macros).
+  const showRoutine = true;
+  const showNutrition = true;
 
   useEffect(() => {
     const ac = new AbortController();
