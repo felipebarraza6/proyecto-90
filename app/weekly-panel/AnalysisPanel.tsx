@@ -39,8 +39,15 @@ export function AnalysisPanel({
   return (
     <section className="wp-analysis" aria-labelledby="wp-analysis-title">
       <header>
-        <span className="eyebrow">OPCIÓN A · REGLAS + EVIDENCIA</span>
-        <h2 id="wp-analysis-title">Alertas y análisis · IA</h2>
+        <span className="eyebrow">
+          {data?.summary_engine === "llm" ? "ANÁLISIS SEMANAL · IA" : "ANÁLISIS SEMANAL · REGLAS"}
+        </span>
+        <h2 id="wp-analysis-title">
+          Alertas y consejo
+          {data?.partial && data.status !== "insufficient" ? (
+            <span className="wp-partial">Parcial · semana en curso</span>
+          ) : null}
+        </h2>
       </header>
       {loading && !data ? <SkeletonTable rows={3} /> : null}
       {isError ? (
@@ -68,10 +75,20 @@ export function AnalysisPanel({
           {insufficient ? (
             <p className="wp-insufficient">
               {data.summary_text ||
-                `Sin datos suficientes para concluir: ${days ?? 0} de ${due ?? 0} días con registro`}
+                `Todavía no hay registros suficientes: ${days ?? 0} de ${due ?? 0} días con registro`}
             </p>
           ) : data.summary_text ? (
             <p className="wp-summary-text">{data.summary_text}</p>
+          ) : null}
+          {data.advice?.length ? (
+            <>
+              <h3 className="wp-advice-title">Sugerencias para el equipo</h3>
+              <ul className="wp-advice">
+                {data.advice.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </>
           ) : null}
           <ul className="wp-alerts">
             {(data.alerts || []).map((alert) => (

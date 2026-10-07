@@ -360,7 +360,9 @@
 .wp-drawer-head h2{flex:1;font-size:18px;margin:0}
 .wp-drawer-head .back{margin:0}
 .wp-drawer-nav{display:flex;gap:6px}
-.wp-drawer-body{overflow:auto;padding:18px 18px 40px;display:grid;gap:18px}
+.wp-drawer-body{overflow:auto;padding:18px 18px 40px;display:grid;gap:18px;grid-auto-rows:max-content;align-content:start}
+/* Sin grid-auto-rows:max-content, la tabla (overflow:hidden) se colapsaba a 2px cuando la ficha no cabía en pantalla */
+.wp-drawer-body>*{min-width:0}
 .wp-facts-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
 .wp-facts-head h2{font-size:22px;margin:6px 0 4px}
 .wp-facts-head p{margin:0;font-size:11px}
@@ -384,7 +386,11 @@
 .wp-student-table th[scope="row"]{position:sticky;left:0;z-index:1;background:#111512;text-align:left;min-width:140px;font-size:10px;text-transform:none;letter-spacing:0;color:var(--text)}
 .wp-total-row{background:#142018}
 .wp-total-row th[scope="row"]{background:#142018;color:var(--green)}
-.wp-habit{display:inline-flex;flex-direction:column;align-items:flex-start;gap:2px}
+.wp-student-table td{text-align:center}
+.wp-habit{display:inline-flex;flex-direction:column;align-items:center;gap:3px}
+.wp-habit b{display:inline-flex;align-items:center;justify-content:center;width:34px;height:28px;border-radius:8px;border:1px solid var(--line);background:#101411}
+.wp-habit.met b{background:#13271a;border-color:#275b38}
+.wp-habit.missed b{background:#271313;border-color:#5c2a2a}
 .wp-habit b{font-size:13px}
 .wp-habit small{font-size:7px;color:var(--muted)}
 .wp-habit.met b{color:var(--green)}
@@ -392,8 +398,18 @@
 .wp-habit.missing b{color:var(--amber)}
 .wp-habit.rest b{color:#91bbe8}
 .wp-habit.today b{color:var(--green)}
-.wp-macro-cell{display:inline-flex;flex-direction:column;gap:2px}
-.wp-macro-cell b{font-size:10px}
+.wp-macro-cell{display:inline-flex;flex-direction:column;align-items:center;gap:2px;min-width:64px;border:1px solid var(--line);border-radius:8px;padding:6px 6px;background:#101411}
+.wp-macro-cell.in-range{background:#13271a;border-color:#275b38}
+.wp-macro-cell.out-range{background:#271313;border-color:#5c2a2a}
+.wp-macro-cell small{font-size:7px;color:inherit;opacity:.85}
+.wp-macro-cell.in-range small{color:var(--green)}
+.wp-macro-cell.out-range small{color:var(--red)}
+.wp-row-sub{display:block;font-size:8px;color:var(--muted);font-weight:500;margin-top:2px}
+.wp-advice-title{font-size:12px;margin:12px 0 0;color:var(--green)}
+.wp-advice{margin:10px 0 0;padding-left:18px;font-size:12px;line-height:1.5}
+.wp-advice li{margin:3px 0}
+.wp-partial{display:inline-block;margin-left:8px;font-size:9px;padding:2px 6px;border-radius:999px;border:1px solid #5c4721;color:var(--amber);vertical-align:middle}
+.wp-macro-cell b{font-size:12px}
 .wp-macro-cell i{font-style:normal;color:var(--muted);font-weight:600}
 .wp-macro-cell.in-range b{color:var(--green)}
 .wp-macro-cell.out-range b{color:var(--red)}

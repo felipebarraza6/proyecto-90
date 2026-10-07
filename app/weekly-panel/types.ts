@@ -179,6 +179,10 @@ export type AnalysisResponse = {
   };
   alerts?: AlertItem[];
   summary_text?: string;
+  summary_engine?: "template" | "llm" | string;
+  partial?: boolean;
+  advice?: string[];
+  overview?: Record<string, unknown> | null;
   disclaimer?: string;
   generated_at?: string | null;
   last_ok_generated_at?: string | null;
