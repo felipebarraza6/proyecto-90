@@ -12,3 +12,8 @@ export function navShortLabel(name: string): string {
   if (name.includes("/")) return name.split("/")[0];
   return name;
 }
+
+// La config cargada alcanza. El booleano panel_enabled no decide si el panel se ve.
+export function staffPanelActive(config: object | null): boolean {
+  return config != null;
+}

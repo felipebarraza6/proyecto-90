@@ -37,5 +37,13 @@ administrador con contraseña temporal.
 
 ## Producción
 
-`Dockerfile` compila la SPA y la sirve con nginx, proxyeando `/api` hacia el
-contenedor de Yggdra (`yggdra-api:8000`, configurable en `nginx-spa.conf`).
+El sitio https://90dias.habitofirme.app sale de la rama `main` de
+`marcelomoyavallejos-dotcom/proyecto-90`. GitHub Action «Deploy Front (90dias)»
+compila con `VITE_API_BASE=https://api.yggdra.cl` y sube `dist/client` por FTP.
+`dev` se mantiene en el mismo commit que `main` y no despliega.
+
+El panel de staff vive en `app/weekly-panel`. `panel_enabled` de la API no
+apaga esa pantalla. `npm run check:panel` forma parte de `npm run build`.
+
+`Dockerfile` también puede servir la SPA con nginx y proxy a Yggdra. El sitio
+público no usa ese camino.
