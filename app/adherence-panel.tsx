@@ -8,7 +8,6 @@ import {
   mondayOf,
   type Row,
 } from "./adherence-alerts";
-import { WeeklyTeamPanel } from "./weekly-team-panel";
 
 type Act = (payload: Row) => Promise<unknown>;
 type AlertFilter = "all" | "risk" | "missing";
@@ -30,18 +29,18 @@ const nameOf = (row: Row) =>
 
 const modeCopy: Record<Mode, { title: string; copy: string; habits: (keyof typeof habits)[] }> = {
   full: {
-    title: "Alertas locales de adherencia",
-    copy: "Seguimiento basado en registros de /api/app. Sus reglas de 3 incumplimientos y 48 horas son distintas a las alertas del panel semanal del backend.",
+    title: "Panel de adherencia",
+    copy: "Alertas operativas de la semana actual. El riesgo se activa solo por entrenamiento o macros; el agua permanece como seguimiento.",
     habits: ["training", "macros", "water"],
   },
   training: {
-    title: "Alertas locales de entrenamiento",
-    copy: "Seguimiento basado en registros de /api/app; conserva sus reglas locales y es independiente del panel semanal del backend.",
+    title: "Alertas de entrenamiento",
+    copy: "Alumnos en riesgo o sin reportar entrenamientos esta semana. El agua no genera alerta.",
     habits: ["training"],
   },
   macros: {
-    title: "Alertas locales de macros",
-    copy: "Seguimiento basado en registros de /api/app; conserva sus reglas locales y es independiente del panel semanal del backend.",
+    title: "Alertas de macros",
+    copy: "Alumnos en riesgo o sin reportar macros esta semana, según calorías y proteínas del plan aprobado.",
     habits: ["macros"],
   },
 };
@@ -152,14 +151,13 @@ export function AdherencePanel({
 
   return (
     <div className="adherence-panel">
-      <WeeklyTeamPanel />
       <div className="admin-title">
         <div>
           <span className="eyebrow">SEGUIMIENTO SEMANAL · PROYECTO 90</span>
           <h1>{config.title}</h1>
           <p>{config.copy}</p>
         </div>
-        <span className="integration-pill">● Alertas locales</span>
+        <span className="integration-pill">● Registro propio</span>
       </div>
       <section className="adherence-controls">
         <div className="habit-tabs">
