@@ -17,7 +17,7 @@ import { NoticesPanel, ParticipantNotesList, StaffNotesPanel } from "./notes-not
 import { uploadFile } from "./chunked-upload";
 import { BodyDataEditor } from "./body-data-editor";
 import { NutritionPlanFields } from "./nutrition-recalc";
-import { fetchPanelConfig, navShortLabel, normalizeScreen, PANEL_SCREEN, setPanelFilterIntent, WeeklyPanel, type PanelConfig } from "./weekly-panel";
+import { fetchPanelConfig, navShortLabel, normalizeScreen, PANEL_SCREEN, setPanelFilterIntent, staffPanelActive, WeeklyPanel, type PanelConfig } from "./weekly-panel";
 
 type Row = Record<string, unknown>;
 type ViewerRole = "admin" | "professional" | "participant" | "reviewer";
@@ -57,8 +57,7 @@ export function FunctionalApp({ initialViewer,initialData,onLogout }: { initialV
   const [panelConfig,setPanelConfig]=useState<PanelConfig|null>(null);
   const firstLoad=useRef(true);
   const activeRole=data?.viewer.role||initialViewer.role;
-  // panel_enabled llega en false desde la API y, al aplicarse, devolvía la pantalla a Adherencia.
-  const panelEnabled=panelConfig!=null;
+  const panelEnabled=staffPanelActive(panelConfig);
   const nav=activeRole==="participant"?participantNav:staffNav(activeRole,data?.professionalSpecialty,panelEnabled);
   function goScreen(name:string){setScreen(panelEnabled?normalizeScreen(name):name)}
   async function load(){setLoading(true);const params=new URLSearchParams();if(previewTarget==="coach"||previewTarget==="nutrition")params.set("viewAs",previewTarget);else if(previewTarget.startsWith("participant:")){params.set("viewAs","participant");params.set("participantId",previewTarget.slice(12))}const res=await fetch(apiUrl(`/api/app${params.size?`?${params}`:""}`),{headers:authHeaders(),cache:"no-store"});const json=await res.json();if(!res.ok)setError(json.error||"No fue posible cargar");else setData(json);setLoading(false)}

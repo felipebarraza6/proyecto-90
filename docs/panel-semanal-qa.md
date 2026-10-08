@@ -1,6 +1,6 @@
 # Checklist QA — panel semanal «Adherencia y seguimiento»
 
-Repo del cliente: no se agregó Vitest. Verificar a mano contra la API de dev (flag `panel_enabled` en Django admin → Coaching → Configuración del panel).
+Repo del cliente: no se agregó Vitest. El chequeo `npm run check:panel` impide volver a usar `panel_enabled` como interruptor de la pantalla. Verificar a mano contra la API.
 
 Viewports: **1440 px** (tabla) y **375 px** (tarjetas + ficha a pantalla completa). Roles: Admin, Coach, Nutri.
 
@@ -20,7 +20,7 @@ Viewports: **1440 px** (tabla) y **375 px** (tarjetas + ficha a pantalla complet
 | 12 | Panel usable en móvil y escritorio | 375 px y 1440 px | ☐ |
 | + | Abrir ficha desde el nombre, la fila o un %; misma semana; cambio de alumno recarga todo | Clics en tabla / tarjetas | ☐ |
 | + | Menú: una sola entrada «Adherencia y seguimiento»; «Adherencia en riesgo» abre con filtro risk; «Abrir seguimiento →» abre el panel | Admin y profesional | ☐ |
-| + | Con `panel_enabled=false` vuelven Adherencia y Seguimiento antiguos | Admin Django, recargar SPA | ☐ |
+| + | Con `panel_enabled=false` el menú de staff sigue en «Adherencia y seguimiento» y la ficha abre | Recargar la SPA con el flag en false | ☐ |
 | + | Participante no ve el panel (403 en `/api/p90/panel/config`) | Login alumno | ☐ |
 | + | Borrador por alumno (`localStorage` `p90_draft_{staffUserId}_{clientId}`), sin mezcla | Escribir en A, abrir B, volver a A | ☐ |
 | + | Vacío: «Ningún alumno había iniciado en esta semana»; filtro sin match; «Aún no hay comentarios» | Semana futura / filtro / ficha nueva | ☐ |
