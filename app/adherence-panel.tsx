@@ -8,7 +8,6 @@ import {
   mondayOf,
   type Row,
 } from "./adherence-alerts";
-import { WeeklyTeamPanel } from "./weekly-team-panel";
 
 type Act = (payload: Row) => Promise<unknown>;
 type AlertFilter = "all" | "risk" | "missing";
@@ -152,7 +151,6 @@ export function AdherencePanel({
 
   return (
     <div className="adherence-panel">
-      <WeeklyTeamPanel />
       <div className="admin-title">
         <div>
           <span className="eyebrow">SEGUIMIENTO SEMANAL · PROYECTO 90</span>
