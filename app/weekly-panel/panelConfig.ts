@@ -385,7 +385,7 @@ export function policyLabel(code: string): string {
     computed_then_manual: "Calculado y luego manual",
     computed: "Solo calculado",
     manual: "Solo manual",
-    any_staff: "Cualquier staff",
+    any_staff: "Cualquier miembro del equipo",
     own_or_admin: "Autor o administrador",
     author_or_admin: "Autor o administrador",
     all: "Todos los alumnos",
@@ -441,8 +441,8 @@ export const POLICY_OPTIONS = {
     { value: "manual", label: "Solo manual" },
   ],
   comment_delete_policy: [
-    { value: "any_staff", label: "Cualquier miembro del staff" },
-    { value: "own_or_admin", label: "Solo el autor o un admin" },
+    { value: "any_staff", label: "Cualquier miembro del equipo" },
+    { value: "own_or_admin", label: "Solo el autor o un administrador" },
   ],
   professional_scope: [
     { value: "all", label: "Todos los alumnos" },

@@ -379,8 +379,7 @@ function ReadOnlyRows({ config }: { config: PanelConfig }) {
             </div>
             <strong>
               Tarjetas {draft.show_summary_cards ? "sí" : "no"} · Correo{" "}
-              {draft.show_email_in_table ? "sí" : "no"} · Panel{" "}
-              {draft["panel_enabled"] ? "activo" : "inactivo"}
+              {draft.show_email_in_table ? "sí" : "no"}
             </strong>
           </li>
           <li>
@@ -421,7 +420,7 @@ function ReadOnlyRows({ config }: { config: PanelConfig }) {
           </li>
           <li>
             <div>
-              <h3>Sesiones por semana (default)</h3>
+              <h3>Sesiones por semana (por defecto)</h3>
             </div>
             <strong>{draft.default_sessions_per_week}</strong>
           </li>
@@ -801,7 +800,7 @@ export function PanelConfigView({
                   </select>
                 </label>
                 <label>
-                  Decimales del %
+                  Precisión del % (decimales)
                   <input
                     type="number"
                     min={0}
@@ -879,9 +878,9 @@ export function PanelConfigView({
                 />
               </div>
               <div className="wp-config-switch-row">
-                <span>Permitir varios badges de estado</span>
+                <span>Permitir varias etiquetas de estado</span>
                 <Switch
-                  label="Varios badges de estado"
+                  label="Varias etiquetas de estado"
                   checked={draft.status_multi_badge}
                   onChange={(v) => touch((p) => ({ ...p, status_multi_badge: v }))}
                 />
@@ -890,16 +889,6 @@ export function PanelConfigView({
 
             <fieldset className="wp-config-block" disabled={saving}>
               <legend>Vista del panel</legend>
-              <div className="wp-config-switch-row">
-                <span>
-                  Marca interna del panel (se guarda, pero no oculta esta pantalla)
-                </span>
-                <Switch
-                  label="Panel habilitado"
-                  checked={draft["panel_enabled"]}
-                  onChange={(v) => touch((p) => ({ ...p, panel_enabled: v }))}
-                />
-              </div>
               <div className="wp-config-switch-row">
                 <span>Mostrar tarjetas de resumen</span>
                 <Switch
@@ -1009,7 +998,7 @@ export function PanelConfigView({
                   </select>
                 </label>
                 <label>
-                  Acceso del reviewer
+                  Acceso del revisor
                   <select
                     value={draft.reviewer_access}
                     onChange={(e) => touch((p) => ({ ...p, reviewer_access: e.target.value }))}
@@ -1228,7 +1217,7 @@ export function PanelConfigView({
                   </select>
                 </label>
                 <label>
-                  Sesiones por semana (default)
+                  Sesiones por semana (por defecto)
                   <input
                     type="number"
                     min={1}
@@ -1259,9 +1248,9 @@ export function PanelConfigView({
                 </label>
               </div>
               <div className="wp-config-switch-row">
-                <span>Prorratear sesiones en semanas parciales</span>
+                <span>Ajustar sesiones en semanas incompletas</span>
                 <Switch
-                  label="Prorratear semanas parciales"
+                  label="Ajustar sesiones en semanas incompletas"
                   checked={draft.prorate_partial_weeks}
                   onChange={(v) => touch((p) => ({ ...p, prorate_partial_weeks: v }))}
                 />
@@ -1487,7 +1476,7 @@ export function PanelConfigView({
           <ConfigSection
             id="sec-hitos"
             title="Hitos"
-            help="Checkpoints de peso y ventanas de adherencia por tramo."
+            help="Hitos de peso y tramos de adherencia."
           >
             <fieldset className="wp-config-block" disabled={saving}>
               <legend>Días y ventanas</legend>

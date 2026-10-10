@@ -56,7 +56,7 @@ function WeekView() {
 function ProgressView() {
   return <>
     <div className="product-greeting"><div><small>TU PROGRESO</small><h2>La constancia se acumula.</h2><p>No se trata de una semana perfecta, sino de seguir volviendo.</p></div><span className="trend-badge"><b>↗ 8%</b><small>tendencia</small></span></div>
-    <div className="checkpoint-track" aria-label="Checkpoints del programa"><i/><span className="passed"><b>Inicio</b><small>✓</small></span><span className="passed"><b>Día 30</b><small>✓</small></span><span className="current"><b>Día 60</b><small>●</small></span><span><b>Día 90</b><small>○</small></span></div>
+    <div className="checkpoint-track" aria-label="Hitos del programa"><i/><span className="passed"><b>Inicio</b><small>✓</small></span><span className="passed"><b>Día 30</b><small>✓</small></span><span className="current"><b>Día 60</b><small>●</small></span><span><b>Día 90</b><small>○</small></span></div>
     <div className="progress-weeks"><span><small>SEM 1</small><i><b style={{height:"58%"}}/></i></span><span><small>SEM 2</small><i><b style={{height:"66%"}}/></i></span><span><small>SEM 3</small><i><b style={{height:"74%"}}/></i></span><span className="active"><small>SEM 4</small><i><b style={{height:"81%"}}/></i></span></div>
     <div className="progress-message"><i>✓</i><span><b>La adherencia marca el camino</b><small>Más constancia significa más oportunidades de acercarte a tu objetivo.</small></span></div>
   </>;

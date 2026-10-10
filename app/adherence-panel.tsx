@@ -101,8 +101,8 @@ export function AdherencePanel({
   const missingCutoffDays = alerts.missingCutoffDays;
   const modeCopyText =
     mode === "full"
-      ? `Seguimiento basado en registros de /api/app. Riesgo = ${streakNeeded} incumplimientos consecutivos; falta reportar = ≥ ${missingCutoffDays} día(s) (con gracia de reporte). Distinto de las alertas del panel semanal del backend.`
-      : "Seguimiento basado en registros de /api/app; usa las reglas locales de Reglas y es independiente del panel semanal del backend.";
+      ? `Seguimiento con los registros diarios. Riesgo = ${streakNeeded} incumplimientos seguidos; falta reportar = ≥ ${missingCutoffDays} día(s) (con horas de gracia). Es distinto de las alertas del panel semanal.`
+      : "Seguimiento con los registros diarios; usa las reglas de esta pantalla y es independiente del panel semanal.";
   const effectiveRecords = useMemo(
     () => buildEffectiveRecords(people, records, nutritionRecords, panelConfig),
     [people, records, nutritionRecords, panelConfig],

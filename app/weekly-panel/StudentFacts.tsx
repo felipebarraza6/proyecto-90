@@ -7,15 +7,19 @@ import {
   WEEKDAYS_SHORT,
 } from "./format";
 import { usePanelStats } from "./PanelStatsContext";
+import { trainingProgressDisplay } from "./trainingProgress";
 import { StatusBadges } from "./ui";
 import type { StudentWeekResponse, WeightMilestone, WeightPoint } from "./types";
 
 function sourceLabel(source?: string | null, type?: string | null): string {
-  if (type === "checkpoint" || source === "checkpoint") return "checkpoint";
+  if (type === "checkpoint" || source === "checkpoint") return "hito";
   if (source === "profile") return "perfil";
   if (type === "control" || source === "measurement" || source === "participant") return "control";
   if (type === "initial" && source && source !== "profile") return "control";
-  return source || "";
+  if (!source) return "";
+  // Códigos técnicos del backend → español corto; desconocidos se ocultan.
+  if (/^[a-z_]+$/i.test(source)) return "";
+  return source;
 }
 
 function WeightMini({
@@ -90,6 +94,7 @@ export function StudentFacts({
 }) {
   const { profile, weekly, training_progress: progress } = data;
   const { percent_decimals, milestone_days, challenge_length_days, thresholds } = usePanelStats();
+  const trainingLabel = trainingProgressDisplay(progress, { weekClosed });
   const changed = profile.nutrition_targets.changed_in_week || [];
   const weight = profile.weight || { initial: null, milestones: [], latest: null };
   const milestones = milestone_days.map((day) => {
@@ -162,10 +167,8 @@ export function StudentFacts({
         <div>
           <dt>Entrenamientos</dt>
           <dd>
-            {progress.done} de {progress.planned ?? "—"}
-            {progress.partial && !weekClosed ? (
-              <small>Avance parcial (semana en curso)</small>
-            ) : null}
+            {trainingLabel.primary}
+            {trainingLabel.note ? <small>{trainingLabel.note}</small> : null}
           </dd>
         </div>
         {showRoutine ? (
