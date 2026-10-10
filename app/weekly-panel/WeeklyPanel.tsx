@@ -107,7 +107,7 @@ export function WeeklyPanel({
           <h1>Panel semanal</h1>
           <p>
             Una semana, un vistazo por alumno y la ficha completa sin cambiar de pestaña. Los
-            porcentajes y colores salen del servidor.
+            porcentajes y colores siguen las reglas del panel.
           </p>
         </div>
         {isAdmin ? (

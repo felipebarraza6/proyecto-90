@@ -23,7 +23,7 @@ export function WeeklyTable({
   showEmail: boolean;
   onOpen: (clientId: number) => void;
 }) {
-  const { percent_decimals } = usePanelStats();
+  const { percent_decimals, thresholds } = usePanelStats();
   return (
     <div className="table-card wp-table-wrap">
       <table className="wp-table">
@@ -89,7 +89,7 @@ export function WeeklyTable({
                     onOpen(row.client_id);
                   }}
                 >
-                  {formatPct(row.weekly.pct, percent_decimals)}
+                  {formatPct(row.weekly.pct, percent_decimals, { color: String(row.weekly.color), greenGt: thresholds.green_gt, yellowGte: thresholds.yellow_gte })}
                 </button>
               </td>
               <td>

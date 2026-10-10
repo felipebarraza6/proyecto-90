@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { heightCmForDisplay, normalizeHeightInputCm } from "./height";
 import { PANEL_CONFIG_DEFAULTS } from "./weekly-panel/panelConfig";
 import type { PanelConfig } from "./weekly-panel/types";
 
@@ -24,9 +25,10 @@ const LABELS: Record<FieldKey, string> = {
 
 function text(value: unknown) { return value == null ? "" : String(value); }
 function valuesOf(person: Row): Values {
+  const heightCm = heightCmForDisplay(person.height);
   return {
     weight: text(person.weight),
-    height: text(person.height),
+    height: heightCm == null ? "" : String(heightCm),
     birthdate: text(person.birthdate).slice(0, 10),
     gender: text(person.gender),
     weightDay30: text(person.weight_day_30),
@@ -59,10 +61,11 @@ function validate(
   }
   const height = values.height.trim();
   if (height) {
-    const n = Number(height.replace(",", "."));
-    if (!Number.isFinite(n) || n < ranges.heightMin || n > ranges.heightMax) {
-      errors.height = `Usa un valor entre ${ranges.heightMin} y ${ranges.heightMax} cm`;
-    }
+    const result = normalizeHeightInputCm(height, {
+      min: ranges.heightMin,
+      max: ranges.heightMax,
+    });
+    if (result.error) errors.height = result.error;
   }
   const birthdate = values.birthdate.trim();
   if (birthdate) {
@@ -117,13 +120,39 @@ export function BodyDataEditor({
   function set(key: FieldKey, value: string) { setValues(current => ({ ...current, [key]: value })); setError(""); setResult(null); }
   function reset() { setValues(baseline); setError(""); setResult(null); }
 
+  function commitHeight() {
+    const result = normalizeHeightInputCm(values.height, {
+      min: ranges.heightMin,
+      max: ranges.heightMax,
+    });
+    if (result.cm != null && result.convertedFromMeters) {
+      setValues((current) => ({ ...current, height: String(result.cm) }));
+    }
+  }
+
   async function save() {
     if (hasErrors) { setError("Corrige los campos marcados antes de guardar."); return; }
     if (!changed.length) { setError("No hay cambios para guardar."); return; }
     const payload: Row = { action: "participant.body.update", id: person.id };
     for (const key of changed) {
       const raw = values[key].trim();
-      payload[key] = key === "birthdate" || key === "gender" ? raw : Number(raw.replace(",", "."));
+      if (key === "birthdate" || key === "gender") {
+        payload[key] = raw;
+        continue;
+      }
+      if (key === "height") {
+        const result = normalizeHeightInputCm(raw, {
+          min: ranges.heightMin,
+          max: ranges.heightMax,
+        });
+        if (result.error || result.cm == null) {
+          setError(result.error || "Revisa la estatura en centímetros.");
+          return;
+        }
+        payload[key] = result.cm;
+        continue;
+      }
+      payload[key] = Number(raw.replace(",", "."));
     }
     setSaving(true); setError(""); setResult(null);
     try {
@@ -145,7 +174,27 @@ export function BodyDataEditor({
     } finally { setSaving(false); }
   }
 
-  const numberField = (key: FieldKey, unit: string, min: number, max: number) => <label className={errors[key] ? "body-field invalid" : changed.includes(key) ? "body-field changed" : "body-field"}>{LABELS[key]} ({unit})<input type="number" inputMode="decimal" step="0.1" min={min} max={max} value={values[key]} placeholder={key.startsWith("weightDay") ? "Sin registro" : "No informado"} onChange={e => set(key, e.target.value)} aria-invalid={Boolean(errors[key])}/>{errors[key] && <em role="alert">{errors[key]}</em>}</label>;
+  const numberField = (key: FieldKey, unit: string, min: number, max: number) => (
+    <label className={errors[key] ? "body-field invalid" : changed.includes(key) ? "body-field changed" : "body-field"}>
+      {LABELS[key]} ({unit})
+      <input
+        type="number"
+        inputMode="decimal"
+        step="0.1"
+        min={key === "height" ? undefined : min}
+        max={key === "height" ? undefined : max}
+        value={values[key]}
+        placeholder={key === "height" ? "Ej. 170" : key.startsWith("weightDay") ? "Sin registro" : "No informado"}
+        onChange={(e) => set(key, e.target.value)}
+        onBlur={key === "height" ? commitHeight : undefined}
+        aria-invalid={Boolean(errors[key])}
+      />
+      {errors[key] && <em role="alert">{errors[key]}</em>}
+      {key === "height" ? (
+        <small className="body-field-hint">En centímetros. Si escribes metros (1,70), lo convertimos a 170 cm.</small>
+      ) : null}
+    </label>
+  );
 
   return <section className="body-data-editor">
     <header>

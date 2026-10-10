@@ -542,3 +542,5 @@
   .effective-from-field{width:100%;margin-right:0}
 }
 
+
+.body-field-hint,.intake-field-hint{display:block;margin-top:6px;font-size:11px;color:var(--muted);line-height:1.35}

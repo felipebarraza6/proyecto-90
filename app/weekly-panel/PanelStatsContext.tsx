@@ -7,6 +7,7 @@ type PanelStats = {
   thresholds: PanelConfig["thresholds"];
   habit_weights: PanelConfig["habit_weights"];
   adherence_equal_weights_as_40_40_20: boolean;
+  macro_ranges: PanelConfig["macro_ranges"];
   challenge_length_days: number;
   milestone_days: number[];
   milestone_windows: PanelConfig["milestone_windows"];
@@ -24,6 +25,12 @@ const DEFAULTS: PanelStats = {
   thresholds: { ...PANEL_CONFIG_DEFAULTS.thresholds },
   habit_weights: PANEL_CONFIG_DEFAULTS.habit_weights,
   adherence_equal_weights_as_40_40_20: PANEL_CONFIG_DEFAULTS.adherence_equal_weights_as_40_40_20,
+  macro_ranges: {
+    calories: { ...PANEL_CONFIG_DEFAULTS.macro_ranges.calories },
+    protein: { ...PANEL_CONFIG_DEFAULTS.macro_ranges.protein },
+    carbs: { ...PANEL_CONFIG_DEFAULTS.macro_ranges.carbs },
+    fats: { ...PANEL_CONFIG_DEFAULTS.macro_ranges.fats },
+  },
   challenge_length_days: PANEL_CONFIG_DEFAULTS.challenge_length_days,
   milestone_days: [...PANEL_CONFIG_DEFAULTS.milestone_days],
   milestone_windows: { ...PANEL_CONFIG_DEFAULTS.milestone_windows },
@@ -52,6 +59,7 @@ export function PanelStatsProvider({
         thresholds: config.thresholds,
         habit_weights: config.habit_weights,
         adherence_equal_weights_as_40_40_20: config.adherence_equal_weights_as_40_40_20,
+        macro_ranges: config.macro_ranges,
         challenge_length_days: config.challenge_length_days,
         milestone_days: config.milestone_days,
         milestone_windows: config.milestone_windows,

@@ -6,7 +6,6 @@ import {
   MACRO_KEYS,
   macroKeyLabel,
   milestoneWindowsHint,
-  PANEL_CONFIG_PATCH_ENDPOINT,
   POLICY_OPTIONS,
   type MacroKey,
 } from "./panelConfig";
@@ -193,7 +192,7 @@ function validateDraft(draft: Draft): FieldErrors {
     errors.week_start_weekday = "El inicio de semana debe ser un día válido (0–6).";
   }
   if (!draft.timezone.trim()) {
-    errors.timezone = "Indica una zona horaria IANA (ej. America/Santiago).";
+    errors.timezone = "Indica una zona horaria (ej. America/Santiago).";
   }
   if (draft.report_grace_hours < 0 || draft.report_grace_hours > 72) {
     errors.report_grace_hours = "Las horas de gracia van de 0 a 72.";
@@ -255,13 +254,13 @@ function validateDraft(draft: Draft): FieldErrors {
     errors.comment_max_length = "Largo máximo del comentario: 100–20000.";
   }
   if (draft.ai_temperature < 0 || draft.ai_temperature > 2) {
-    errors.ai_temperature = "Temperatura de IA: 0–2.";
+    errors.ai_temperature = "Creatividad del texto: entre 0 y 2.";
   }
   if (draft.ai_max_tokens < 50 || draft.ai_max_tokens > 4000) {
-    errors.ai_max_tokens = "Tokens máximos: 50–4000.";
+    errors.ai_max_tokens = "Largo máximo del resumen: entre 50 y 4000.";
   }
   if (draft.ai_timeout_s < 1 || draft.ai_timeout_s > 120) {
-    errors.ai_timeout_s = "Timeout de IA: 1–120 s.";
+    errors.ai_timeout_s = "Tiempo máximo de espera: entre 1 y 120 segundos.";
   }
   return errors;
 }
@@ -517,7 +516,7 @@ function ReadOnlyRows({ config }: { config: PanelConfig }) {
               <h3>Parámetros</h3>
             </div>
             <strong>
-              temp {draft.ai_temperature} · tokens {draft.ai_max_tokens} · timeout{" "}
+              creatividad {draft.ai_temperature} · largo máx. {draft.ai_max_tokens} · espera{" "}
               {draft.ai_timeout_s}s
             </strong>
           </li>
@@ -661,7 +660,7 @@ export function PanelConfigView({
       if (err instanceof PanelApiError) {
         if (err.status === 405) {
           setWritable(false);
-          setFormError("El backend aún no admite guardar reglas (405). Queda en solo lectura.");
+          setFormError("Todavía no se pueden guardar reglas desde aquí. Queda en solo lectura.");
         } else if (err.status === 403) {
           setFormError("Solo un administrador puede cambiar estas reglas.");
         } else if (err.status === 400) {
@@ -691,11 +690,11 @@ export function PanelConfigView({
           <span className="eyebrow">SOLO ADMINISTRADOR</span>
           <h2 id="wp-config-title">Reglas de adherencia del panel</h2>
           <p>
-            Ajustes que usa el backend para calcular % y alertas. Un cambio aquí recalcula la
-            adherencia de todos los alumnos.
+            Aquí defines cómo se calculan los porcentajes, colores y alertas del panel. Si
+            guardas un cambio, se aplica a todos los alumnos.
           </p>
           {config.config_version != null ? (
-            <p className="wp-config-version">Versión de config: {config.config_version}</p>
+            <p className="wp-config-version">Versión de las reglas: {config.config_version}</p>
           ) : null}
         </div>
       </header>
@@ -706,8 +705,8 @@ export function PanelConfigView({
         <div className="wp-config-readonly" role="status">
           <b>Solo lectura</b>
           <p>
-            El servidor aún no admite <code>{PANEL_CONFIG_PATCH_ENDPOINT}</code> (405 / sin PATCH en
-            Allow). Cuando el PR #80 del backend esté desplegado, podrás editar desde aquí.
+            Por ahora solo puedes ver las reglas. Cuando el equipo active el guardado, podrás
+            editarlas desde esta pantalla.
           </p>
         </div>
       ) : (
@@ -893,8 +892,7 @@ export function PanelConfigView({
               <legend>Vista del panel</legend>
               <div className="wp-config-switch-row">
                 <span>
-                  Flag <code>panel_enabled</code> (solo se guarda; el front no lo usa para
-                  mostrar u ocultar el panel)
+                  Marca interna del panel (se guarda, pero no oculta esta pantalla)
                 </span>
                 <Switch
                   label="Panel habilitado"
@@ -1324,7 +1322,7 @@ export function PanelConfigView({
                   </select>
                 </label>
                 <label>
-                  Zona horaria (IANA)
+                  Zona horaria
                   <input
                     type="text"
                     placeholder="America/Santiago"
@@ -1495,7 +1493,7 @@ export function PanelConfigView({
               <legend>Días y ventanas</legend>
               <p className="wp-config-help">
                 {milestoneWindowsHint(draft.milestone_windows) ||
-                  "Define los días de hito y su ventana (offsets desde el día 1)."}
+                  "Define los días de hito y el tramo de días que cubre cada uno (desde el día 1)."}
               </p>
               <label>
                 Días de hito (separados por comas)
@@ -1514,7 +1512,7 @@ export function PanelConfigView({
                     <div key={day} className="wp-config-range-row">
                       <b>Día {day}</b>
                       <label>
-                        Desde (offset)
+                        Desde (día relativo)
                         <input
                           type="number"
                           step={1}
@@ -1523,7 +1521,7 @@ export function PanelConfigView({
                         />
                       </label>
                       <label>
-                        Hasta (offset)
+                        Hasta (día relativo)
                         <input
                           type="number"
                           step={1}
@@ -1542,10 +1540,10 @@ export function PanelConfigView({
           <ConfigSection
             id="sec-ia"
             title="Análisis IA"
-            help="Resumen automático en la ficha del alumno (sin proveedor ni clave)."
+            help="Resumen automático en la ficha del alumno."
           >
             <fieldset className="wp-config-block" disabled={saving}>
-              <legend>Motor de resumen</legend>
+              <legend>Resumen automático</legend>
               <div className="wp-config-switch-row">
                 <span>Resumen con IA</span>
                 <Switch
@@ -1556,7 +1554,7 @@ export function PanelConfigView({
               </div>
               <div className="wp-config-grid three">
                 <label>
-                  Temperatura
+                  Creatividad del texto
                   <input
                     type="number"
                     min={0}
@@ -1569,7 +1567,7 @@ export function PanelConfigView({
                   />
                 </label>
                 <label>
-                  Tokens máximos
+                  Largo máximo del resumen
                   <input
                     type="number"
                     min={50}
@@ -1582,7 +1580,7 @@ export function PanelConfigView({
                   />
                 </label>
                 <label>
-                  Timeout (segundos)
+                  Tiempo máximo de espera (s)
                   <input
                     type="number"
                     min={1}
@@ -1606,7 +1604,7 @@ export function PanelConfigView({
               {formError}
             </p>
           ) : null}
-          {ok ? <p className="wp-sent">Guardado. Se recargó la config y el panel.</p> : null}
+          {ok ? <p className="wp-sent">Guardado. Se actualizaron las reglas y el panel.</p> : null}
 
           <div className="wp-config-actions">
             <button

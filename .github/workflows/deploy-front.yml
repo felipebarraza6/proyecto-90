@@ -1,6 +1,7 @@
 # Deploy automático del front a https://90dias.habitofirme.app
 #
 # Disparadores:
+#   - pull_request → verify (lint, check:panel, test, build; sin subir)
 #   - push a main → deploy
 #   - workflow_dispatch mode=deploy → deploy (solo si la ref es main)
 #   - workflow_dispatch mode=diagnose → solo lista el remoto (NO sube; puede
@@ -28,6 +29,7 @@
 name: Deploy Front (90dias)
 
 on:
+  pull_request:
   push:
     branches: [main]
   workflow_dispatch:
@@ -41,13 +43,45 @@ on:
         default: diagnose
 
 concurrency:
-  group: deploy-front-${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'deploy' }}
+  group: deploy-front-${{ github.event_name == 'workflow_dispatch' && inputs.mode || github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || 'deploy' }}
   cancel-in-progress: true
 
 env:
   VITE_API_BASE: https://api.yggdra.cl
 
 jobs:
+  # -------------------------------------------------------------------------
+  # Verificación en PRs (no publica)
+  # -------------------------------------------------------------------------
+  verify:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4.2.2
+
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: check:panel
+        run: npm run check:panel
+
+      - name: Tests
+        run: npm test
+
+      - name: Build de producción
+        run: npm run build
+        env:
+          VITE_API_BASE: ${{ env.VITE_API_BASE }}
+
   # -------------------------------------------------------------------------
   # Diagnóstico: login + listados. Nunca sube archivos.
   # -------------------------------------------------------------------------
@@ -201,6 +235,9 @@ jobs:
 
       - name: check:panel
         run: npm run check:panel
+
+      - name: Tests
+        run: npm test
 
       - name: Build de producción
         run: npm run build

@@ -89,7 +89,7 @@ export function StudentFacts({
   weekClosed?: boolean;
 }) {
   const { profile, weekly, training_progress: progress } = data;
-  const { percent_decimals, milestone_days, challenge_length_days } = usePanelStats();
+  const { percent_decimals, milestone_days, challenge_length_days, thresholds } = usePanelStats();
   const changed = profile.nutrition_targets.changed_in_week || [];
   const weight = profile.weight || { initial: null, milestones: [], latest: null };
   const milestones = milestone_days.map((day) => {
@@ -117,7 +117,7 @@ export function StudentFacts({
         </div>
         <div className={`wp-week-pct large ${weekly.color}`}>
           <small>Adherencia semanal</small>
-          <b>{formatPct(weekly.pct, percent_decimals)}</b>
+          <b>{formatPct(weekly.pct, percent_decimals, { color: String(weekly.color), greenGt: thresholds.green_gt, yellowGte: thresholds.yellow_gte })}</b>
           <StatusBadges status={weekly.status} />
         </div>
       </header>

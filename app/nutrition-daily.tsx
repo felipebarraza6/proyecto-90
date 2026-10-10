@@ -6,8 +6,10 @@ import {
   macrosDayStatus,
   macroTone,
   PANEL_CONFIG_DEFAULTS,
+  rangeInBounds,
   type MacroKey,
 } from "./weekly-panel/panelConfig";
+import { formatGoalPctLabel } from "./weekly-panel/format";
 import type { PanelConfig } from "./weekly-panel/types";
 
 type Row = Record<string, unknown>;
@@ -355,17 +357,27 @@ export function NutritionDailyReview({
                 </th>
                 {days.map((day) => {
                   const value = String(entry(iso(day))?.[metric.key] ?? "");
-                  const percentage =
-                    value && target(metric.key)
-                      ? Math.round((Number(value) / target(metric.key)) * 100)
-                      : null;
+                  const goal = target(metric.key);
+                  const ratio =
+                    value && goal ? Number(value) / goal : null;
+                  const inRange =
+                    ratio == null ? null : rangeInBounds(ratio, ranges[metric.key]);
+                  const goalLabel =
+                    ratio == null
+                      ? null
+                      : formatGoalPctLabel(ratio * 100, {
+                          inRange,
+                          minRatio: ranges[metric.key].min,
+                          maxRatio: ranges[metric.key].max,
+                          decimals: 0,
+                        });
                   return (
                     <td key={iso(day)}>
                       <span
-                        className={`daily-value ${macroTone(value, target(metric.key), ranges[metric.key])}`}
+                        className={`daily-value ${macroTone(value, goal, ranges[metric.key])}`}
                       >
                         <b>{value || "—"}</b>
-                        {percentage != null && <small>{percentage}% del objetivo</small>}
+                        {goalLabel != null && <small>{goalLabel}</small>}
                       </span>
                     </td>
                   );

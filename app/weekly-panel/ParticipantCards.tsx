@@ -23,7 +23,7 @@ export function ParticipantCards({
   showEmail: boolean;
   onOpen: (clientId: number) => void;
 }) {
-  const { percent_decimals } = usePanelStats();
+  const { percent_decimals, thresholds } = usePanelStats();
   return (
     <ul className="wp-cards">
       {rows.map((row) => (
@@ -36,7 +36,7 @@ export function ParticipantCards({
                 {showEmail ? <small>{row.email}</small> : null}
               </span>
               <strong className={`wp-week-pct ${row.weekly.color}`}>
-                {formatPct(row.weekly.pct, percent_decimals)}
+                {formatPct(row.weekly.pct, percent_decimals, { color: String(row.weekly.color), greenGt: thresholds.green_gt, yellowGte: thresholds.yellow_gte })}
               </strong>
             </header>
             <MiniDayChips days={row.days} />

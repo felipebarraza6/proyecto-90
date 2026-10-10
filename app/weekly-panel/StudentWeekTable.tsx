@@ -1,6 +1,7 @@
-import { formatMlAsLiters, habitDisplay, WEEKDAYS_SHORT } from "./format";
+import { formatGoalPctLabel, formatMlAsLiters, habitDisplay, WEEKDAYS_SHORT } from "./format";
+import { usePanelStats } from "./PanelStatsContext";
 import { HabitMark, PercentChip } from "./ui";
-import type { MacroCell, StudentWeekResponse, TableRow } from "./types";
+import type { MacroCell, MacroRanges, StudentWeekResponse, TableRow } from "./types";
 
 const ROW_LABELS: Record<string, string> = {
   daily_total: "Adherencia diaria · total",
@@ -61,7 +62,7 @@ function renderCell(row: TableRow, cell: TableRow["cells"][number], date: string
   if (row.key === "calories" || row.key === "protein" || row.key === "carbs" || row.key === "fats") {
     const macro = cell as MacroCell;
     if (macro.value == null && pending(String(macro.status))) return <HabitMark status="today" />;
-    return <MacroMark cell={macro} />;
+    return <MacroMark cell={macro} metric={row.key} />;
   }
   const habit = cell as { status: string };
   if (pending(habit.status)) return <HabitMark status="today" />;
@@ -73,7 +74,14 @@ function renderCell(row: TableRow, cell: TableRow["cells"][number], date: string
   return <HabitMark status={habit.status} />;
 }
 
-function MacroMark({ cell }: { cell: MacroCell }) {
+function MacroMark({
+  cell,
+  metric,
+}: {
+  cell: MacroCell;
+  metric: keyof MacroRanges;
+}) {
+  const { macro_ranges } = usePanelStats();
   if (cell.value == null && (cell.status === "missing" || cell.status === "not_started" || cell.status === "future" || cell.status === "today" || cell.status === "not_applicable" || cell.status === "out_of_challenge")) {
     return <HabitMark status={String(cell.status)} />;
   }
@@ -81,12 +89,21 @@ function MacroMark({ cell }: { cell: MacroCell }) {
     return <HabitMark status={String(cell.status || "missing")} />;
   }
   const range = cell.in_range == null ? "" : cell.in_range ? "in-range" : "out-range";
-  const pct = cell.pct == null ? null : Math.round(cell.pct);
-  const display = habitDisplay(cell.status);
+  const bounds = macro_ranges?.[metric];
+  const extra = cell as MacroCell & { display_pct?: number | null; pct_display?: number | null };
+  const label =
+    formatGoalPctLabel(cell.pct, {
+      inRange: cell.in_range,
+      minRatio: bounds?.min ?? null,
+      maxRatio: bounds?.max ?? null,
+      decimals: 0,
+      displayPct: extra.display_pct,
+      pctDisplay: extra.pct_display,
+    }) || habitDisplay(cell.status).text;
   return (
     <span className={`wp-macro-cell ${range}`}>
       <b>{NUM.format(cell.value)}</b>
-      <small>{pct != null ? `${pct}% del objetivo` : display.text}</small>
+      <small>{label}</small>
     </span>
   );
 }

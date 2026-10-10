@@ -64,18 +64,23 @@ export function PercentChip({
   const stats = usePanelStats();
   const places = decimals ?? stats.percent_decimals;
   const className = `wp-chip ${colorClass(color)}`;
+  const align = {
+    color,
+    greenGt: stats.thresholds.green_gt,
+    yellowGte: stats.thresholds.yellow_gte,
+  };
   const aria = chipAriaLabel({ date, pct, label });
   if (onOpen) {
     return (
       <button type="button" className={className} aria-label={aria} onClick={onOpen}>
-        <b>{formatPct(pct, places)}</b>
+        <b>{formatPct(pct, places, align)}</b>
         <small>{label}</small>
       </button>
     );
   }
   return (
     <span className={className} aria-label={aria}>
-      <b>{formatPct(pct, places)}</b>
+      <b>{formatPct(pct, places, align)}</b>
       <small>{label}</small>
     </span>
   );

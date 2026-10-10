@@ -1,9 +1,22 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { normalizeHeightInputCm } from "./height";
+import { PANEL_CONFIG_DEFAULTS } from "./weekly-panel/panelConfig";
 
 type Row = Record<string, unknown>;
 type Action = (payload: Row) => Promise<unknown>;
+
+const HEIGHT_RANGE = {
+  min: PANEL_CONFIG_DEFAULTS.height_min_cm,
+  max: PANEL_CONFIG_DEFAULTS.height_max_cm,
+};
+
+function isHeightQuestion(question: Row) {
+  const key = String(question.key || "").toLowerCase();
+  const prompt = String(question.prompt || "").toLowerCase();
+  return key === "height" || key === "estatura" || prompt.includes("estatura") || prompt.includes("altura");
+}
 
 const audienceLabel: Record<string,string> = { both:"Coach + Nutricionista", coach:"Personal trainer", nutrition:"Nutricionista" };
 const typeLabel: Record<string,string> = { text:"Respuesta corta",textarea:"Respuesta larga",number:"Número",date:"Fecha",single:"Selección única",multi:"Selección múltiple",yesno:"Sí / No",scale:"Escala 0 a 10",consent:"Consentimiento" };
@@ -26,8 +39,30 @@ export function IntakeForm({questions,responses,act}:{questions:Row[];responses:
   const byKey = Object.fromEntries(questions.map(q=>[String(q.key),answers[String(q.id)]]));
   const visible = questions.filter(q=>String(q.section)===sections[step] && (!q.condition_key || byKey[String(q.condition_key)]===q.condition_value));
   function set(id:string,value:unknown){setAnswers(current=>({...current,[id]:value}));setWarning("")}
-  function validate(){const missing=visible.filter(q=>Boolean(q.required)&&!hasValue(answers[String(q.id)]));if(missing.length){setWarning(`Completa ${missing.length===1?"la pregunta obligatoria":"las preguntas obligatorias"} antes de continuar.`);return false}return true}
-  async function next(){if(!validate())return;if(step<sections.length-1){setStep(step+1);window.scrollTo({top:0,behavior:"smooth"});return}setSaving(true);try{await act({action:"intake.submit",responses:answers})}finally{setSaving(false)}}
+  function normalizeVisibleHeights(source: Record<string, unknown>) {
+    const next = { ...source };
+    for (const q of visible) {
+      if (!isHeightQuestion(q)) continue;
+      const id = String(q.id);
+      const result = normalizeHeightInputCm(next[id] as string, HEIGHT_RANGE);
+      if (result.error) return { ok: false as const, error: result.error, next };
+      if (result.cm != null) next[id] = String(result.cm);
+    }
+    return { ok: true as const, next };
+  }
+  function validate(){
+    const missing=visible.filter(q=>Boolean(q.required)&&!hasValue(answers[String(q.id)]));
+    if(missing.length){setWarning(`Completa ${missing.length===1?"la pregunta obligatoria":"las preguntas obligatorias"} antes de continuar.`);return false}
+    const heights = normalizeVisibleHeights(answers);
+    if (!heights.ok) { setWarning(heights.error); return false; }
+    if (heights.next !== answers) setAnswers(heights.next);
+    return true;
+  }
+  async function next(){if(!validate())return;if(step<sections.length-1){setStep(step+1);window.scrollTo({top:0,behavior:"smooth"});return}setSaving(true);try{
+    const heights = normalizeVisibleHeights(answers);
+    if (!heights.ok) { setWarning(heights.error); return; }
+    await act({action:"intake.submit",responses:heights.next})
+  }finally{setSaving(false)}}
   return <div className="intake-first-login">
     <header className="intake-welcome"><img className="brand-wordmark intake-logo" src="/proyecto90-logo.jpg" alt="Proyecto 90" width="384" height="384"/><div><span className="eyebrow">PRIMER INGRESO</span><h1>Conozcámonos antes de comenzar</h1><p>Tus respuestas permiten que el coach y la nutricionista preparen un plan seguro y realmente personal.</p></div></header>
     <div className="intake-progress"><div><span style={{width:`${((step+1)/sections.length)*100}%`}}/></div><p>Paso {step+1} de {sections.length} · {sections[step]}</p></div>
@@ -41,8 +76,28 @@ export function IntakeForm({questions,responses,act}:{questions:Row[];responses:
 
 function QuestionField({question,value,setValue}:{question:Row;value:unknown;setValue:(value:unknown)=>void}) {
   const id=String(question.id), type=String(question.type), opts=optionsOf(question), selected=Array.isArray(value)?value.map(String):[];
+  const heightQ = isHeightQuestion(question);
+  function onHeightBlur() {
+    const result = normalizeHeightInputCm(value as string, HEIGHT_RANGE);
+    if (result.cm != null && result.convertedFromMeters) setValue(String(result.cm));
+  }
   return <fieldset className="intake-question"><legend>{String(question.prompt)}{Boolean(question.required)&&<sup>*</sup>}</legend>{Boolean(question.help_text)&&<p>{String(question.help_text)}</p>}
-    {(type==="text"||type==="number"||type==="date")&&<input id={id} type={type} value={String(value??"")} min={type==="number"?0:undefined} onChange={e=>setValue(e.target.value)}/>} 
+    {heightQ && type === "number" ? (
+      <>
+        <input
+          id={id}
+          type="number"
+          inputMode="decimal"
+          step="0.1"
+          value={String(value ?? "")}
+          placeholder="Ej. 170"
+          onChange={(e) => setValue(e.target.value)}
+          onBlur={onHeightBlur}
+        />
+        <p className="intake-field-hint">Estatura en centímetros. Si escribes metros (1,70), la convertimos a 170 cm.</p>
+      </>
+    ) : null}
+    {!heightQ && (type==="text"||type==="number"||type==="date")&&<input id={id} type={type} value={String(value??"")} min={type==="number"?0:undefined} onChange={e=>setValue(e.target.value)}/>} 
     {type==="textarea"&&<textarea value={String(value??"")} rows={4} onChange={e=>setValue(e.target.value)}/>} 
     {(type==="single"||type==="yesno")&&<div className="choice-grid">{(type==="yesno"?["Sí","No"]:opts).map(option=><label key={option} className={value===option?"selected":""}><input type="radio" name={id} checked={value===option} onChange={()=>setValue(option)}/><span>{option}</span></label>)}</div>}
     {type==="multi"&&<div className="choice-grid multi">{opts.map(option=><label key={option} className={selected.includes(option)?"selected":""}><input type="checkbox" checked={selected.includes(option)} onChange={e=>setValue(e.target.checked?[...selected,option]:selected.filter(x=>x!==option))}/><span>{option}</span></label>)}</div>}
