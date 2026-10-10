@@ -56,12 +56,16 @@ En el repo: **Settings → Secrets and variables → Actions**, crear:
 | Secreto | Valor |
 |---|---|
 | `FTP_SERVER` | Hostname FTP, p. ej. `ftp.habitofirme.app` |
-| `FTP_USERNAME` | Usuario FTP del hosting |
+| `FTP_USERNAME` | Usuario FTP (p. ej. `90dias@habitofirme.app`) |
 | `FTP_PASSWORD` | Contraseña FTP |
+| `FTP_REMOTE_DIR` | (opcional) Ruta relativa al home del usuario. Vacío o `.` = raíz del jail (típico para cuenta cPanel del subdominio). Solo usa `90dias.habitofirme.app` si el usuario es la cuenta principal (como FileZilla). También se acepta la variable de repo `FTP_REMOTE_DIR`. |
 
-Sin esos tres secretos el job falla en «Validar secretos FTP» (las 4
-ejecuciones del 5–8 oct fallaron porque `FTP_HOST`/`FTP_USER`/`FTP_PASS`
-estaban vacíos / no existían).
+Sin `FTP_SERVER` / `FTP_USERNAME` / `FTP_PASSWORD` el job falla en «Validar
+secretos FTP».
+
+**Diagnóstico (sin publicar):** Actions → Deploy Front (90dias) → Run workflow →
+`mode=diagnose`. Lista el home y candidatos de path; no sube archivos. Se puede
+correr desde una rama distinta de `main`. El deploy real solo corre en `main`.
 
 `dev` se mantiene en el mismo commit que `main` y no despliega.
 
