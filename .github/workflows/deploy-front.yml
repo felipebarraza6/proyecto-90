@@ -1,11 +1,24 @@
-# Deploy Front desactivado en push.
-# Felipe publica a 90dias.habitofirme.app por build + FTP manual; este Action
-# fallaba en cada push (el fork no tiene secretos FTP / no es el sitio de prod).
-# Se deja solo workflow_dispatch por si hace falta dispararlo a mano alguna vez.
+# Deploy automático del front a https://90dias.habitofirme.app
+#
+# Disparadores: push a main · workflow_dispatch
+# Build: npm run build → dist/client (misma salida que el paquete manual)
+# Subida: FTPS (TLS 1.2) a ftp.habitofirme.app → 90dias.habitofirme.app/
+# Orden: primero assets/ (y el resto sin index.html), al final index.html
+# No borra archivos remotos que no vengan en el build (rollback = bundles viejos).
+#
+# Secretos del repo (Settings → Secrets and variables → Actions):
+#   FTP_SERVER    → hostname, ej. ftp.habitofirme.app
+#   FTP_USERNAME  → usuario FTP del hosting
+#   FTP_PASSWORD  → contraseña FTP
+#
+# Variable de build (fija en el workflow, no es secreto):
+#   VITE_API_BASE=https://api.yggdra.cl
 
 name: Deploy Front (90dias)
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -15,11 +28,11 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4.4.0
         with:
           node-version: "22"
           cache: npm
@@ -27,32 +40,83 @@ jobs:
       - name: Instalar dependencias
         run: npm ci
 
+      - name: Lint
+        run: npm run lint
+
+      - name: check:panel
+        run: npm run check:panel
+
       - name: Build de producción
         run: npm run build
         env:
           VITE_API_BASE: https://api.yggdra.cl
 
+      - name: Comprobar salida del build
+        run: |
+          test -f dist/client/index.html
+          test -d dist/client/assets
+          ls -la dist/client dist/client/assets | head -40
+
       - name: Instalar lftp
         run: sudo apt-get update -qq && sudo apt-get install -y -qq lftp
 
+      - name: Validar secretos FTP
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+        run: |
+          missing=0
+          if [ -z "$FTP_SERVER" ]; then echo "::error::Falta el secreto FTP_SERVER (hostname, ej. ftp.habitofirme.app)"; missing=1; fi
+          if [ -z "$FTP_USERNAME" ]; then echo "::error::Falta el secreto FTP_USERNAME"; missing=1; fi
+          if [ -z "$FTP_PASSWORD" ]; then echo "::error::Falta el secreto FTP_PASSWORD"; missing=1; fi
+          if [ "$missing" -ne 0 ]; then
+            echo "Crea los tres secretos en Settings → Secrets and variables → Actions y vuelve a correr el workflow."
+            exit 1
+          fi
+          echo "Secretos FTP presentes (servidor: $FTP_SERVER)."
+
+      # FTPS + TLS 1.2, equivalente al script manual:
+      #   ftp://ftp.habitofirme.app/90dias.habitofirme.app  (--ssl)
+      # Sin --delete: no se borran archivos remotos ajenos al build.
       - name: Subir assets (sin index.html)
         env:
-          FTP_HOST: ${{ secrets.FTP_HOST }}
-          FTP_USER: ${{ secrets.FTP_USER }}
-          FTP_PASS: ${{ secrets.FTP_PASS }}
-        run: lftp -e "set ssl:verify-certificate no; set net:max-retries 3; mirror -R --only-newer --exclude-glob index.html dist/client /90dias.habitofirme.app; bye" -u "$FTP_USER","$FTP_PASS" "$FTP_HOST"
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+        run: |
+          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "ftps://$FTP_SERVER" -e '
+            set ftp:ssl-force true;
+            set ftp:ssl-protect-data true;
+            set ssl:verify-certificate no;
+            set ssl:priority NORMAL:-VERS-SSL3.0:-VERS-TLS1.0:-VERS-TLS1.1:+VERS-TLS1.2;
+            set net:max-retries 3;
+            set net:timeout 20;
+            mirror -R --verbose --exclude-glob index.html dist/client 90dias.habitofirme.app;
+            bye
+          '
 
       - name: Subir index.html al final
         env:
-          FTP_HOST: ${{ secrets.FTP_HOST }}
-          FTP_USER: ${{ secrets.FTP_USER }}
-          FTP_PASS: ${{ secrets.FTP_PASS }}
-        run: lftp -e "set ssl:verify-certificate no; put -O /90dias.habitofirme.app dist/client/index.html; bye" -u "$FTP_USER","$FTP_PASS" "$FTP_HOST"
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+        run: |
+          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "ftps://$FTP_SERVER" -e '
+            set ftp:ssl-force true;
+            set ftp:ssl-protect-data true;
+            set ssl:verify-certificate no;
+            set ssl:priority NORMAL:-VERS-SSL3.0:-VERS-TLS1.0:-VERS-TLS1.1:+VERS-TLS1.2;
+            set net:max-retries 3;
+            set net:timeout 20;
+            put -O 90dias.habitofirme.app dist/client/index.html;
+            bye
+          '
 
       - name: Verificar despliegue
         run: |
           sleep 5
-          code=$(curl -s -o /tmp/live.html -w "%{http_code}" https://90dias.habitofirme.app/)
+          code=$(curl -sS -o /tmp/live.html -w "%{http_code}" https://90dias.habitofirme.app/)
           echo "HTTP $code"
-          grep -o "assets/index[^\"]*" /tmp/live.html | head -2
+          grep -oE 'assets/index[^"]+' /tmp/live.html | head -5 || true
           test "$code" = "200"

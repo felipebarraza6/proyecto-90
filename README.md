@@ -37,9 +37,32 @@ administrador con contraseña temporal.
 
 ## Producción
 
-El sitio https://90dias.habitofirme.app sale de la rama `main` de
-`marcelomoyavallejos-dotcom/proyecto-90`. GitHub Action «Deploy Front (90dias)»
-compila con `VITE_API_BASE=https://api.yggdra.cl` y sube `dist/client` por FTP.
+El sitio https://90dias.habitofirme.app se publica desde `main` con el workflow
+`.github/workflows/deploy-front.yml` (también se puede disparar a mano con
+`workflow_dispatch`).
+
+1. `npm ci` → `npm run lint` → `npm run check:panel` → `npm run build`
+2. Build con `VITE_API_BASE=https://api.yggdra.cl` (URL de la API de producción;
+   no es secreto; es la misma que usa el paquete manual).
+3. Salida: `dist/client` (`vite.config.ts` → `outDir: "dist/client"`).
+4. Subida por **FTPS** (TLS 1.2) a `ftp.habitofirme.app`, directorio remoto
+   `90dias.habitofirme.app/`: primero todo menos `index.html`, después
+   `index.html`. No se borran archivos remotos ajenos al build.
+
+### Secretos de GitHub Actions
+
+En el repo: **Settings → Secrets and variables → Actions**, crear:
+
+| Secreto | Valor |
+|---|---|
+| `FTP_SERVER` | Hostname FTP, p. ej. `ftp.habitofirme.app` |
+| `FTP_USERNAME` | Usuario FTP del hosting |
+| `FTP_PASSWORD` | Contraseña FTP |
+
+Sin esos tres secretos el job falla en «Validar secretos FTP» (las 4
+ejecuciones del 5–8 oct fallaron porque `FTP_HOST`/`FTP_USER`/`FTP_PASS`
+estaban vacíos / no existían).
+
 `dev` se mantiene en el mismo commit que `main` y no despliega.
 
 El panel de staff vive en `app/weekly-panel`. `panel_enabled` de la API no
