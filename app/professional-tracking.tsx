@@ -255,7 +255,7 @@ export function ProfessionalTracking({
               />
             </>
           ) : (
-            <TrainingDailyReview records={habitRecords} person={selected} />
+            <TrainingDailyReview records={habitRecords} person={selected} panelConfig={panelConfig} />
           )}
           {act && (
             <>

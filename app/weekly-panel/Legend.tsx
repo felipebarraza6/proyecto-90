@@ -16,7 +16,10 @@ export function PanelLegend({
   yellowGte: number;
   config?: PanelConfig | null;
 }) {
-  const weightsText = habitWeightsFormulaText(config?.habit_weights);
+  const weightsText = habitWeightsFormulaText(
+    config?.habit_weights,
+    config?.adherence_equal_weights_as_40_40_20,
+  );
   const restCounts = policyLabel(config?.rest_day_counts || "exclude");
   const requires = (config?.macro_met_requires || ["calories", "protein"])
     .map((k) => macroKeyLabel(k as MacroKey))

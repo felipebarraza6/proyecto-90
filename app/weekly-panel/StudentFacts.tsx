@@ -89,10 +89,10 @@ export function StudentFacts({
   weekClosed?: boolean;
 }) {
   const { profile, weekly, training_progress: progress } = data;
-  const { percent_decimals } = usePanelStats();
+  const { percent_decimals, milestone_days, challenge_length_days } = usePanelStats();
   const changed = profile.nutrition_targets.changed_in_week || [];
   const weight = profile.weight || { initial: null, milestones: [], latest: null };
-  const milestones = [30, 60, 90].map((day) => {
+  const milestones = milestone_days.map((day) => {
     const found = (weight.milestones || []).find((item) => item.day === day);
     return (
       found || {
@@ -151,7 +151,8 @@ export function StudentFacts({
             {formatDateLong(profile.challenge_start)}
             {profile.challenge_day != null ? (
               <small>
-                día {profile.challenge_day} / semana {profile.challenge_week ?? "—"} del desafío
+                día {profile.challenge_day}/{challenge_length_days} · semana{" "}
+                {profile.challenge_week ?? "—"} del desafío
               </small>
             ) : (
               <small>Aún no inicia</small>

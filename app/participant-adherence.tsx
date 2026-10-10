@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
+  challengeWeeks,
   macrosDayStatus,
   PANEL_CONFIG_DEFAULTS,
   type MacroKey,
@@ -26,8 +27,8 @@ const chileToday = () =>
   }).format(new Date());
 const dateAt = (value: unknown) =>
   new Date(`${String(value || new Date().toISOString()).slice(0, 10)}T12:00:00Z`);
-const initialWeek = (start: Date) =>
-  Math.max(1, Math.min(13, Math.floor((Date.now() - start.getTime()) / (7 * 86400000)) + 1));
+const initialWeek = (start: Date, weeks = challengeWeeks()) =>
+  Math.max(1, Math.min(weeks, Math.floor((Date.now() - start.getTime()) / (7 * 86400000)) + 1));
 
 type HabitStatus = "met" | "missed" | "rest" | "empty";
 
@@ -47,16 +48,19 @@ export function ParticipantHabitMatrix({
   panelConfig?: PanelConfig | null;
 }) {
   const start = useMemo(() => dateAt(startDate), [startDate]);
-  const [week, setWeek] = useState(() => initialWeek(start));
+  const weeks = challengeWeeks(panelConfig);
+  const challengeLen =
+    panelConfig?.challenge_length_days ?? PANEL_CONFIG_DEFAULTS.challenge_length_days;
+  const [week, setWeek] = useState(() => initialWeek(start, weeks));
   useEffect(() => {
-    setWeek(initialWeek(start));
-  }, [start]);
+    setWeek(initialWeek(start, weeks));
+  }, [start, weeks]);
   const days = useMemo(
     () =>
       Array.from({ length: 7 }, (_, index) => addDays(start, (week - 1) * 7 + index)).filter(
-        (day) => day < addDays(start, 90),
+        (day) => day < addDays(start, challengeLen),
       ),
-    [start, week],
+    [start, week, challengeLen],
   );
   const lookup = useMemo(
     () => new Map(records.map((row) => [`${row.habit}:${row.habit_date}`, String(row.status)])),
@@ -128,7 +132,7 @@ export function ParticipantHabitMatrix({
         <label>
           Semana
           <select value={week} onChange={(event) => setWeek(Number(event.target.value))}>
-            {Array.from({ length: 13 }, (_, index) => (
+            {Array.from({ length: weeks }, (_, index) => (
               <option value={index + 1} key={index}>
                 Semana {index + 1}
               </option>
@@ -233,21 +237,24 @@ export function ParticipantHabitMatrix({
   );
 }
 
-export function TrainingDailyReview({ records, person }: { records: Row[]; person: Row }) {
+export function TrainingDailyReview({ records, person, panelConfig }: { records: Row[]; person: Row; panelConfig?: PanelConfig | null }) {
   const start = useMemo(
     () => dateAt(person.challenge_start || person.assigned_at || person.created_at),
     [person.challenge_start, person.assigned_at, person.created_at],
   );
-  const [week, setWeek] = useState(() => initialWeek(start));
+  const weeks = challengeWeeks(panelConfig);
+  const challengeLen =
+    panelConfig?.challenge_length_days ?? PANEL_CONFIG_DEFAULTS.challenge_length_days;
+  const [week, setWeek] = useState(() => initialWeek(start, weeks));
   useEffect(() => {
-    setWeek(initialWeek(start));
-  }, [start]);
+    setWeek(initialWeek(start, weeks));
+  }, [start, weeks]);
   const days = useMemo(
     () =>
       Array.from({ length: 7 }, (_, index) => addDays(start, (week - 1) * 7 + index)).filter(
-        (day) => day < addDays(start, 90),
+        (day) => day < addDays(start, challengeLen),
       ),
-    [start, week],
+    [start, week, challengeLen],
   );
   const own = new Map(
     records
@@ -269,7 +276,7 @@ export function TrainingDailyReview({ records, person }: { records: Row[]; perso
         <label>
           Semana
           <select value={week} onChange={(event) => setWeek(Number(event.target.value))}>
-            {Array.from({ length: 13 }, (_, index) => (
+            {Array.from({ length: weeks }, (_, index) => (
               <option value={index + 1} key={index}>
                 Semana {index + 1}
               </option>

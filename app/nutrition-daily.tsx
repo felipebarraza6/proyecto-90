@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
+  challengeWeeks,
   macrosDayStatus,
   macroTone,
   PANEL_CONFIG_DEFAULTS,
@@ -31,8 +32,8 @@ const dateAt = (value: unknown) => {
   return new Date(`${raw}T12:00:00Z`);
 };
 const addDays = (date: Date, days: number) => new Date(date.getTime() + days * 86400000);
-const initialWeek = (start: Date) =>
-  Math.max(1, Math.min(13, Math.floor((Date.now() - start.getTime()) / (7 * 86400000)) + 1));
+const initialWeek = (start: Date, weeks = challengeWeeks()) =>
+  Math.max(1, Math.min(weeks, Math.floor((Date.now() - start.getTime()) / (7 * 86400000)) + 1));
 const empty = (): Values => ({ calories: "", protein: "", fats: "", carbs: "" });
 function recordValues(row?: Row): Values {
   return {
@@ -91,16 +92,19 @@ export function NutritionDailyTracker({
   panelConfig?: PanelConfig | null;
 }) {
   const start = useMemo(() => dateAt(startDate), [startDate]);
-  const [week, setWeek] = useState(() => initialWeek(start));
+  const weeks = challengeWeeks(panelConfig);
+  const challengeLen =
+    panelConfig?.challenge_length_days ?? PANEL_CONFIG_DEFAULTS.challenge_length_days;
+  const [week, setWeek] = useState(() => initialWeek(start, weeks));
   useEffect(() => {
-    setWeek(initialWeek(start));
-  }, [start]);
+    setWeek(initialWeek(start, weeks));
+  }, [start, weeks]);
   const days = useMemo(
     () =>
       Array.from({ length: 7 }, (_, index) => addDays(start, (week - 1) * 7 + index)).filter(
-        (day) => day < addDays(start, 90),
+        (day) => day < addDays(start, challengeLen),
       ),
-    [start, week],
+    [start, week, challengeLen],
   );
   const [values, setValues] = useState<Record<string, Values>>({});
   const [saving, setSaving] = useState(false);
@@ -137,7 +141,7 @@ export function NutritionDailyTracker({
         <label>
           Semana
           <select value={week} onChange={(event) => setWeek(Number(event.target.value))}>
-            {Array.from({ length: 13 }, (_, index) => (
+            {Array.from({ length: weeks }, (_, index) => (
               <option value={index + 1} key={index}>
                 Semana {index + 1}
               </option>
@@ -240,16 +244,19 @@ export function NutritionDailyReview({
     () => dateAt(person.challenge_start || person.assigned_at || person.created_at),
     [person.challenge_start, person.assigned_at, person.created_at],
   );
-  const [week, setWeek] = useState(() => initialWeek(start));
+  const weeks = challengeWeeks(panelConfig);
+  const challengeLen =
+    panelConfig?.challenge_length_days ?? PANEL_CONFIG_DEFAULTS.challenge_length_days;
+  const [week, setWeek] = useState(() => initialWeek(start, weeks));
   useEffect(() => {
-    setWeek(initialWeek(start));
-  }, [start]);
+    setWeek(initialWeek(start, weeks));
+  }, [start, weeks]);
   const days = useMemo(
     () =>
       Array.from({ length: 7 }, (_, index) => addDays(start, (week - 1) * 7 + index)).filter(
-        (day) => day < addDays(start, 90),
+        (day) => day < addDays(start, challengeLen),
       ),
-    [start, week],
+    [start, week, challengeLen],
   );
   const own = records.filter((row) => String(row.user_id) === String(person.id));
   const target = (key: (typeof metrics)[number]["key"]) => Number(person[key] || 0);
@@ -289,7 +296,7 @@ export function NutritionDailyReview({
         <label>
           Semana
           <select value={week} onChange={(event) => setWeek(Number(event.target.value))}>
-            {Array.from({ length: 13 }, (_, index) => (
+            {Array.from({ length: weeks }, (_, index) => (
               <option value={index + 1} key={index}>
                 Semana {index + 1}
               </option>

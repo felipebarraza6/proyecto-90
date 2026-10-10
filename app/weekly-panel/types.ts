@@ -45,9 +45,12 @@ export type MacroRanges = {
 
 export type MacroMetKey = keyof MacroRanges;
 
+/** Ventanas de hitos: día → [offsetInicio, offsetFin] desde el día 1. */
+export type MilestoneWindows = Record<string, [number, number]>;
+
 /**
- * Config del panel. Tras `normalizePanelConfig` todos los campos nuevos
- * están presentes (defaults del PR #80 / reglas actuales si la API aún no los manda).
+ * Config del panel. Tras `normalizePanelConfig` todos los campos están
+ * presentes (defaults del contrato PR #80 / migraciones 0009+0010).
  */
 export type PanelConfig = {
   panel_enabled: boolean;
@@ -58,9 +61,11 @@ export type PanelConfig = {
   ai_summary_enabled: boolean;
   can_comment: boolean;
   comment_delete_policy: string;
-  /** Versión optimista del backend (PR #80); no se envía en PATCH. */
+  /** Versión optimista del backend; no se envía en PATCH. */
   config_version?: number;
+
   habit_weights: HabitWeights;
+  adherence_equal_weights_as_40_40_20: boolean;
   partial_day_policy: string;
   missing_day_policy: string;
   macro_met_requires: MacroMetKey[];
@@ -75,6 +80,39 @@ export type PanelConfig = {
   default_water_goal_ml: number;
   default_sessions_per_week: number;
   training_mode: string;
+  macros_source: string;
+
+  no_data_counts_as_risk: boolean;
+  status_multi_badge: boolean;
+  week_start_weekday: number;
+  timezone: string;
+  report_grace_hours: number;
+  challenge_length_days: number;
+  show_after_challenge_end: boolean;
+  block_length_days: number;
+  prorate_partial_weeks: boolean;
+  training_alert_closed_weeks_only: boolean;
+  min_days_for_analysis: number;
+  min_days_per_metric: number;
+  alert_min_affected_days: number;
+  missing_alert_min_days: number;
+  milestone_days: number[];
+  milestone_windows: MilestoneWindows;
+  weight_min_kg: number;
+  weight_max_kg: number;
+  height_min_cm: number;
+  height_max_cm: number;
+  comment_visible_to_participant_default: boolean;
+  notify_participant_on_comment: boolean;
+  duplicate_window_seconds: number;
+  comment_max_length: number;
+  professional_scope: string;
+  reviewer_access: string;
+
+  /** IA no secreta (sin proveedor / modelo / clave). */
+  ai_temperature: number;
+  ai_max_tokens: number;
+  ai_timeout_s: number;
 };
 
 /** Body parcial de PATCH /api/p90/panel/config (sin can_comment ni config_version). */

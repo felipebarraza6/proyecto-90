@@ -68,7 +68,9 @@ export function DailyClosure({
               new Date(`${start}T12:00:00Z`).getTime()) /
               86400000,
           ) + 1;
-        if (day > 90) return null;
+        const challengeLen =
+          panelConfig?.challenge_length_days ?? PANEL_CONFIG_DEFAULTS.challenge_length_days;
+        if (day > challengeLen) return null;
         const cells: Partial<Record<ClosureHabit, CellState>> = {};
         for (const habit of habits) {
           if (habit === "training") {
@@ -213,7 +215,8 @@ export function DailyClosure({
                     {Math.max(
                       1,
                       Math.min(
-                        90,
+                        panelConfig?.challenge_length_days ??
+                          PANEL_CONFIG_DEFAULTS.challenge_length_days,
                         Math.floor(
                           (new Date(`${date}T12:00:00Z`).getTime() -
                             new Date(
@@ -223,7 +226,9 @@ export function DailyClosure({
                         ) + 1,
                       ),
                     )}
-                    /90
+                    /
+                    {panelConfig?.challenge_length_days ??
+                      PANEL_CONFIG_DEFAULTS.challenge_length_days}
                   </td>
                   {habits.includes("training") && (
                     <td>

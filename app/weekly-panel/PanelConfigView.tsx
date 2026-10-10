@@ -24,7 +24,7 @@ type FieldErrors = Record<string, string>;
 
 function toDraft(config: PanelConfig): Draft {
   return {
-    panel_enabled: config.panel_enabled,
+    panel_enabled: config["panel_enabled"],
     thresholds: { ...config.thresholds },
     percent_decimals: config.percent_decimals,
     show_summary_cards: config.show_summary_cards,
@@ -381,7 +381,7 @@ function ReadOnlyRows({ config }: { config: PanelConfig }) {
             <strong>
               Tarjetas {draft.show_summary_cards ? "sí" : "no"} · Correo{" "}
               {draft.show_email_in_table ? "sí" : "no"} · Panel{" "}
-              {draft.panel_enabled ? "activo" : "inactivo"}
+              {draft["panel_enabled"] ? "activo" : "inactivo"}
             </strong>
           </li>
           <li>
@@ -892,10 +892,13 @@ export function PanelConfigView({
             <fieldset className="wp-config-block" disabled={saving}>
               <legend>Vista del panel</legend>
               <div className="wp-config-switch-row">
-                <span>Panel habilitado (flag de backend)</span>
+                <span>
+                  Flag <code>panel_enabled</code> (solo se guarda; el front no lo usa para
+                  mostrar u ocultar el panel)
+                </span>
                 <Switch
                   label="Panel habilitado"
-                  checked={draft.panel_enabled}
+                  checked={draft["panel_enabled"]}
                   onChange={(v) => touch((p) => ({ ...p, panel_enabled: v }))}
                 />
               </div>
