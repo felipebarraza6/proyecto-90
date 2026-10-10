@@ -1,4 +1,5 @@
 import { apiUrl, authHeaders } from "../../src/api";
+import { normalizePanelConfig } from "./panelConfig";
 import type {
   AnalysisResponse,
   CommentItem,
@@ -71,8 +72,9 @@ async function panelFetch<T>(
   return body as T;
 }
 
-export function fetchPanelConfig(signal?: AbortSignal): Promise<PanelConfig> {
-  return panelFetch<PanelConfig>("/config", { signal });
+export async function fetchPanelConfig(signal?: AbortSignal): Promise<PanelConfig> {
+  const raw = await panelFetch<Partial<PanelConfig>>("/config", { signal });
+  return normalizePanelConfig(raw);
 }
 
 export function fetchWeeks(signal?: AbortSignal): Promise<WeeksResponse> {

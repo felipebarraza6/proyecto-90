@@ -24,17 +24,23 @@ export function AnalysisPanel({
   loading,
   error,
   onRetry,
+  weekClosed,
 }: {
   data: AnalysisResponse | null;
   loading: boolean;
   error: string | null;
   onRetry: () => void;
+  /** Semana cerrada según weeks/week.is_closed (PR #80). */
+  weekClosed?: boolean;
 }) {
   const coverage = data?.coverage;
   const days = coverage?.days_with_data;
   const due = coverage?.due_days;
   const isError = Boolean(error) || data?.status === "error";
   const insufficient = data?.status === "insufficient";
+  const closed = Boolean(weekClosed || data?.week_closed);
+  const showPartial =
+    Boolean(data?.partial) && data?.status !== "insufficient" && !closed;
 
   return (
     <section className="wp-analysis" aria-labelledby="wp-analysis-title">
@@ -44,9 +50,7 @@ export function AnalysisPanel({
         </span>
         <h2 id="wp-analysis-title">
           Alertas y consejo
-          {data?.partial && data.status !== "insufficient" ? (
-            <span className="wp-partial">Parcial · semana en curso</span>
-          ) : null}
+          {showPartial ? <span className="wp-partial">Parcial · semana en curso</span> : null}
         </h2>
       </header>
       {loading && !data ? <SkeletonTable rows={3} /> : null}

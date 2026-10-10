@@ -473,3 +473,31 @@
 @media(prefers-reduced-motion:reduce){.wp-skeleton-row i{animation:none}}
 .reviewer-shell .wp-page button.primary,.reviewer-shell .wp-page button.secondary,.reviewer-shell .wp-page .danger-link,.reviewer-shell .wp-drawer button.primary,.reviewer-shell .wp-drawer button.secondary,.reviewer-shell .wp-drawer .danger-link{display:inline-block!important}
 
+/* Reglas de adherencia (admin, solo lectura) */
+.wp-config{margin:8px 0 28px;display:grid;gap:14px}
+.wp-config-head h2{margin:6px 0 4px;font-size:22px}
+.wp-config-head p{margin:0;max-width:62ch;font-size:11px;color:var(--muted)}
+.wp-config-readonly{padding:12px 14px;border:1px solid #443a24;border-radius:12px;background:linear-gradient(145deg,#17150e,#11120f)}
+.wp-config-readonly b{display:block;color:var(--amber);font-size:12px;margin-bottom:4px}
+.wp-config-readonly p{margin:0;font-size:11px;color:#c5d0c9;line-height:1.45}
+.wp-config-readonly code{display:inline;font-size:10px;color:var(--amber);word-break:break-word}
+.wp-config-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.wp-config-list li{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:12px;align-items:start;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.wp-config-list h3{margin:0 0 4px;font-size:13px}
+.wp-config-list p{margin:0;font-size:10px;color:var(--muted);line-height:1.4}
+.wp-config-list strong{font-size:12px;color:var(--green);text-align:right;line-height:1.35}
+.habit-choice.with-rest{width:96px;grid-template-columns:1fr 1fr 1fr}
+.habit-choice.rest{border-color:#5c5c5c;background:#1a1f1c}
+.habit-choice.with-rest button:nth-child(3).selected{background:#2a322c;color:#c5d0c9}
+.training-review-grid article.rest{border-color:#5c5c5c}
+.effective-from-field{display:grid;gap:4px;font-size:10px;color:var(--muted);min-width:160px;margin-right:10px}
+.effective-from-field input{background:#0b0f0c;border:1px solid #2c352f;border-radius:8px;color:var(--text);padding:8px 10px;font-size:13px}
+.effective-from-field small{font-size:9px;color:var(--muted)}
+.professional-approval-bar{flex-wrap:wrap;gap:10px}
+@media(max-width:767px){
+  .wp-config-list li{grid-template-columns:1fr}
+  .wp-config-list strong{text-align:left}
+  .habit-choice.with-rest{width:78px}
+  .effective-from-field{width:100%;margin-right:0}
+}
+

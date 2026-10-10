@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { fetchWeek, fetchWeeks } from "./api";
 import { PanelLegend } from "./Legend";
+import { PanelConfigView } from "./PanelConfigView";
 import { ParticipantCards } from "./ParticipantCards";
 import { StatusFilters } from "./StatusFilters";
 import { StudentDrawer } from "./StudentDrawer";
@@ -33,11 +34,16 @@ export function WeeklyPanel({
   const [error, setError] = useState("");
   const [weeksError, setWeeksError] = useState("");
   const [reload, setReload] = useState(0);
+  const [showConfig, setShowConfig] = useState(false);
   const weekGen = useRef(0);
 
   // Marce 07-10: admin, coach y nutri ven la ficha completa (rutina y macros).
   const showRoutine = true;
   const showNutrition = true;
+  const isAdmin = role === "admin";
+  // Cerrada si el backend lo marca, o si no es la semana en curso (compat. sin is_closed).
+  const weekClosed =
+    Boolean(weekData?.week.is_closed) || weekData?.week.is_current === false;
 
   useEffect(() => {
     const ac = new AbortController();
@@ -100,7 +106,20 @@ export function WeeklyPanel({
             porcentajes y colores salen del servidor.
           </p>
         </div>
+        {isAdmin ? (
+          <button
+            type="button"
+            className="secondary"
+            onClick={() => setShowConfig((v) => !v)}
+            aria-expanded={showConfig}
+          >
+            {showConfig ? "Volver al panel" : "Reglas de adherencia"}
+          </button>
+        ) : null}
       </div>
+      {showConfig && isAdmin ? <PanelConfigView config={config} /> : null}
+      {!showConfig ? (
+        <>
       {weeksError ? (
         <RetryError message={weeksError} onRetry={() => window.location.reload()} />
       ) : (
@@ -143,7 +162,11 @@ export function WeeklyPanel({
           />
         )
       ) : null}
-      <PanelLegend greenGt={config.thresholds.green_gt} yellowGte={config.thresholds.yellow_gte} />
+      <PanelLegend
+        greenGt={config.thresholds.green_gt}
+        yellowGte={config.thresholds.yellow_gte}
+        config={config}
+      />
       {selectedClientId != null && weekStart ? (
         <StudentDrawer
           key={selectedClientId}
@@ -159,10 +182,14 @@ export function WeeklyPanel({
           showRoutine={showRoutine}
           showNutrition={showNutrition}
           isMobile={mobile}
+          weekClosed={weekClosed}
+          defaultSessionsPerWeek={config.default_sessions_per_week}
           onWeekChange={setWeekStart}
           onSelectClient={setSelectedClientId}
           onClose={() => setSelectedClientId(null)}
         />
+      ) : null}
+        </>
       ) : null}
     </div>
   );

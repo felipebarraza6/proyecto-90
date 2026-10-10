@@ -30,11 +30,13 @@ export function HabitPlanEditor({
   clientId,
   weekStart,
   challengeStart,
+  defaultSessionsPerWeek = 3,
   onSaved,
 }: {
   clientId: number;
   weekStart: string;
   challengeStart: string | null;
+  defaultSessionsPerWeek?: number;
   onSaved: () => void;
 }) {
   const [loading, setLoading] = useState(true);
@@ -43,6 +45,7 @@ export function HabitPlanEditor({
   const [ok, setOk] = useState(false);
   const [rest, setRest] = useState<number[]>([]);
   const [waterL, setWaterL] = useState("2");
+  const [sessions, setSessions] = useState("3");
   const [fromMode, setFromMode] = useState<"start" | "week" | "date">("week");
   const [customDate, setCustomDate] = useState(weekStart);
   const [hasPrior, setHasPrior] = useState(false);
@@ -60,6 +63,12 @@ export function HabitPlanEditor({
         setRest(current?.rest_weekdays ? [...current.rest_weekdays] : []);
         const defaultMl = current?.water_goal_ml ?? res.defaults?.water_goal_ml ?? 2000;
         setWaterL(mlToLiters(defaultMl) || "2");
+        const sessionsValue =
+          current?.sessions_per_week ??
+          res.defaults?.sessions_per_week ??
+          defaultSessionsPerWeek ??
+          3;
+        setSessions(String(Math.min(7, Math.max(1, Number(sessionsValue) || 3))));
         setFromMode(prior ? "week" : "start");
         setCustomDate(weekStart);
       })
@@ -69,7 +78,7 @@ export function HabitPlanEditor({
       })
       .finally(() => setLoading(false));
     return () => ac.abort();
-  }, [clientId, weekStart]);
+  }, [clientId, weekStart, defaultSessionsPerWeek]);
 
   function toggleDay(day: number) {
     setRest((prev) => {
@@ -87,6 +96,7 @@ export function HabitPlanEditor({
     setError("");
     setOk(false);
     const waterMl = litersToMl(waterL);
+    const sessionsN = Math.min(7, Math.max(1, Math.round(Number(sessions) || 3)));
     let effectiveFrom: string | null = null;
     if (fromMode === "start") effectiveFrom = challengeStart;
     else if (fromMode === "week") effectiveFrom = weekStart;
@@ -95,6 +105,7 @@ export function HabitPlanEditor({
       await saveHabitPlan(clientId, {
         rest_weekdays: rest,
         water_goal_ml: waterMl,
+        sessions_per_week: sessionsN,
         effective_from: effectiveFrom,
       });
       setOk(true);
@@ -145,6 +156,25 @@ export function HabitPlanEditor({
           }}
           disabled={loading || saving}
         />
+      </label>
+      <label className="wp-habit-field">
+        Sesiones de entreno por semana
+        <input
+          type="number"
+          min={1}
+          max={7}
+          step={1}
+          value={sessions}
+          onChange={(e) => {
+            setSessions(e.target.value);
+            setOk(false);
+          }}
+          disabled={loading || saving}
+          aria-describedby="wp-sessions-hint"
+        />
+        <small id="wp-sessions-hint" className="wp-habit-hint">
+          Entre 1 y 7. Define cuántos entrenamientos se esperan en la semana.
+        </small>
       </label>
       <label className="wp-habit-field">
         Aplicar desde

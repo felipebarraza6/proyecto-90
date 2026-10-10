@@ -1,3 +1,10 @@
+import {
+  macrosDayStatus,
+  PANEL_CONFIG_DEFAULTS,
+  type MacroKey,
+} from "./weekly-panel/panelConfig";
+import type { PanelConfig } from "./weekly-panel/types";
+
 export type Row = Record<string, unknown>;
 export type AlertHabit = "training" | "macros";
 
@@ -46,23 +53,37 @@ export function buildEffectiveRecords(
   people: Row[],
   records: Row[],
   nutritionRecords: Row[],
+  panelConfig?: PanelConfig | null,
 ) {
+  const macroCfg = {
+    macro_met_requires: panelConfig?.macro_met_requires || PANEL_CONFIG_DEFAULTS.macro_met_requires,
+    macro_ranges: panelConfig?.macro_ranges || PANEL_CONFIG_DEFAULTS.macro_ranges,
+    calories_min_enabled:
+      panelConfig?.calories_min_enabled ?? PANEL_CONFIG_DEFAULTS.calories_min_enabled,
+    calories_low_ratio: panelConfig?.calories_low_ratio ?? PANEL_CONFIG_DEFAULTS.calories_low_ratio,
+  };
   const calculated = nutritionRecords.flatMap((row) => {
     const person = people.find((item) => String(item.id) === String(row.user_id));
-    const calories = Number(row.calories || 0);
-    const protein = Number(row.protein || 0);
-    const targetCalories = Number(person?.calories || 0);
-    const targetProtein = Number(person?.protein || 0);
-    if (!targetCalories || !targetProtein) return [];
+    const targets: Partial<Record<MacroKey, number>> = {
+      calories: Number(person?.calories || 0),
+      protein: Number(person?.protein || 0),
+      carbs: Number(person?.carbs || 0),
+      fats: Number(person?.fats || 0),
+    };
+    const values: Partial<Record<MacroKey, number>> = {
+      calories: Number(row.calories || 0),
+      protein: Number(row.protein || 0),
+      carbs: Number(row.carbs || 0),
+      fats: Number(row.fats || 0),
+    };
+    const status = macrosDayStatus(values, targets, macroCfg);
+    if (status === "empty") return [];
     return [
       {
         user_id: row.user_id,
         habit: "macros",
         habit_date: row.log_date,
-        status:
-          calories > targetCalories * 1.1 || protein < targetProtein * 0.9
-            ? "missed"
-            : "met",
+        status,
       },
     ];
   });
@@ -74,6 +95,7 @@ export function computeAdherenceAlerts(
   records: Row[],
   nutritionRecords: Row[],
   habits: AlertHabit[] = ["training", "macros"],
+  panelConfig?: PanelConfig | null,
 ) {
   const today = chileToday();
   const currentMonday = mondayOf(new Date(`${today}T12:00:00Z`));
@@ -81,7 +103,7 @@ export function computeAdherenceAlerts(
   const closedDays = days.filter((day) => iso(day) < today);
   const cutoff = iso(addDays(new Date(`${today}T12:00:00Z`), -2));
   const overdueDays = days.filter((day) => iso(day) <= cutoff);
-  const effective = buildEffectiveRecords(people, records, nutritionRecords);
+  const effective = buildEffectiveRecords(people, records, nutritionRecords, panelConfig);
   const lookup = new Map(
     effective.map((row) => [`${row.user_id}:${row.habit}:${row.habit_date}`, String(row.status)]),
   );

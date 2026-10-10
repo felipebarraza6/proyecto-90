@@ -80,10 +80,12 @@ export function StudentFacts({
   data,
   showRoutine,
   showNutrition,
+  weekClosed,
 }: {
   data: StudentWeekResponse;
   showRoutine: boolean;
   showNutrition: boolean;
+  weekClosed?: boolean;
 }) {
   const { profile, weekly, training_progress: progress } = data;
   const changed = profile.nutrition_targets.changed_in_week || [];
@@ -139,7 +141,7 @@ export function StudentFacts({
         </div>
         <div>
           <dt>Objetivo</dt>
-          <dd>{profile.goal || "—"}</dd>
+          <dd>{(profile.goal || profile.objective || "").trim() || "—"}</dd>
         </div>
         <div>
           <dt>Inicio del desafío</dt>
@@ -158,7 +160,9 @@ export function StudentFacts({
           <dt>Entrenamientos</dt>
           <dd>
             {progress.done} de {progress.planned ?? "—"}
-            {progress.partial ? <small>Avance parcial (semana en curso)</small> : null}
+            {progress.partial && !weekClosed ? (
+              <small>Avance parcial (semana en curso)</small>
+            ) : null}
           </dd>
         </div>
         {showRoutine ? (
@@ -208,9 +212,6 @@ export function StudentFacts({
             {profile.nutrition_targets.effective_from
               ? `Vigente desde ${formatDateShort(profile.nutrition_targets.effective_from)}`
               : "Sin meta vigente"}
-            {profile.nutrition_targets.approved_by
-              ? ` · ${profile.nutrition_targets.approved_by}`
-              : ""}
           </p>
           {changed.length > 0 ? (
             <p className="wp-changed">

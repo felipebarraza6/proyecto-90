@@ -25,6 +25,30 @@ export type HabitStatus =
   | "due";
 export type StudentStatus = "missing_report" | "at_risk" | "no_due_days";
 
+export type HabitWeights = {
+  training: number;
+  macros: number;
+  water: number;
+};
+
+export type MacroRange = {
+  min: number | null;
+  max: number | null;
+};
+
+export type MacroRanges = {
+  calories: MacroRange;
+  protein: MacroRange;
+  carbs: MacroRange;
+  fats: MacroRange;
+};
+
+export type MacroMetKey = keyof MacroRanges;
+
+/**
+ * Config del panel. Tras `normalizePanelConfig` todos los campos nuevos
+ * están presentes (defaults del PR #80 / reglas actuales si la API aún no los manda).
+ */
 export type PanelConfig = {
   panel_enabled: boolean;
   thresholds: { green_gt: number; yellow_gte: number; risk: number };
@@ -34,6 +58,21 @@ export type PanelConfig = {
   ai_summary_enabled: boolean;
   can_comment: boolean;
   comment_delete_policy: string;
+  habit_weights: HabitWeights;
+  partial_day_policy: string;
+  missing_day_policy: string;
+  macro_met_requires: MacroMetKey[];
+  macro_ranges: MacroRanges;
+  calories_min_enabled: boolean;
+  calories_low_ratio: number;
+  calories_low_alert_enabled: boolean;
+  goal_resolution: string;
+  summary_avg_mode: string;
+  allow_student_rest: boolean;
+  rest_day_counts: string;
+  default_water_goal_ml: number;
+  default_sessions_per_week: number;
+  training_mode: string;
 };
 
 export type WeekOption = { start: string; end: string; label: string };
@@ -61,7 +100,13 @@ export type PanelRow = {
 };
 
 export type WeekResponse = {
-  week: { start: string; end: string; label: string; is_current: boolean };
+  week: {
+    start: string;
+    end: string;
+    label: string;
+    is_current: boolean;
+    is_closed?: boolean;
+  };
   generated_at: string;
   summary: {
     participants: number;
@@ -118,12 +163,13 @@ export type HabitPlanResponse = {
   current: HabitPlanRecord | null;
   history: HabitPlanRecord[];
   can_edit: boolean;
-  defaults: { water_goal_ml: number };
+  defaults: { water_goal_ml: number; sessions_per_week?: number };
 };
 
 export type HabitPlanSaveBody = {
   rest_weekdays: number[];
   water_goal_ml: number | null;
+  sessions_per_week?: number | null;
   effective_from: string | null;
   note?: string;
 };
@@ -165,6 +211,8 @@ export type StudentWeekResponse = {
     weight: WeightBlock;
     height_cm: number | null;
     goal: string;
+    /** Fallback si el backend aún no mapea objective → goal. */
+    objective?: string | null;
     challenge_start: string | null;
     challenge_day: number | null;
     challenge_week: number | null;
@@ -180,7 +228,8 @@ export type StudentWeekResponse = {
       carbs: number | null;
       fats: number | null;
       effective_from: string | null;
-      approved_by: string | null;
+      /** Obsoleto (PR #80): el front ya no lo muestra. */
+      approved_by?: string | null;
       changed_in_week: string[];
     };
     habit_plan: HabitPlan;
@@ -231,6 +280,8 @@ export type AnalysisResponse = {
   summary_text?: string;
   summary_engine?: "template" | "llm" | string;
   partial?: boolean;
+  /** Semana cerrada (PR #80): no mostrar «Parcial · semana en curso». */
+  week_closed?: boolean;
   advice?: string[];
   overview?: Record<string, unknown> | null;
   disclaimer?: string;
