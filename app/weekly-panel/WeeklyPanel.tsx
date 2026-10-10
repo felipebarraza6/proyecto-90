@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { fetchWeek, fetchWeeks } from "./api";
+import { fetchPanelConfig, fetchWeek, fetchWeeks } from "./api";
 import { PanelLegend } from "./Legend";
 import { PanelConfigView } from "./PanelConfigView";
 import { ParticipantCards } from "./ParticipantCards";
@@ -18,11 +18,13 @@ export function WeeklyPanel({
   role,
   specialty,
   config,
+  onConfigChange,
 }: {
   viewerId: string;
   role: string;
   specialty?: string;
   config: PanelConfig;
+  onConfigChange?: (next: PanelConfig) => void;
 }) {
   const { weekStart, filter, selectedClientId, setWeekStart, setFilter, setSelectedClientId } =
     usePanelWeek();
@@ -117,7 +119,21 @@ export function WeeklyPanel({
           </button>
         ) : null}
       </div>
-      {showConfig && isAdmin ? <PanelConfigView config={config} /> : null}
+      {showConfig && isAdmin ? (
+        <PanelConfigView
+          config={config}
+          onSaved={async (next) => {
+            onConfigChange?.(next);
+            try {
+              const fresh = await fetchPanelConfig();
+              onConfigChange?.(fresh);
+            } catch {
+              /* Se conserva la respuesta del PATCH. */
+            }
+            setReload((n) => n + 1);
+          }}
+        />
+      ) : null}
       {!showConfig ? (
         <>
       {weeksError ? (

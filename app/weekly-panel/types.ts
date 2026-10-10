@@ -58,6 +58,8 @@ export type PanelConfig = {
   ai_summary_enabled: boolean;
   can_comment: boolean;
   comment_delete_policy: string;
+  /** Versión optimista del backend (PR #80); no se envía en PATCH. */
+  config_version?: number;
   habit_weights: HabitWeights;
   partial_day_policy: string;
   missing_day_policy: string;
@@ -74,6 +76,11 @@ export type PanelConfig = {
   default_sessions_per_week: number;
   training_mode: string;
 };
+
+/** Body parcial de PATCH /api/p90/panel/config (sin can_comment ni config_version). */
+export type PanelConfigPatch = Partial<
+  Omit<PanelConfig, "can_comment" | "config_version">
+>;
 
 export type WeekOption = { start: string; end: string; label: string };
 

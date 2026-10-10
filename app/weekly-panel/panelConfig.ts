@@ -2,9 +2,9 @@
  * Contrato de PanelConfig ampliado (backend PR #80) + defaults compatibles
  * con producción actual (mismas reglas documentadas en gaps-marce-0710).
  *
- * Escritura: en producción `Allow: GET, HEAD, OPTIONS` sobre
- * `/api/p90/panel/config`. No hay PUT/PATCH/POST de escritura; la UI admin
- * es de solo lectura hasta que el backend exponga uno.
+ * Escritura: PATCH /api/p90/panel/config (solo admin). Body parcial de los
+ * mismos campos del GET salvo can_comment y config_version. Si prod aún
+ * responde 405 / Allow sin PATCH, la UI queda en solo lectura.
  */
 
 import type {
@@ -153,6 +153,8 @@ export function normalizePanelConfig(raw: Partial<PanelConfig> | null | undefine
       PANEL_CONFIG_DEFAULTS.default_sessions_per_week,
     ),
     training_mode: asString(base.training_mode, PANEL_CONFIG_DEFAULTS.training_mode),
+    config_version:
+      base.config_version == null ? undefined : asNumber(base.config_version, 0),
   };
 }
 
@@ -269,6 +271,41 @@ export function macroKeyLabel(key: MacroKey): string {
   return map[key];
 }
 
-/** Endpoint de escritura que falta en el backend (prod y PR #80 según Allow actual). */
-export const PANEL_CONFIG_WRITE_ENDPOINT_MISSING =
-  "PUT o PATCH /api/p90/panel/config (admin) — hoy solo existe GET; Allow: GET, HEAD, OPTIONS";
+export const PANEL_CONFIG_PATCH_ENDPOINT = "PATCH /api/p90/panel/config";
+
+/** Opciones de enums con copy claro para el coach. */
+export const POLICY_OPTIONS = {
+  partial_day_policy: [
+    { value: "exclude", label: "Se excluye (no cuenta en el promedio)" },
+    { value: "zero", label: "Cuenta como 0 %" },
+    { value: "partial", label: "Cuenta como parcial" },
+  ],
+  missing_day_policy: [
+    { value: "exclude", label: "Se excluye (no cuenta en el promedio)" },
+    { value: "zero", label: "Cuenta como 0 %" },
+  ],
+  rest_day_counts: [
+    { value: "exclude", label: "Se excluye (no cuenta)" },
+    { value: "met", label: "Cuenta como cumplido (✓)" },
+    { value: "zero", label: "Cuenta como 0 %" },
+  ],
+  goal_resolution: [
+    { value: "daily", label: "Meta vigente cada día" },
+    { value: "latest", label: "Última meta aprobada" },
+    { value: "week_end", label: "Meta al cierre de la semana" },
+  ],
+  summary_avg_mode: [
+    { value: "days_with_pct", label: "Promedio de días con %" },
+    { value: "all_due_days", label: "Promedio de todos los días exigibles" },
+  ],
+  training_mode: [
+    { value: "sessions_per_week", label: "Sesiones por semana" },
+    { value: "rest_weekdays", label: "Días fijos de descanso" },
+  ],
+} as const;
+
+export const MACRO_KEYS: MacroKey[] = ["calories", "protein", "carbs", "fats"];
+
+export function deepEqual(a: unknown, b: unknown): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
+}

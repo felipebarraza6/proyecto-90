@@ -473,19 +473,48 @@
 @media(prefers-reduced-motion:reduce){.wp-skeleton-row i{animation:none}}
 .reviewer-shell .wp-page button.primary,.reviewer-shell .wp-page button.secondary,.reviewer-shell .wp-page .danger-link,.reviewer-shell .wp-drawer button.primary,.reviewer-shell .wp-drawer button.secondary,.reviewer-shell .wp-drawer .danger-link{display:inline-block!important}
 
-/* Reglas de adherencia (admin, solo lectura) */
+/* Reglas de adherencia (admin) */
 .wp-config{margin:8px 0 28px;display:grid;gap:14px}
 .wp-config-head h2{margin:6px 0 4px;font-size:22px}
 .wp-config-head p{margin:0;max-width:62ch;font-size:11px;color:var(--muted)}
-.wp-config-readonly{padding:12px 14px;border:1px solid #443a24;border-radius:12px;background:linear-gradient(145deg,#17150e,#11120f)}
-.wp-config-readonly b{display:block;color:var(--amber);font-size:12px;margin-bottom:4px}
-.wp-config-readonly p{margin:0;font-size:11px;color:#c5d0c9;line-height:1.45}
+.wp-config-version{margin-top:6px!important;font-size:10px!important;color:var(--green)!important}
+.wp-config-readonly,.wp-config-warn{padding:12px 14px;border-radius:12px}
+.wp-config-readonly{border:1px solid #443a24;background:linear-gradient(145deg,#17150e,#11120f)}
+.wp-config-warn{border:1px solid #2a4633;background:linear-gradient(145deg,#101712,#0c110e)}
+.wp-config-readonly b,.wp-config-warn b{display:block;font-size:12px;margin-bottom:4px}
+.wp-config-readonly b{color:var(--amber)}
+.wp-config-warn b{color:var(--green)}
+.wp-config-readonly p,.wp-config-warn p{margin:0;font-size:11px;color:#c5d0c9;line-height:1.45}
 .wp-config-readonly code{display:inline;font-size:10px;color:var(--amber);word-break:break-word}
 .wp-config-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
 .wp-config-list li{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:12px;align-items:start;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
 .wp-config-list h3{margin:0 0 4px;font-size:13px}
 .wp-config-list p{margin:0;font-size:10px;color:var(--muted);line-height:1.4}
 .wp-config-list strong{font-size:12px;color:var(--green);text-align:right;line-height:1.35}
+.wp-config-form{display:grid;gap:12px}
+.wp-config-block{margin:0;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);display:grid;gap:10px}
+.wp-config-block legend{padding:0 4px;font-size:12px;font-weight:700;color:var(--green)}
+.wp-config-help{margin:0;font-size:10px;color:var(--muted);line-height:1.4}
+.wp-config-grid{display:grid;gap:10px}
+.wp-config-grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.wp-config-grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.wp-config-block label{display:grid;gap:5px;font-size:10px;color:var(--muted)}
+.wp-config-block input[type="number"],.wp-config-block select{background:#0b0f0c;border:1px solid #2c352f;border-radius:8px;color:var(--text);padding:9px 11px;font-size:13px}
+.wp-config-checks{display:grid;gap:6px}
+.wp-config-check{display:flex!important;align-items:center;gap:8px;font-size:12px!important;color:var(--text)!important}
+.wp-config-check input{width:16px;height:16px}
+.wp-config-ranges{display:grid;gap:8px}
+.wp-config-range-row{display:grid;grid-template-columns:110px 1fr 1fr;gap:8px;align-items:end}
+.wp-config-range-row b{font-size:12px;padding-bottom:8px}
+.wp-config-switch-row{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px;padding:4px 0}
+.wp-config-switch{display:inline-flex;align-items:center;gap:8px;border:1px solid #2c352f;border-radius:999px;background:#0b0f0c;color:var(--muted);padding:4px 10px 4px 4px;font-size:11px}
+.wp-config-switch i{width:28px;height:18px;border-radius:999px;background:#1a1f1c;position:relative;display:block}
+.wp-config-switch i::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#59645e;transition:left .15s}
+.wp-config-switch.on{border-color:#275b38;color:var(--green)}
+.wp-config-switch.on i{background:#13271a}
+.wp-config-switch.on i::after{left:12px;background:var(--green)}
+.wp-config-field-error{margin:0;font-size:10px;color:var(--red)}
+.wp-config-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
 .habit-choice.with-rest{width:96px;grid-template-columns:1fr 1fr 1fr}
 .habit-choice.rest{border-color:#5c5c5c;background:#1a1f1c}
 .habit-choice.with-rest button:nth-child(3).selected{background:#2a322c;color:#c5d0c9}
@@ -497,6 +526,9 @@
 @media(max-width:767px){
   .wp-config-list li{grid-template-columns:1fr}
   .wp-config-list strong{text-align:left}
+  .wp-config-grid.two,.wp-config-grid.three,.wp-config-range-row{grid-template-columns:1fr}
+  .wp-config-actions{flex-direction:column-reverse}
+  .wp-config-actions button{width:100%}
   .habit-choice.with-rest{width:78px}
   .effective-from-field{width:100%;margin-right:0}
 }
