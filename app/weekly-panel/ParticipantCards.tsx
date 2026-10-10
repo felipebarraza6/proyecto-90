@@ -1,4 +1,5 @@
 import { formatPct } from "./format";
+import { usePanelStats } from "./PanelStatsContext";
 import { MiniDayChips, StatusBadges } from "./ui";
 import type { PanelRow } from "./types";
 
@@ -22,6 +23,7 @@ export function ParticipantCards({
   showEmail: boolean;
   onOpen: (clientId: number) => void;
 }) {
+  const { percent_decimals } = usePanelStats();
   return (
     <ul className="wp-cards">
       {rows.map((row) => (
@@ -34,7 +36,7 @@ export function ParticipantCards({
                 {showEmail ? <small>{row.email}</small> : null}
               </span>
               <strong className={`wp-week-pct ${row.weekly.color}`}>
-                {formatPct(row.weekly.pct)}
+                {formatPct(row.weekly.pct, percent_decimals)}
               </strong>
             </header>
             <MiniDayChips days={row.days} />

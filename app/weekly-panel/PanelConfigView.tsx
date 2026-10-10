@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { PanelApiError, patchPanelConfig, probePanelConfigWritable } from "./api";
 import {
   deepEqual,
@@ -187,30 +187,135 @@ function Switch({
   );
 }
 
+function ConfigSection({
+  id,
+  title,
+  help,
+  children,
+}: {
+  id: string;
+  title: string;
+  help?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="wp-config-section" aria-labelledby={id}>
+      <header className="wp-config-section-head">
+        <h3 id={id}>{title}</h3>
+        {help ? <p>{help}</p> : null}
+      </header>
+      <div className="wp-config-section-body">{children}</div>
+    </section>
+  );
+}
+
+function PendingFields({ items }: { items: string[] }) {
+  return (
+    <div className="wp-config-pending" role="note">
+      <b>Campos pendientes en el backend</b>
+      <p>
+        Cuando el PR #80 agregue estos campos, aparecerán aquí editables. Mientras tanto siguen fijos
+        en el front (ver auditoría).
+      </p>
+      <ul>
+        {items.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function ReadOnlyRows({ config }: { config: PanelConfig }) {
   const draft = toDraft(config);
   return (
-    <ul className="wp-config-list">
-      <li>
-        <div>
-          <h3>Pesos de la adherencia total</h3>
-          <p>Cuánto pesa cada hábito en el % total.</p>
-        </div>
-        <strong>{habitWeightsFormulaText(draft.habit_weights)}</strong>
-      </li>
-      <li>
-        <div>
-          <h3>Macros que definen el cumplimiento</h3>
-        </div>
-        <strong>{draft.macro_met_requires.map(macroKeyLabel).join(", ")}</strong>
-      </li>
-      <li>
-        <div>
-          <h3>Alumno puede marcar Descanso</h3>
-        </div>
-        <strong>{draft.allow_student_rest ? "Sí" : "No"}</strong>
-      </li>
-    </ul>
+    <div className="wp-config-readonly-sections">
+      <ConfigSection id="ro-formula" title="Fórmula y semáforo">
+        <ul className="wp-config-list">
+          <li>
+            <div>
+              <h3>Pesos de la adherencia total</h3>
+              <p>Cuánto pesa cada hábito en el % total.</p>
+            </div>
+            <strong>{habitWeightsFormulaText(draft.habit_weights)}</strong>
+          </li>
+          <li>
+            <div>
+              <h3>Semáforo</h3>
+            </div>
+            <strong>
+              Verde &gt; {draft.thresholds.green_gt} · Amarillo ≥ {draft.thresholds.yellow_gte} ·
+              Riesgo &lt; {draft.thresholds.risk}
+            </strong>
+          </li>
+        </ul>
+      </ConfigSection>
+      <ConfigSection id="ro-macros" title="Macros">
+        <ul className="wp-config-list">
+          <li>
+            <div>
+              <h3>Macros que definen el cumplimiento</h3>
+            </div>
+            <strong>{draft.macro_met_requires.map(macroKeyLabel).join(", ")}</strong>
+          </li>
+        </ul>
+      </ConfigSection>
+      <ConfigSection id="ro-entreno" title="Entreno y descansos">
+        <ul className="wp-config-list">
+          <li>
+            <div>
+              <h3>Alumno puede marcar Descanso</h3>
+            </div>
+            <strong>{draft.allow_student_rest ? "Sí" : "No"}</strong>
+          </li>
+          <li>
+            <div>
+              <h3>Sesiones por semana (default)</h3>
+            </div>
+            <strong>{draft.default_sessions_per_week}</strong>
+          </li>
+        </ul>
+      </ConfigSection>
+      <ConfigSection id="ro-agua" title="Agua">
+        <ul className="wp-config-list">
+          <li>
+            <div>
+              <h3>Meta de agua por defecto</h3>
+            </div>
+            <strong>{draft.default_water_goal_ml / 1000} L/día</strong>
+          </li>
+        </ul>
+      </ConfigSection>
+      <ConfigSection id="ro-alertas" title="Alertas">
+        <ul className="wp-config-list">
+          <li>
+            <div>
+              <h3>Alerta por calorías bajas</h3>
+            </div>
+            <strong>{draft.calories_low_alert_enabled ? "Sí" : "No"}</strong>
+          </li>
+        </ul>
+        <PendingFields
+          items={[
+            "Racha de incumplimientos (hoy: 3 días)",
+            "Ventana «falta reportar» (hoy: 48 h)",
+          ]}
+        />
+      </ConfigSection>
+      <ConfigSection id="ro-hitos" title="Hitos">
+        <PendingFields items={["Días de hito (hoy: 30 / 60 / 90)", "Duración del desafío (hoy: 90 días)"]} />
+      </ConfigSection>
+      <ConfigSection id="ro-ia" title="Análisis IA">
+        <ul className="wp-config-list">
+          <li>
+            <div>
+              <h3>Resumen con IA</h3>
+            </div>
+            <strong>{draft.ai_summary_enabled ? "Sí" : "No"}</strong>
+          </li>
+        </ul>
+      </ConfigSection>
+    </div>
   );
 }
 
@@ -272,7 +377,12 @@ export function PanelConfigView({
         ...prev.macro_ranges,
         [key]: {
           ...prev.macro_ranges[key],
-          [side]: pctRaw.trim() === "" ? null : Number.isFinite(ratio as number) ? ratio : prev.macro_ranges[key][side],
+          [side]:
+            pctRaw.trim() === ""
+              ? null
+              : Number.isFinite(ratio as number)
+                ? ratio
+                : prev.macro_ranges[key][side],
         },
       },
     }));
@@ -371,152 +481,405 @@ export function PanelConfigView({
         <ReadOnlyRows config={config} />
       ) : (
         <form className="wp-config-form" onSubmit={onSubmit} noValidate>
-          <fieldset className="wp-config-block" disabled={saving}>
-            <legend>Pesos de la adherencia total</legend>
-            <p className="wp-config-help">
-              Deben sumar 100 %. Vista previa: {habitWeightsFormulaText(draft.habit_weights)}
-            </p>
-            <div className="wp-config-grid three">
-              {(["training", "macros", "water"] as const).map((key) => (
-                <label key={key}>
-                  {key === "training" ? "Entreno %" : key === "macros" ? "Macros %" : "Agua %"}
+          <ConfigSection
+            id="sec-formula"
+            title="Fórmula y semáforo"
+            help="Pesos del % total, políticas de promedio y cortes de color."
+          >
+            <fieldset className="wp-config-block" disabled={saving}>
+              <legend>Pesos de la adherencia total</legend>
+              <p className="wp-config-help">
+                Deben sumar 100 %. Vista previa: {habitWeightsFormulaText(draft.habit_weights)}
+              </p>
+              <div className="wp-config-grid three">
+                {(["training", "macros", "water"] as const).map((key) => (
+                  <label key={key}>
+                    {key === "training" ? "Entreno %" : key === "macros" ? "Macros %" : "Agua %"}
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      step={1}
+                      value={ratioToPct(draft.habit_weights[key])}
+                      onChange={(e) => setWeight(key, e.target.value)}
+                    />
+                  </label>
+                ))}
+              </div>
+              <FieldError id="habit_weights" errors={errors} />
+            </fieldset>
+
+            <fieldset className="wp-config-block" disabled={saving}>
+              <legend>Días parciales, sin reporte y promedio</legend>
+              <div className="wp-config-grid two">
+                <label>
+                  Día parcial (semana en curso)
+                  <select
+                    value={draft.partial_day_policy}
+                    onChange={(e) => {
+                      setDraft((p) => ({ ...p, partial_day_policy: e.target.value }));
+                      setOk(false);
+                    }}
+                  >
+                    {POLICY_OPTIONS.partial_day_policy.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Día sin reporte
+                  <select
+                    value={draft.missing_day_policy}
+                    onChange={(e) => {
+                      setDraft((p) => ({ ...p, missing_day_policy: e.target.value }));
+                      setOk(false);
+                    }}
+                  >
+                    {POLICY_OPTIONS.missing_day_policy.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Promedio semanal
+                  <select
+                    value={draft.summary_avg_mode}
+                    onChange={(e) => {
+                      setDraft((p) => ({ ...p, summary_avg_mode: e.target.value }));
+                      setOk(false);
+                    }}
+                  >
+                    {POLICY_OPTIONS.summary_avg_mode.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Decimales del %
+                  <input
+                    type="number"
+                    min={0}
+                    max={2}
+                    step={1}
+                    value={draft.percent_decimals}
+                    onChange={(e) => {
+                      setDraft((p) => ({ ...p, percent_decimals: Number(e.target.value) }));
+                      setOk(false);
+                    }}
+                  />
+                </label>
+              </div>
+              <FieldError id="percent_decimals" errors={errors} />
+            </fieldset>
+
+            <fieldset className="wp-config-block" disabled={saving}>
+              <legend>Semáforo y vista del panel</legend>
+              <div className="wp-config-grid three">
+                <label>
+                  Verde si &gt;
                   <input
                     type="number"
                     min={0}
                     max={100}
-                    step={1}
-                    value={ratioToPct(draft.habit_weights[key])}
-                    onChange={(e) => setWeight(key, e.target.value)}
+                    step={0.1}
+                    value={draft.thresholds.green_gt}
+                    onChange={(e) => {
+                      setDraft((p) => ({
+                        ...p,
+                        thresholds: { ...p.thresholds, green_gt: Number(e.target.value) },
+                      }));
+                      setOk(false);
+                    }}
                   />
                 </label>
-              ))}
-            </div>
-            <FieldError id="habit_weights" errors={errors} />
-          </fieldset>
-
-          <fieldset className="wp-config-block" disabled={saving}>
-            <legend>Días parciales y sin reporte</legend>
-            <div className="wp-config-grid two">
-              <label>
-                Día parcial (semana en curso)
-                <select
-                  value={draft.partial_day_policy}
-                  onChange={(e) => {
-                    setDraft((p) => ({ ...p, partial_day_policy: e.target.value }));
-                    setOk(false);
-                  }}
-                >
-                  {POLICY_OPTIONS.partial_day_policy.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Día sin reporte
-                <select
-                  value={draft.missing_day_policy}
-                  onChange={(e) => {
-                    setDraft((p) => ({ ...p, missing_day_policy: e.target.value }));
-                    setOk(false);
-                  }}
-                >
-                  {POLICY_OPTIONS.missing_day_policy.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-          </fieldset>
-
-          <fieldset className="wp-config-block" disabled={saving}>
-            <legend>Macros · cumplimiento y rangos</legend>
-            <p className="wp-config-help">
-              Solo las macros marcadas deciden el ✓ / ✗ del día. Los rangos se expresan como % de la
-              meta (vacío = sin umbral).
-            </p>
-            <div className="wp-config-checks">
-              {MACRO_KEYS.map((key) => (
-                <label key={key} className="wp-config-check">
+                <label>
+                  Amarillo si ≥
                   <input
-                    type="checkbox"
-                    checked={draft.macro_met_requires.includes(key)}
-                    onChange={() => toggleMacroRequire(key)}
+                    type="number"
+                    min={0}
+                    max={100}
+                    step={0.1}
+                    value={draft.thresholds.yellow_gte}
+                    onChange={(e) => {
+                      setDraft((p) => ({
+                        ...p,
+                        thresholds: { ...p.thresholds, yellow_gte: Number(e.target.value) },
+                      }));
+                      setOk(false);
+                    }}
                   />
-                  {macroKeyLabel(key)} decide el cumplimiento
                 </label>
-              ))}
-            </div>
-            <FieldError id="macro_met_requires" errors={errors} />
-            <div className="wp-config-ranges">
-              {MACRO_KEYS.map((key) => (
-                <div key={key} className="wp-config-range-row">
-                  <b>{macroKeyLabel(key)}</b>
-                  <label>
-                    Mín %
-                    <input
-                      type="number"
-                      min={0}
-                      max={300}
-                      step={1}
-                      placeholder="—"
-                      value={ratioToPct(draft.macro_ranges[key].min)}
-                      onChange={(e) => setRange(key, "min", e.target.value)}
-                    />
-                  </label>
-                  <label>
-                    Máx %
-                    <input
-                      type="number"
-                      min={0}
-                      max={300}
-                      step={1}
-                      placeholder="—"
-                      value={ratioToPct(draft.macro_ranges[key].max)}
-                      onChange={(e) => setRange(key, "max", e.target.value)}
-                    />
-                  </label>
-                  <FieldError id={`macro_ranges.${key}`} errors={errors} />
-                </div>
-              ))}
-            </div>
-            <FieldError id="macro_ranges" errors={errors} />
-          </fieldset>
-
-          <fieldset className="wp-config-block" disabled={saving}>
-            <legend>Calorías mínimas y alertas</legend>
-            <div className="wp-config-grid two">
+                <label>
+                  Riesgo si &lt;
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    step={0.1}
+                    value={draft.thresholds.risk}
+                    onChange={(e) => {
+                      setDraft((p) => ({
+                        ...p,
+                        thresholds: { ...p.thresholds, risk: Number(e.target.value) },
+                      }));
+                      setOk(false);
+                    }}
+                  />
+                </label>
+              </div>
+              <FieldError id="thresholds" errors={errors} />
               <div className="wp-config-switch-row">
-                <span>Exigir mínimo de calorías</span>
+                <span>Mostrar tarjetas de resumen</span>
                 <Switch
-                  label="Exigir mínimo de calorías"
-                  checked={draft.calories_min_enabled}
+                  label="Mostrar tarjetas de resumen"
+                  checked={draft.show_summary_cards}
                   onChange={(v) => {
-                    setDraft((p) => ({ ...p, calories_min_enabled: v }));
+                    setDraft((p) => ({ ...p, show_summary_cards: v }));
                     setOk(false);
                   }}
                 />
               </div>
-              <label>
-                Piso de calorías (% de la meta)
-                <input
-                  type="number"
-                  min={0}
-                  max={150}
-                  step={1}
-                  value={ratioToPct(draft.calories_low_ratio)}
-                  onChange={(e) => {
-                    const ratio = pctToRatio(e.target.value);
-                    if (Number.isFinite(ratio as number) && ratio != null) {
-                      setDraft((p) => ({ ...p, calories_low_ratio: ratio }));
-                      setOk(false);
-                    }
+              <div className="wp-config-switch-row">
+                <span>Mostrar correo en la tabla</span>
+                <Switch
+                  label="Mostrar correo en la tabla"
+                  checked={draft.show_email_in_table}
+                  onChange={(v) => {
+                    setDraft((p) => ({ ...p, show_email_in_table: v }));
+                    setOk(false);
                   }}
                 />
-              </label>
+              </div>
+            </fieldset>
+          </ConfigSection>
+
+          <ConfigSection
+            id="sec-macros"
+            title="Macros"
+            help="Qué macros definen el ✓ del día y en qué % de la meta deben caer."
+          >
+            <fieldset className="wp-config-block" disabled={saving}>
+              <legend>Cumplimiento y rangos</legend>
+              <p className="wp-config-help">
+                Solo las macros marcadas deciden el ✓ / ✗ del día. Los rangos se expresan como % de la
+                meta (vacío = sin umbral).
+              </p>
+              <div className="wp-config-checks">
+                {MACRO_KEYS.map((key) => (
+                  <label key={key} className="wp-config-check">
+                    <input
+                      type="checkbox"
+                      checked={draft.macro_met_requires.includes(key)}
+                      onChange={() => toggleMacroRequire(key)}
+                    />
+                    {macroKeyLabel(key)} decide el cumplimiento
+                  </label>
+                ))}
+              </div>
+              <FieldError id="macro_met_requires" errors={errors} />
+              <div className="wp-config-ranges">
+                {MACRO_KEYS.map((key) => (
+                  <div key={key} className="wp-config-range-row">
+                    <b>{macroKeyLabel(key)}</b>
+                    <label>
+                      Mín %
+                      <input
+                        type="number"
+                        min={0}
+                        max={300}
+                        step={1}
+                        placeholder="—"
+                        value={ratioToPct(draft.macro_ranges[key].min)}
+                        onChange={(e) => setRange(key, "min", e.target.value)}
+                      />
+                    </label>
+                    <label>
+                      Máx %
+                      <input
+                        type="number"
+                        min={0}
+                        max={300}
+                        step={1}
+                        placeholder="—"
+                        value={ratioToPct(draft.macro_ranges[key].max)}
+                        onChange={(e) => setRange(key, "max", e.target.value)}
+                      />
+                    </label>
+                    <FieldError id={`macro_ranges.${key}`} errors={errors} />
+                  </div>
+                ))}
+              </div>
+              <FieldError id="macro_ranges" errors={errors} />
+            </fieldset>
+
+            <fieldset className="wp-config-block" disabled={saving}>
+              <legend>Calorías mínimas y resolución de meta</legend>
+              <div className="wp-config-grid two">
+                <div className="wp-config-switch-row">
+                  <span>Exigir mínimo de calorías</span>
+                  <Switch
+                    label="Exigir mínimo de calorías"
+                    checked={draft.calories_min_enabled}
+                    onChange={(v) => {
+                      setDraft((p) => ({ ...p, calories_min_enabled: v }));
+                      setOk(false);
+                    }}
+                  />
+                </div>
+                <label>
+                  Piso de calorías (% de la meta)
+                  <input
+                    type="number"
+                    min={0}
+                    max={150}
+                    step={1}
+                    value={ratioToPct(draft.calories_low_ratio)}
+                    onChange={(e) => {
+                      const ratio = pctToRatio(e.target.value);
+                      if (Number.isFinite(ratio as number) && ratio != null) {
+                        setDraft((p) => ({ ...p, calories_low_ratio: ratio }));
+                        setOk(false);
+                      }
+                    }}
+                  />
+                </label>
+                <label>
+                  Resolución de la meta nutricional
+                  <select
+                    value={draft.goal_resolution}
+                    onChange={(e) => {
+                      setDraft((p) => ({ ...p, goal_resolution: e.target.value }));
+                      setOk(false);
+                    }}
+                  >
+                    {POLICY_OPTIONS.goal_resolution.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <FieldError id="calories_low_ratio" errors={errors} />
+            </fieldset>
+          </ConfigSection>
+
+          <ConfigSection
+            id="sec-entreno"
+            title="Entreno y descansos"
+            help="Plan por defecto del alumno y cómo cuenta un día de descanso."
+          >
+            <fieldset className="wp-config-block" disabled={saving}>
+              <legend>Plan y descanso</legend>
+              <div className="wp-config-grid two">
+                <div className="wp-config-switch-row">
+                  <span>El alumno puede marcar Descanso (D)</span>
+                  <Switch
+                    label="El alumno puede marcar Descanso"
+                    checked={draft.allow_student_rest}
+                    onChange={(v) => {
+                      setDraft((p) => ({ ...p, allow_student_rest: v }));
+                      setOk(false);
+                    }}
+                  />
+                </div>
+                <label>
+                  Cómo cuenta un día de descanso
+                  <select
+                    value={draft.rest_day_counts}
+                    onChange={(e) => {
+                      setDraft((p) => ({ ...p, rest_day_counts: e.target.value }));
+                      setOk(false);
+                    }}
+                  >
+                    {POLICY_OPTIONS.rest_day_counts.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Sesiones por semana (default)
+                  <input
+                    type="number"
+                    min={1}
+                    max={7}
+                    step={1}
+                    value={draft.default_sessions_per_week}
+                    onChange={(e) => {
+                      setDraft((p) => ({
+                        ...p,
+                        default_sessions_per_week:
+                          Number(e.target.value) || p.default_sessions_per_week,
+                      }));
+                      setOk(false);
+                    }}
+                  />
+                </label>
+                <label>
+                  Modo de entrenamiento
+                  <select
+                    value={draft.training_mode}
+                    onChange={(e) => {
+                      setDraft((p) => ({ ...p, training_mode: e.target.value }));
+                      setOk(false);
+                    }}
+                  >
+                    {POLICY_OPTIONS.training_mode.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <FieldError id="default_sessions_per_week" errors={errors} />
+            </fieldset>
+          </ConfigSection>
+
+          <ConfigSection id="sec-agua" title="Agua" help="Meta por defecto al crear el plan de hábitos.">
+            <fieldset className="wp-config-block" disabled={saving}>
+              <legend>Meta de agua</legend>
+              <div className="wp-config-grid two">
+                <label>
+                  Meta de agua por defecto (L/día)
+                  <input
+                    type="number"
+                    min={0.5}
+                    max={6}
+                    step={0.25}
+                    value={draft.default_water_goal_ml / 1000}
+                    onChange={(e) => {
+                      const liters = Number(e.target.value.replace(",", "."));
+                      if (Number.isFinite(liters)) {
+                        setDraft((p) => ({
+                          ...p,
+                          default_water_goal_ml: Math.round(liters * 1000),
+                        }));
+                        setOk(false);
+                      }
+                    }}
+                  />
+                </label>
+              </div>
+              <FieldError id="default_water_goal_ml" errors={errors} />
+            </fieldset>
+          </ConfigSection>
+
+          <ConfigSection
+            id="sec-alertas"
+            title="Alertas"
+            help="Alertas del panel y del seguimiento local (racha / 48 h pendientes de backend)."
+          >
+            <fieldset className="wp-config-block" disabled={saving}>
+              <legend>Calorías bajas</legend>
               <div className="wp-config-switch-row">
                 <span>Alerta por calorías bajas</span>
                 <Switch
@@ -528,241 +891,54 @@ export function PanelConfigView({
                   }}
                 />
               </div>
-            </div>
-            <FieldError id="calories_low_ratio" errors={errors} />
-          </fieldset>
+            </fieldset>
+            <PendingFields
+              items={[
+                "alert_miss_streak — racha de incumplimientos (hoy fijo: 3)",
+                "alert_missing_hours / días — ventana «falta reportar» (hoy fijo: 48 h)",
+              ]}
+            />
+          </ConfigSection>
 
-          <fieldset className="wp-config-block" disabled={saving}>
-            <legend>Metas, promedio y descanso</legend>
-            <div className="wp-config-grid two">
-              <label>
-                Resolución de la meta nutricional
-                <select
-                  value={draft.goal_resolution}
-                  onChange={(e) => {
-                    setDraft((p) => ({ ...p, goal_resolution: e.target.value }));
-                    setOk(false);
-                  }}
-                >
-                  {POLICY_OPTIONS.goal_resolution.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Promedio semanal
-                <select
-                  value={draft.summary_avg_mode}
-                  onChange={(e) => {
-                    setDraft((p) => ({ ...p, summary_avg_mode: e.target.value }));
-                    setOk(false);
-                  }}
-                >
-                  {POLICY_OPTIONS.summary_avg_mode.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
+          <ConfigSection
+            id="sec-hitos"
+            title="Hitos"
+            help="Checkpoints de peso y duración del desafío."
+          >
+            <PendingFields
+              items={[
+                "milestone_days — hitos de peso (hoy fijo: 30 / 60 / 90)",
+                "challenge_days / challenge_weeks — duración (hoy fijo: 90 días · 13 semanas)",
+              ]}
+            />
+          </ConfigSection>
+
+          <ConfigSection
+            id="sec-ia"
+            title="Análisis IA"
+            help="Resumen automático en la ficha del alumno."
+          >
+            <fieldset className="wp-config-block" disabled={saving}>
+              <legend>Motor de resumen</legend>
               <div className="wp-config-switch-row">
-                <span>El alumno puede marcar Descanso (D)</span>
+                <span>Resumen con IA</span>
                 <Switch
-                  label="El alumno puede marcar Descanso"
-                  checked={draft.allow_student_rest}
+                  label="Resumen con IA"
+                  checked={draft.ai_summary_enabled}
                   onChange={(v) => {
-                    setDraft((p) => ({ ...p, allow_student_rest: v }));
+                    setDraft((p) => ({ ...p, ai_summary_enabled: v }));
                     setOk(false);
                   }}
                 />
               </div>
-              <label>
-                Cómo cuenta un día de descanso
-                <select
-                  value={draft.rest_day_counts}
-                  onChange={(e) => {
-                    setDraft((p) => ({ ...p, rest_day_counts: e.target.value }));
-                    setOk(false);
-                  }}
-                >
-                  {POLICY_OPTIONS.rest_day_counts.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-          </fieldset>
-
-          <fieldset className="wp-config-block" disabled={saving}>
-            <legend>Defaults de hábitos y entrenamiento</legend>
-            <div className="wp-config-grid three">
-              <label>
-                Meta de agua por defecto (L/día)
-                <input
-                  type="number"
-                  min={0.5}
-                  max={6}
-                  step={0.25}
-                  value={draft.default_water_goal_ml / 1000}
-                  onChange={(e) => {
-                    const liters = Number(e.target.value.replace(",", "."));
-                    if (Number.isFinite(liters)) {
-                      setDraft((p) => ({
-                        ...p,
-                        default_water_goal_ml: Math.round(liters * 1000),
-                      }));
-                      setOk(false);
-                    }
-                  }}
-                />
-              </label>
-              <label>
-                Sesiones por semana (default)
-                <input
-                  type="number"
-                  min={1}
-                  max={7}
-                  step={1}
-                  value={draft.default_sessions_per_week}
-                  onChange={(e) => {
-                    setDraft((p) => ({
-                      ...p,
-                      default_sessions_per_week: Number(e.target.value) || p.default_sessions_per_week,
-                    }));
-                    setOk(false);
-                  }}
-                />
-              </label>
-              <label>
-                Modo de entrenamiento
-                <select
-                  value={draft.training_mode}
-                  onChange={(e) => {
-                    setDraft((p) => ({ ...p, training_mode: e.target.value }));
-                    setOk(false);
-                  }}
-                >
-                  {POLICY_OPTIONS.training_mode.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-            <FieldError id="default_water_goal_ml" errors={errors} />
-            <FieldError id="default_sessions_per_week" errors={errors} />
-          </fieldset>
-
-          <fieldset className="wp-config-block" disabled={saving}>
-            <legend>Semáforo y vista del panel</legend>
-            <div className="wp-config-grid three">
-              <label>
-                Verde si &gt;
-                <input
-                  type="number"
-                  min={0}
-                  max={100}
-                  step={0.1}
-                  value={draft.thresholds.green_gt}
-                  onChange={(e) => {
-                    setDraft((p) => ({
-                      ...p,
-                      thresholds: { ...p.thresholds, green_gt: Number(e.target.value) },
-                    }));
-                    setOk(false);
-                  }}
-                />
-              </label>
-              <label>
-                Amarillo si ≥
-                <input
-                  type="number"
-                  min={0}
-                  max={100}
-                  step={0.1}
-                  value={draft.thresholds.yellow_gte}
-                  onChange={(e) => {
-                    setDraft((p) => ({
-                      ...p,
-                      thresholds: { ...p.thresholds, yellow_gte: Number(e.target.value) },
-                    }));
-                    setOk(false);
-                  }}
-                />
-              </label>
-              <label>
-                Riesgo si &lt;
-                <input
-                  type="number"
-                  min={0}
-                  max={100}
-                  step={0.1}
-                  value={draft.thresholds.risk}
-                  onChange={(e) => {
-                    setDraft((p) => ({
-                      ...p,
-                      thresholds: { ...p.thresholds, risk: Number(e.target.value) },
-                    }));
-                    setOk(false);
-                  }}
-                />
-              </label>
-              <label>
-                Decimales del %
-                <input
-                  type="number"
-                  min={0}
-                  max={2}
-                  step={1}
-                  value={draft.percent_decimals}
-                  onChange={(e) => {
-                    setDraft((p) => ({ ...p, percent_decimals: Number(e.target.value) }));
-                    setOk(false);
-                  }}
-                />
-              </label>
-            </div>
-            <FieldError id="thresholds" errors={errors} />
-            <FieldError id="percent_decimals" errors={errors} />
-            <div className="wp-config-switch-row">
-              <span>Mostrar tarjetas de resumen</span>
-              <Switch
-                label="Mostrar tarjetas de resumen"
-                checked={draft.show_summary_cards}
-                onChange={(v) => {
-                  setDraft((p) => ({ ...p, show_summary_cards: v }));
-                  setOk(false);
-                }}
-              />
-            </div>
-            <div className="wp-config-switch-row">
-              <span>Mostrar correo en la tabla</span>
-              <Switch
-                label="Mostrar correo en la tabla"
-                checked={draft.show_email_in_table}
-                onChange={(v) => {
-                  setDraft((p) => ({ ...p, show_email_in_table: v }));
-                  setOk(false);
-                }}
-              />
-            </div>
-            <div className="wp-config-switch-row">
-              <span>Resumen con IA</span>
-              <Switch
-                label="Resumen con IA"
-                checked={draft.ai_summary_enabled}
-                onChange={(v) => {
-                  setDraft((p) => ({ ...p, ai_summary_enabled: v }));
-                  setOk(false);
-                }}
-              />
-            </div>
-          </fieldset>
+            </fieldset>
+            <PendingFields
+              items={[
+                "Umbral de cobertura «días con registro» para marcar insufficient",
+                "Política de refresh / motor LLM (si el backend la expone)",
+              ]}
+            />
+          </ConfigSection>
 
           {formError ? (
             <p className="wp-feedback-error" role="alert">

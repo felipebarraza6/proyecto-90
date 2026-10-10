@@ -8,6 +8,7 @@ import {
   mondayOf,
   type Row,
 } from "./adherence-alerts";
+import type { PanelConfig } from "./weekly-panel/types";
 
 type Act = (payload: Row) => Promise<unknown>;
 type AlertFilter = "all" | "risk" | "missing";
@@ -54,6 +55,7 @@ export function AdherencePanel({
   mode = "full",
   canEditCells = true,
   canMarkContact = true,
+  panelConfig,
 }: {
   people: Row[];
   records: Row[];
@@ -63,6 +65,7 @@ export function AdherencePanel({
   mode?: Mode;
   canEditCells?: boolean;
   canMarkContact?: boolean;
+  panelConfig?: PanelConfig | null;
 }) {
   const config = modeCopy[mode];
   const defaultHabit = config.habits[0];
@@ -85,12 +88,13 @@ export function AdherencePanel({
         records,
         nutritionRecords,
         alertKey.split("|").filter(Boolean) as ("training" | "macros")[],
+        panelConfig,
       ),
-    [people, records, nutritionRecords, alertKey],
+    [people, records, nutritionRecords, alertKey, panelConfig],
   );
   const effectiveRecords = useMemo(
-    () => buildEffectiveRecords(people, records, nutritionRecords),
-    [people, records, nutritionRecords],
+    () => buildEffectiveRecords(people, records, nutritionRecords, panelConfig),
+    [people, records, nutritionRecords, panelConfig],
   );
   const lookup = useMemo(
     () => new Map(effectiveRecords.map((row) => [`${row.user_id}:${row.habit}:${row.habit_date}`, String(row.status)])),

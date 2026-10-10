@@ -491,7 +491,16 @@
 .wp-config-list h3{margin:0 0 4px;font-size:13px}
 .wp-config-list p{margin:0;font-size:10px;color:var(--muted);line-height:1.4}
 .wp-config-list strong{font-size:12px;color:var(--green);text-align:right;line-height:1.35}
-.wp-config-form{display:grid;gap:12px}
+.wp-config-form,.wp-config-readonly-sections{display:grid;gap:16px}
+.wp-config-section{display:grid;gap:10px}
+.wp-config-section-head h3{margin:0;font-size:15px;color:var(--text)}
+.wp-config-section-head p{margin:4px 0 0;font-size:10px;color:var(--muted);line-height:1.4;max-width:62ch}
+.wp-config-section-body{display:grid;gap:10px}
+.wp-config-pending{padding:12px 14px;border:1px dashed #3a433c;border-radius:12px;background:#0d110e}
+.wp-config-pending b{display:block;font-size:11px;color:var(--amber);margin-bottom:4px}
+.wp-config-pending p{margin:0 0 8px;font-size:10px;color:var(--muted);line-height:1.4}
+.wp-config-pending ul{margin:0;padding-left:16px;display:grid;gap:4px}
+.wp-config-pending li{font-size:10px;color:#c5d0c9;line-height:1.35}
 .wp-config-block{margin:0;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);display:grid;gap:10px}
 .wp-config-block legend{padding:0 4px;font-size:12px;font-weight:700;color:var(--green)}
 .wp-config-help{margin:0;font-size:10px;color:var(--muted);line-height:1.4}

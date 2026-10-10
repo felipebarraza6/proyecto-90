@@ -31,6 +31,7 @@ export function StudentDrawer({
   isMobile,
   weekClosed,
   defaultSessionsPerWeek,
+  defaultWaterGoalMl,
   onWeekChange,
   onSelectClient,
   onClose,
@@ -49,6 +50,7 @@ export function StudentDrawer({
   isMobile: boolean;
   weekClosed?: boolean;
   defaultSessionsPerWeek?: number;
+  defaultWaterGoalMl?: number;
   onWeekChange: (start: string) => void;
   onSelectClient: (id: number) => void;
   onClose: () => void;
@@ -212,6 +214,7 @@ export function StudentDrawer({
                     weekStart={weekStart}
                     challengeStart={data.profile.challenge_start}
                     defaultSessionsPerWeek={defaultSessionsPerWeek}
+                    defaultWaterGoalMl={defaultWaterGoalMl}
                     onSaved={() => {
                       analysisRefresh.current = true;
                       setReload((n) => n + 1);

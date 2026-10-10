@@ -6,6 +6,7 @@ import {
   formatPct,
   WEEKDAYS_SHORT,
 } from "./format";
+import { usePanelStats } from "./PanelStatsContext";
 import { StatusBadges } from "./ui";
 import type { StudentWeekResponse, WeightMilestone, WeightPoint } from "./types";
 
@@ -88,6 +89,7 @@ export function StudentFacts({
   weekClosed?: boolean;
 }) {
   const { profile, weekly, training_progress: progress } = data;
+  const { percent_decimals } = usePanelStats();
   const changed = profile.nutrition_targets.changed_in_week || [];
   const weight = profile.weight || { initial: null, milestones: [], latest: null };
   const milestones = [30, 60, 90].map((day) => {
@@ -115,7 +117,7 @@ export function StudentFacts({
         </div>
         <div className={`wp-week-pct large ${weekly.color}`}>
           <small>Adherencia semanal</small>
-          <b>{formatPct(weekly.pct)}</b>
+          <b>{formatPct(weekly.pct, percent_decimals)}</b>
           <StatusBadges status={weekly.status} />
         </div>
       </header>

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { fetchPanelConfig, fetchWeek, fetchWeeks } from "./api";
 import { PanelLegend } from "./Legend";
 import { PanelConfigView } from "./PanelConfigView";
+import { PanelStatsProvider } from "./PanelStatsContext";
 import { ParticipantCards } from "./ParticipantCards";
 import { StatusFilters } from "./StatusFilters";
 import { StudentDrawer } from "./StudentDrawer";
@@ -98,6 +99,7 @@ export function WeeklyPanel({
       : "Los alumnos aparecen desde el lunes de la semana en que inicia su desafío.";
 
   return (
+    <PanelStatsProvider config={config}>
     <div className="wp-page">
       <div className="admin-title">
         <div>
@@ -200,6 +202,7 @@ export function WeeklyPanel({
           isMobile={mobile}
           weekClosed={weekClosed}
           defaultSessionsPerWeek={config.default_sessions_per_week}
+          defaultWaterGoalMl={config.default_water_goal_ml}
           onWeekChange={setWeekStart}
           onSelectClient={setSelectedClientId}
           onClose={() => setSelectedClientId(null)}
@@ -208,5 +211,6 @@ export function WeeklyPanel({
         </>
       ) : null}
     </div>
+    </PanelStatsProvider>
   );
 }

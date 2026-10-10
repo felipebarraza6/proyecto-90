@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { fetchHabitPlan, saveHabitPlan } from "./api";
 import { formatDateShort } from "./format";
+import { PANEL_CONFIG_DEFAULTS } from "./panelConfig";
 import type { HabitPlanResponse } from "./types";
 
 const DAY_TOGGLES = [
@@ -30,13 +31,15 @@ export function HabitPlanEditor({
   clientId,
   weekStart,
   challengeStart,
-  defaultSessionsPerWeek = 3,
+  defaultSessionsPerWeek = PANEL_CONFIG_DEFAULTS.default_sessions_per_week,
+  defaultWaterGoalMl = PANEL_CONFIG_DEFAULTS.default_water_goal_ml,
   onSaved,
 }: {
   clientId: number;
   weekStart: string;
   challengeStart: string | null;
   defaultSessionsPerWeek?: number;
+  defaultWaterGoalMl?: number;
   onSaved: () => void;
 }) {
   const [loading, setLoading] = useState(true);
@@ -44,8 +47,8 @@ export function HabitPlanEditor({
   const [error, setError] = useState("");
   const [ok, setOk] = useState(false);
   const [rest, setRest] = useState<number[]>([]);
-  const [waterL, setWaterL] = useState("2");
-  const [sessions, setSessions] = useState("3");
+  const [waterL, setWaterL] = useState(String(defaultWaterGoalMl / 1000));
+  const [sessions, setSessions] = useState(String(defaultSessionsPerWeek));
   const [fromMode, setFromMode] = useState<"start" | "week" | "date">("week");
   const [customDate, setCustomDate] = useState(weekStart);
   const [hasPrior, setHasPrior] = useState(false);
@@ -61,14 +64,28 @@ export function HabitPlanEditor({
         const prior = Boolean(current) || (res.history && res.history.length > 0);
         setHasPrior(prior);
         setRest(current?.rest_weekdays ? [...current.rest_weekdays] : []);
-        const defaultMl = current?.water_goal_ml ?? res.defaults?.water_goal_ml ?? 2000;
-        setWaterL(mlToLiters(defaultMl) || "2");
+        const defaultMl =
+          current?.water_goal_ml ??
+          res.defaults?.water_goal_ml ??
+          defaultWaterGoalMl ??
+          PANEL_CONFIG_DEFAULTS.default_water_goal_ml;
+        setWaterL(mlToLiters(defaultMl) || String(defaultWaterGoalMl / 1000));
         const sessionsValue =
           current?.sessions_per_week ??
           res.defaults?.sessions_per_week ??
           defaultSessionsPerWeek ??
-          3;
-        setSessions(String(Math.min(7, Math.max(1, Number(sessionsValue) || 3))));
+          PANEL_CONFIG_DEFAULTS.default_sessions_per_week;
+        setSessions(
+          String(
+            Math.min(
+              7,
+              Math.max(
+                1,
+                Number(sessionsValue) || PANEL_CONFIG_DEFAULTS.default_sessions_per_week,
+              ),
+            ),
+          ),
+        );
         setFromMode(prior ? "week" : "start");
         setCustomDate(weekStart);
       })
@@ -78,7 +95,7 @@ export function HabitPlanEditor({
       })
       .finally(() => setLoading(false));
     return () => ac.abort();
-  }, [clientId, weekStart, defaultSessionsPerWeek]);
+  }, [clientId, weekStart, defaultSessionsPerWeek, defaultWaterGoalMl]);
 
   function toggleDay(day: number) {
     setRest((prev) => {
@@ -96,7 +113,13 @@ export function HabitPlanEditor({
     setError("");
     setOk(false);
     const waterMl = litersToMl(waterL);
-    const sessionsN = Math.min(7, Math.max(1, Math.round(Number(sessions) || 3)));
+    const sessionsN = Math.min(
+      7,
+      Math.max(
+        1,
+        Math.round(Number(sessions) || defaultSessionsPerWeek || PANEL_CONFIG_DEFAULTS.default_sessions_per_week),
+      ),
+    );
     let effectiveFrom: string | null = null;
     if (fromMode === "start") effectiveFrom = challengeStart;
     else if (fromMode === "week") effectiveFrom = weekStart;
