@@ -1,26 +1,11 @@
-# Deploy automático del front de Proyecto 90 a 90dias.habitofirme.app (cPanel FTP).
-# Barato: 1 job Linux de ~2-3 min por corrida (capa gratis de Actions lo cubre).
-# Sin acciones de terceros: build de Vite + lftp (preinstalado en el runner).
-#
-# Cómo deployar: pushear/mergear a `main` (o correrlo a mano desde Actions).
-# `dev` no deploya; main es lo que vive en producción.
-# El índice se sube al final para que nadie cargue un index.html que
-# referencia assets aún no subidos. Los bundles viejos quedan en el
-# servidor como rollback inmediato (no se borran).
+# Deploy Front desactivado en push.
+# Felipe publica a 90dias.habitofirme.app por build + FTP manual; este Action
+# fallaba en cada push (el fork no tiene secretos FTP / no es el sitio de prod).
+# Se deja solo workflow_dispatch por si hace falta dispararlo a mano alguna vez.
 
 name: Deploy Front (90dias)
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "app/**"
-      - "src/**"
-      - "public/**"
-      - "index.html"
-      - "vite.config.ts"
-      - "package.json"
-      - "package-lock.json"
   workflow_dispatch:
 
 concurrency:
