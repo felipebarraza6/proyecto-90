@@ -8,6 +8,8 @@ import {
   mondayOf,
   type Row,
 } from "./adherence-alerts";
+import { challengeWeeks, PANEL_CONFIG_DEFAULTS } from "./weekly-panel/panelConfig";
+import type { PanelConfig } from "./weekly-panel/types";
 
 type Act = (payload: Row) => Promise<unknown>;
 type AlertFilter = "all" | "risk" | "missing";
@@ -27,20 +29,17 @@ const weekLabel = (offset: number, start: Date) =>
 const nameOf = (row: Row) =>
   `${row.first_name || ""} ${row.last_name || ""}`.trim() || String(row.email || "Alumno");
 
-const modeCopy: Record<Mode, { title: string; copy: string; habits: (keyof typeof habits)[] }> = {
+const modeMeta: Record<Mode, { title: string; habits: (keyof typeof habits)[] }> = {
   full: {
     title: "Alertas locales de adherencia",
-    copy: "Seguimiento basado en registros de /api/app. Sus reglas de 3 incumplimientos y 48 horas son distintas a las alertas del panel semanal del backend.",
     habits: ["training", "macros", "water"],
   },
   training: {
     title: "Alertas locales de entrenamiento",
-    copy: "Seguimiento basado en registros de /api/app; conserva sus reglas locales y es independiente del panel semanal del backend.",
     habits: ["training"],
   },
   macros: {
     title: "Alertas locales de macros",
-    copy: "Seguimiento basado en registros de /api/app; conserva sus reglas locales y es independiente del panel semanal del backend.",
     habits: ["macros"],
   },
 };
@@ -54,6 +53,7 @@ export function AdherencePanel({
   mode = "full",
   canEditCells = true,
   canMarkContact = true,
+  panelConfig,
 }: {
   people: Row[];
   records: Row[];
@@ -63,16 +63,24 @@ export function AdherencePanel({
   mode?: Mode;
   canEditCells?: boolean;
   canMarkContact?: boolean;
+  panelConfig?: PanelConfig | null;
 }) {
-  const config = modeCopy[mode];
+  const config = modeMeta[mode];
   const defaultHabit = config.habits[0];
   const [habit, setHabit] = useState<keyof typeof habits>(defaultHabit);
   const [weekOffset, setWeekOffset] = useState(0);
   const [alertFilter, setAlertFilter] = useState<AlertFilter>("all");
-  const today = chileToday();
-  const currentMonday = useMemo(() => mondayOf(new Date(`${today}T12:00:00Z`)), [today]);
+  const tz = panelConfig?.timezone || PANEL_CONFIG_DEFAULTS.timezone;
+  const weekStartWd =
+    panelConfig?.week_start_weekday ?? PANEL_CONFIG_DEFAULTS.week_start_weekday;
+  const today = chileToday(tz);
+  const currentMonday = useMemo(
+    () => mondayOf(new Date(`${today}T12:00:00Z`), weekStartWd),
+    [today, weekStartWd],
+  );
   const weekStart = useMemo(() => addDays(currentMonday, -weekOffset * 7), [currentMonday, weekOffset]);
   const days = useMemo(() => Array.from({ length: 7 }, (_, index) => addDays(weekStart, index)), [weekStart]);
+  const weekCount = challengeWeeks(panelConfig);
   const alertHabits = (mode === "full" ? ["training", "macros"] : config.habits.filter((h) => h !== "water")) as (
     | "training"
     | "macros"
@@ -85,12 +93,19 @@ export function AdherencePanel({
         records,
         nutritionRecords,
         alertKey.split("|").filter(Boolean) as ("training" | "macros")[],
+        panelConfig,
       ),
-    [people, records, nutritionRecords, alertKey],
+    [people, records, nutritionRecords, alertKey, panelConfig],
   );
+  const streakNeeded = alerts.streakNeeded;
+  const missingCutoffDays = alerts.missingCutoffDays;
+  const modeCopyText =
+    mode === "full"
+      ? `Seguimiento basado en registros de /api/app. Riesgo = ${streakNeeded} incumplimientos consecutivos; falta reportar = ≥ ${missingCutoffDays} día(s) (con gracia de reporte). Distinto de las alertas del panel semanal del backend.`
+      : "Seguimiento basado en registros de /api/app; usa las reglas locales de Reglas y es independiente del panel semanal del backend.";
   const effectiveRecords = useMemo(
-    () => buildEffectiveRecords(people, records, nutritionRecords),
-    [people, records, nutritionRecords],
+    () => buildEffectiveRecords(people, records, nutritionRecords, panelConfig),
+    [people, records, nutritionRecords, panelConfig],
   );
   const lookup = useMemo(
     () => new Map(effectiveRecords.map((row) => [`${row.user_id}:${row.habit}:${row.habit_date}`, String(row.status)])),
@@ -155,7 +170,7 @@ export function AdherencePanel({
         <div>
           <span className="eyebrow">SEGUIMIENTO SEMANAL · PROYECTO 90</span>
           <h1>{config.title}</h1>
-          <p>{config.copy}</p>
+          <p>{modeCopyText}</p>
         </div>
         <span className="integration-pill">● Alertas locales</span>
       </div>
@@ -172,7 +187,7 @@ export function AdherencePanel({
           <label>
             Semana
             <select value={weekOffset} onChange={(e) => changeWeek(Number(e.target.value))}>
-              {Array.from({ length: 13 }, (_, offset) => {
+              {Array.from({ length: weekCount }, (_, offset) => {
                 const optionStart = addDays(currentMonday, -offset * 7);
                 return (
                   <option value={offset} key={offset}>
@@ -319,9 +334,9 @@ export function AdherencePanel({
               <tr>
                 <td colSpan={9} className="matrix-empty">
                   {alertFilter === "risk"
-                    ? `No hay participantes con tres incumplimientos consecutivos en ${mode === "macros" ? "macros" : mode === "training" ? "entrenamiento" : "entrenamiento o macros"} esta semana.`
+                    ? `No hay participantes con ${streakNeeded} incumplimientos consecutivos en ${mode === "macros" ? "macros" : mode === "training" ? "entrenamiento" : "entrenamiento o macros"} esta semana.`
                     : alertFilter === "missing"
-                      ? "No hay participantes con reportes pendientes por más de 48 horas."
+                      ? `No hay participantes con reportes pendientes ≥ ${missingCutoffDays} día(s).`
                       : "No hay participantes registrados."}
                 </td>
               </tr>
@@ -330,8 +345,9 @@ export function AdherencePanel({
         </table>
       </div>
       <p className="adherence-footnote">
-        “En riesgo” considera 3 días cerrados consecutivos en rojo. “Falta reportar” detecta registros vacíos con al
-        menos 48 horas. Agua no genera alertas de riesgo.
+        “En riesgo” considera {streakNeeded} día(s) cerrado(s) consecutivos en rojo. “Falta
+        reportar” detecta registros vacíos con ≥ {missingCutoffDays} día(s) (según Reglas). Agua
+        no genera alertas de riesgo.
       </p>
     </div>
   );

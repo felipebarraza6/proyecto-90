@@ -1,13 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { PANEL_CONFIG_DEFAULTS } from "./weekly-panel/panelConfig";
+import type { PanelConfig } from "./weekly-panel/types";
 
 type Row = Record<string, unknown>;
 type Act = (payload: Row) => Promise<unknown>;
 
-// Rangos del backend (participant.body.update). Se validan aquí para avisar
-// antes de enviar; el backend vuelve a validar y su mensaje se muestra igual.
-const WEIGHT_MIN = 30, WEIGHT_MAX = 300, HEIGHT_MIN = 100, HEIGHT_MAX = 230;
 const FALLBACK_GENDERS = ["Mujer", "Hombre", "No binario", "Prefiero no responder", "Otro"];
 
 type FieldKey = "weight" | "height" | "birthdate" | "gender" | "weightDay30" | "weightDay60" | "weightDay90";
@@ -45,18 +44,25 @@ function genderOptions(questions: Row[], current: string) {
 function sameNumber(a: string, b: string) { return a.trim() !== "" && b.trim() !== "" && Number(a) === Number(b); }
 function todayIso() { const d = new Date(); const pad = (n: number) => String(n).padStart(2, "0"); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
 
-function validate(values: Values): Partial<Record<FieldKey, string>> {
+function validate(
+  values: Values,
+  ranges: { weightMin: number; weightMax: number; heightMin: number; heightMax: number },
+): Partial<Record<FieldKey, string>> {
   const errors: Partial<Record<FieldKey, string>> = {};
   for (const key of ["weight", "weightDay30", "weightDay60", "weightDay90"] as FieldKey[]) {
     const raw = values[key].trim();
     if (!raw) continue;
     const n = Number(raw.replace(",", "."));
-    if (!Number.isFinite(n) || n < WEIGHT_MIN || n > WEIGHT_MAX) errors[key] = `Usa un valor entre ${WEIGHT_MIN} y ${WEIGHT_MAX} kg`;
+    if (!Number.isFinite(n) || n < ranges.weightMin || n > ranges.weightMax) {
+      errors[key] = `Usa un valor entre ${ranges.weightMin} y ${ranges.weightMax} kg`;
+    }
   }
   const height = values.height.trim();
   if (height) {
     const n = Number(height.replace(",", "."));
-    if (!Number.isFinite(n) || n < HEIGHT_MIN || n > HEIGHT_MAX) errors.height = `Usa un valor entre ${HEIGHT_MIN} y ${HEIGHT_MAX} cm`;
+    if (!Number.isFinite(n) || n < ranges.heightMin || n > ranges.heightMax) {
+      errors.height = `Usa un valor entre ${ranges.heightMin} y ${ranges.heightMax} cm`;
+    }
   }
   const birthdate = values.birthdate.trim();
   if (birthdate) {
@@ -73,14 +79,32 @@ function validate(values: Values): Partial<Record<FieldKey, string>> {
  * pesos de los hitos 30/60/90 (acción `participant.body.update`, solo admin).
  * Solo envía los campos que cambiaron; el backend no borra datos omitidos.
  */
-export function BodyDataEditor({ person, questions, act, startOpen = false }: { person: Row; questions: Row[]; act: Act; startOpen?: boolean }) {
+export function BodyDataEditor({
+  person,
+  questions,
+  act,
+  startOpen = false,
+  panelConfig,
+}: {
+  person: Row;
+  questions: Row[];
+  act: Act;
+  startOpen?: boolean;
+  panelConfig?: PanelConfig | null;
+}) {
   const [openEditor, setOpenEditor] = useState(startOpen);
   const [baseline, setBaseline] = useState<Values>(() => valuesOf(person));
   const [values, setValues] = useState<Values>(() => valuesOf(person));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<string[] | null>(null);
-  const errors = validate(values);
+  const ranges = {
+    weightMin: panelConfig?.weight_min_kg ?? PANEL_CONFIG_DEFAULTS.weight_min_kg,
+    weightMax: panelConfig?.weight_max_kg ?? PANEL_CONFIG_DEFAULTS.weight_max_kg,
+    heightMin: panelConfig?.height_min_cm ?? PANEL_CONFIG_DEFAULTS.height_min_cm,
+    heightMax: panelConfig?.height_max_cm ?? PANEL_CONFIG_DEFAULTS.height_max_cm,
+  };
+  const errors = validate(values, ranges);
   const changed = (Object.keys(values) as FieldKey[]).filter(key => {
     const next = values[key].trim();
     if (!next) return false; // vacío = sin cambio (el backend no borra datos)
@@ -130,15 +154,15 @@ export function BodyDataEditor({ person, questions, act, startOpen = false }: { 
     </header>
     {openEditor && <>
       <div className="form-grid four">
-        {numberField("weight", "kg", WEIGHT_MIN, WEIGHT_MAX)}
-        {numberField("height", "cm", HEIGHT_MIN, HEIGHT_MAX)}
+        {numberField("weight", "kg", ranges.weightMin, ranges.weightMax)}
+        {numberField("height", "cm", ranges.heightMin, ranges.heightMax)}
         <label className={errors.birthdate ? "body-field invalid" : changed.includes("birthdate") ? "body-field changed" : "body-field"}>{LABELS.birthdate}<input type="date" max={todayIso()} value={values.birthdate} onChange={e => set("birthdate", e.target.value)} aria-invalid={Boolean(errors.birthdate)}/>{errors.birthdate && <em role="alert">{errors.birthdate}</em>}</label>
         <label className={changed.includes("gender") ? "body-field changed" : "body-field"}>{LABELS.gender}<select value={values.gender} onChange={e => set("gender", e.target.value)}><option value="">No informado</option>{genders.map(option => <option key={option} value={option}>{option}</option>)}</select></label>
-        {numberField("weightDay30", "kg", WEIGHT_MIN, WEIGHT_MAX)}
-        {numberField("weightDay60", "kg", WEIGHT_MIN, WEIGHT_MAX)}
-        {numberField("weightDay90", "kg", WEIGHT_MIN, WEIGHT_MAX)}
+        {numberField("weightDay30", "kg", ranges.weightMin, ranges.weightMax)}
+        {numberField("weightDay60", "kg", ranges.weightMin, ranges.weightMax)}
+        {numberField("weightDay90", "kg", ranges.weightMin, ranges.weightMax)}
       </div>
-      <p className="body-data-hint">Rangos: peso {WEIGHT_MIN}–{WEIGHT_MAX} kg · estatura {HEIGHT_MIN}–{HEIGHT_MAX} cm. Solo se envían los campos modificados; un campo vacío no borra el dato guardado. Corregir datos <b>no publica macros nuevos</b>: la nutri debe usar «Recalcular con datos actuales» en Editar nutrición y guardar el plan.</p>
+      <p className="body-data-hint">Rangos: peso {ranges.weightMin}–{ranges.weightMax} kg · estatura {ranges.heightMin}–{ranges.heightMax} cm. Solo se envían los campos modificados; un campo vacío no borra el dato guardado. Corregir datos <b>no publica macros nuevos</b>: la nutri debe usar «Recalcular con datos actuales» en Editar nutrición y guardar el plan.</p>
       {error && <p className="upload-error" role="alert">{error}</p>}
       {result && <div className="body-data-result" role="status"><b>✓ Datos corregidos</b>{result.length ? <ul>{result.map((change, index) => <li key={index}>{change}</li>)}</ul> : <p>Sin diferencias respecto a lo guardado.</p>}</div>}
       <div className="body-data-actions">

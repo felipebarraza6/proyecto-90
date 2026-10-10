@@ -6,6 +6,7 @@ import {
   formatPct,
   WEEKDAYS_SHORT,
 } from "./format";
+import { usePanelStats } from "./PanelStatsContext";
 import { StatusBadges } from "./ui";
 import type { StudentWeekResponse, WeightMilestone, WeightPoint } from "./types";
 
@@ -80,15 +81,18 @@ export function StudentFacts({
   data,
   showRoutine,
   showNutrition,
+  weekClosed,
 }: {
   data: StudentWeekResponse;
   showRoutine: boolean;
   showNutrition: boolean;
+  weekClosed?: boolean;
 }) {
   const { profile, weekly, training_progress: progress } = data;
+  const { percent_decimals, milestone_days, challenge_length_days } = usePanelStats();
   const changed = profile.nutrition_targets.changed_in_week || [];
   const weight = profile.weight || { initial: null, milestones: [], latest: null };
-  const milestones = [30, 60, 90].map((day) => {
+  const milestones = milestone_days.map((day) => {
     const found = (weight.milestones || []).find((item) => item.day === day);
     return (
       found || {
@@ -113,7 +117,7 @@ export function StudentFacts({
         </div>
         <div className={`wp-week-pct large ${weekly.color}`}>
           <small>Adherencia semanal</small>
-          <b>{formatPct(weekly.pct)}</b>
+          <b>{formatPct(weekly.pct, percent_decimals)}</b>
           <StatusBadges status={weekly.status} />
         </div>
       </header>
@@ -139,7 +143,7 @@ export function StudentFacts({
         </div>
         <div>
           <dt>Objetivo</dt>
-          <dd>{profile.goal || "—"}</dd>
+          <dd>{(profile.goal || profile.objective || "").trim() || "—"}</dd>
         </div>
         <div>
           <dt>Inicio del desafío</dt>
@@ -147,7 +151,8 @@ export function StudentFacts({
             {formatDateLong(profile.challenge_start)}
             {profile.challenge_day != null ? (
               <small>
-                día {profile.challenge_day} / semana {profile.challenge_week ?? "—"} del desafío
+                día {profile.challenge_day}/{challenge_length_days} · semana{" "}
+                {profile.challenge_week ?? "—"} del desafío
               </small>
             ) : (
               <small>Aún no inicia</small>
@@ -158,7 +163,9 @@ export function StudentFacts({
           <dt>Entrenamientos</dt>
           <dd>
             {progress.done} de {progress.planned ?? "—"}
-            {progress.partial ? <small>Avance parcial (semana en curso)</small> : null}
+            {progress.partial && !weekClosed ? (
+              <small>Avance parcial (semana en curso)</small>
+            ) : null}
           </dd>
         </div>
         {showRoutine ? (
@@ -208,9 +215,6 @@ export function StudentFacts({
             {profile.nutrition_targets.effective_from
               ? `Vigente desde ${formatDateShort(profile.nutrition_targets.effective_from)}`
               : "Sin meta vigente"}
-            {profile.nutrition_targets.approved_by
-              ? ` · ${profile.nutrition_targets.approved_by}`
-              : ""}
           </p>
           {changed.length > 0 ? (
             <p className="wp-changed">

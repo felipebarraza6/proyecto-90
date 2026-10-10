@@ -1,4 +1,5 @@
 import { formatPct, WEEKDAYS_SHORT } from "./format";
+import { usePanelStats } from "./PanelStatsContext";
 import { PercentChip, StatusBadges } from "./ui";
 import type { PanelRow } from "./types";
 
@@ -22,6 +23,7 @@ export function WeeklyTable({
   showEmail: boolean;
   onOpen: (clientId: number) => void;
 }) {
+  const { percent_decimals } = usePanelStats();
   return (
     <div className="table-card wp-table-wrap">
       <table className="wp-table">
@@ -87,7 +89,7 @@ export function WeeklyTable({
                     onOpen(row.client_id);
                   }}
                 >
-                  {formatPct(row.weekly.pct)}
+                  {formatPct(row.weekly.pct, percent_decimals)}
                 </button>
               </td>
               <td>

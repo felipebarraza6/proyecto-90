@@ -58,12 +58,16 @@ export function formatDateTime(iso: string | null | undefined): string {
   return d.toLocaleString("es-CL", DATE_TIME);
 }
 
-export function formatPct(value: number | null | undefined): string {
+export function formatPct(
+  value: number | null | undefined,
+  decimals: number = 1,
+): string {
   if (value == null || Number.isNaN(Number(value))) return "—";
   const n = Number(value);
+  const max = Math.max(0, Math.min(2, Math.round(Number(decimals) || 0)));
   const formatted = new Intl.NumberFormat("es-CL", {
-    minimumFractionDigits: Number.isInteger(n) ? 0 : 1,
-    maximumFractionDigits: 1,
+    minimumFractionDigits: Number.isInteger(n) && max > 0 ? 0 : Math.min(max, 1),
+    maximumFractionDigits: max,
   }).format(n);
   return `${formatted} %`;
 }

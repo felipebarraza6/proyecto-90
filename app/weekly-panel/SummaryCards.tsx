@@ -1,4 +1,5 @@
 import { formatPct } from "./format";
+import { usePanelStats } from "./PanelStatsContext";
 import type { PanelFilter, WeekResponse } from "./types";
 
 export function SummaryCards({
@@ -10,6 +11,7 @@ export function SummaryCards({
   filter: PanelFilter;
   onFilter: (filter: PanelFilter) => void;
 }) {
+  const { percent_decimals } = usePanelStats();
   const cards: {
     key: PanelFilter | "avg";
     filter: PanelFilter;
@@ -30,7 +32,7 @@ export function SummaryCards({
       key: "avg",
       filter: "all",
       label: "Adherencia semanal",
-      value: formatPct(summary.weekly_avg),
+      value: formatPct(summary.weekly_avg, percent_decimals),
       note: "Promedio por alumno con dato",
       tone: "",
     },

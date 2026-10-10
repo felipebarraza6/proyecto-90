@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { chipAriaLabel, colorClass, formatPct, habitDisplay, studentStatusLabels } from "./format";
+import { usePanelStats } from "./PanelStatsContext";
 import type { DayChip } from "./types";
 
 export function RetryError({
@@ -51,26 +52,30 @@ export function PercentChip({
   label,
   date,
   onOpen,
+  decimals,
 }: {
   pct: number | null;
   color: string;
   label: string;
   date: string;
   onOpen?: () => void;
+  decimals?: number;
 }) {
+  const stats = usePanelStats();
+  const places = decimals ?? stats.percent_decimals;
   const className = `wp-chip ${colorClass(color)}`;
   const aria = chipAriaLabel({ date, pct, label });
   if (onOpen) {
     return (
       <button type="button" className={className} aria-label={aria} onClick={onOpen}>
-        <b>{formatPct(pct)}</b>
+        <b>{formatPct(pct, places)}</b>
         <small>{label}</small>
       </button>
     );
   }
   return (
     <span className={className} aria-label={aria}>
-      <b>{formatPct(pct)}</b>
+      <b>{formatPct(pct, places)}</b>
       <small>{label}</small>
     </span>
   );

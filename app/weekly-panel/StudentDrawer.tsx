@@ -29,6 +29,9 @@ export function StudentDrawer({
   showRoutine,
   showNutrition,
   isMobile,
+  weekClosed,
+  defaultSessionsPerWeek,
+  defaultWaterGoalMl,
   onWeekChange,
   onSelectClient,
   onClose,
@@ -45,6 +48,9 @@ export function StudentDrawer({
   showRoutine: boolean;
   showNutrition: boolean;
   isMobile: boolean;
+  weekClosed?: boolean;
+  defaultSessionsPerWeek?: number;
+  defaultWaterGoalMl?: number;
   onWeekChange: (start: string) => void;
   onSelectClient: (id: number) => void;
   onClose: () => void;
@@ -193,15 +199,22 @@ export function StudentDrawer({
           ) : null}
           {data ? (
             <>
-              <StudentFacts data={data} showRoutine={showRoutine} showNutrition={showNutrition} />
+              <StudentFacts
+                data={data}
+                showRoutine={showRoutine}
+                showNutrition={showNutrition}
+                weekClosed={weekClosed}
+              />
               <StudentWeekTable data={data} />
               {canEditHabits ? (
                 <details className="wp-habit-details">
-                  <summary>Editar días de descanso y meta de agua</summary>
+                  <summary>Editar plan de hábitos (descansos, agua y sesiones)</summary>
                   <HabitPlanEditor
                     clientId={clientId}
                     weekStart={weekStart}
                     challengeStart={data.profile.challenge_start}
+                    defaultSessionsPerWeek={defaultSessionsPerWeek}
+                    defaultWaterGoalMl={defaultWaterGoalMl}
                     onSaved={() => {
                       analysisRefresh.current = true;
                       setReload((n) => n + 1);
@@ -216,6 +229,7 @@ export function StudentDrawer({
             data={analysis}
             loading={analysisLoading}
             error={analysisError}
+            weekClosed={weekClosed}
             onRetry={() => {
               analysisRefresh.current = true;
               setAnalysisReload((n) => n + 1);
