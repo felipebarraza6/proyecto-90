@@ -1,18 +1,29 @@
 # Deploy automático del front a https://90dias.habitofirme.app
 #
-# Disparadores: push a main · workflow_dispatch
-# Build: npm run build → dist/client (misma salida que el paquete manual)
-# Subida: FTPS (TLS 1.2) a ftp.habitofirme.app → 90dias.habitofirme.app/
-# Orden: primero assets/ (y el resto sin index.html), al final index.html
-# No borra archivos remotos que no vengan en el build (rollback = bundles viejos).
+# Disparadores:
+#   - push a main → deploy
+#   - workflow_dispatch mode=deploy → deploy (solo si la ref es main)
+#   - workflow_dispatch mode=diagnose → solo lista el remoto (NO sube; puede
+#     correrse desde cualquier rama para acertar FTP_REMOTE_DIR)
 #
-# Secretos del repo (Settings → Secrets and variables → Actions):
-#   FTP_SERVER    → hostname, ej. ftp.habitofirme.app
-#   FTP_USERNAME  → usuario FTP del hosting
-#   FTP_PASSWORD  → contraseña FTP
+# Build: npm run build → dist/client
+# Subida: curl FTPS explícito (AUTH TLS, TLS ≤ 1.2), como el script manual
+#   curl --ssl -k --tls-max 1.2 … ftp://ftp.habitofirme.app/…
+# Orden: primero todo menos index.html; al final index.html.
+# No borra archivos remotos ajenos al build.
 #
-# Variable de build (fija en el workflow, no es secreto):
-#   VITE_API_BASE=https://api.yggdra.cl
+# Secretos (Settings → Secrets and variables → Actions):
+#   FTP_SERVER      → hostname, ej. ftp.habitofirme.app
+#   FTP_USERNAME    → usuario FTP (p. ej. 90dias@habitofirme.app, jailed)
+#   FTP_PASSWORD    → contraseña FTP
+#   FTP_REMOTE_DIR  → (opcional) ruta relativa al home del usuario FTP.
+#                     Vacío / "." = raíz del jail (típico para cPanel
+#                     account del subdominio). El usuario FileZilla de
+#                     cuenta principal sí necesita "90dias.habitofirme.app".
+# También se acepta la variable de repo vars.FTP_REMOTE_DIR si el secreto
+# no está definido.
+#
+# Build env (fija, no secreto): VITE_API_BASE=https://api.yggdra.cl
 
 name: Deploy Front (90dias)
 
@@ -20,15 +31,160 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "diagnose = solo listar remoto (sin subir); deploy = publicar (solo en main)"
+        type: choice
+        options:
+          - diagnose
+          - deploy
+        default: diagnose
 
 concurrency:
-  group: deploy-front
+  group: deploy-front-${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'deploy' }}
   cancel-in-progress: true
 
+env:
+  VITE_API_BASE: https://api.yggdra.cl
+
 jobs:
-  deploy:
+  # -------------------------------------------------------------------------
+  # Diagnóstico: login + listados. Nunca sube archivos.
+  # -------------------------------------------------------------------------
+  diagnose:
+    if: github.event_name == 'workflow_dispatch' && inputs.mode == 'diagnose'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
+    steps:
+      - name: Validar secretos FTP
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+        run: |
+          missing=0
+          if [ -z "$FTP_SERVER" ]; then echo "::error::Falta FTP_SERVER"; missing=1; fi
+          if [ -z "$FTP_USERNAME" ]; then echo "::error::Falta FTP_USERNAME"; missing=1; fi
+          if [ -z "$FTP_PASSWORD" ]; then echo "::error::Falta FTP_PASSWORD"; missing=1; fi
+          if [ "$missing" -ne 0 ]; then exit 1; fi
+          echo "Secretos FTP presentes."
+          echo "FTP_SERVER enmascarado por Actions; usuario configurado (no se imprime la contraseña)."
+
+      - name: Resolver FTP_REMOTE_DIR
+        id: remote
+        env:
+          FTP_REMOTE_DIR_SECRET: ${{ secrets.FTP_REMOTE_DIR }}
+          FTP_REMOTE_DIR_VAR: ${{ vars.FTP_REMOTE_DIR }}
+        run: |
+          REMOTE="${FTP_REMOTE_DIR_SECRET:-}"
+          if [ -z "$REMOTE" ]; then REMOTE="${FTP_REMOTE_DIR_VAR:-}"; fi
+          if [ -z "$REMOTE" ] || [ "$REMOTE" = "/" ]; then REMOTE="."; fi
+          # quitar barra final salvo "."
+          if [ "$REMOTE" != "." ]; then REMOTE="${REMOTE%/}"; fi
+          echo "remote=$REMOTE" >> "$GITHUB_OUTPUT"
+          echo "FTP_REMOTE_DIR efectivo: $REMOTE"
+
+      - name: Listar remoto con curl (FTPS explícito, sin subir)
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          REMOTE: ${{ steps.remote.outputs.remote }}
+        run: |
+          set +e
+          CURL_BASE=(curl --silent --show-error --ssl-reqd -k --tlsv1.2 --tls-max 1.2 --ftp-pasv --connect-timeout 20 --max-time 60 --user "$FTP_USERNAME:$FTP_PASSWORD")
+
+          list_url() {
+            local label="$1" url="$2"
+            echo ""
+            echo "======== LIST $label ========"
+            echo "URL (sin credenciales): $url"
+            "${CURL_BASE[@]}" --list-only "$url"
+            local rc=$?
+            echo "---- exit=$rc ----"
+            return $rc
+          }
+
+          # Home del usuario (raíz del jail en cPanel account)
+          list_url "home(/)" "ftp://${FTP_SERVER}/"
+          rc_home=$?
+
+          # Valor configurado de FTP_REMOTE_DIR
+          if [ "$REMOTE" = "." ]; then
+            list_url "FTP_REMOTE_DIR(.)" "ftp://${FTP_SERVER}/"
+            rc_cfg=$rc_home
+          else
+            list_url "FTP_REMOTE_DIR($REMOTE)" "ftp://${FTP_SERVER}/${REMOTE}/"
+            rc_cfg=$?
+          fi
+
+          # Candidato histórico del workflow anterior (suele fallar si el user está jailed)
+          list_url "candidato(90dias.habitofirme.app)" "ftp://${FTP_SERVER}/90dias.habitofirme.app/"
+          rc_legacy=$?
+
+          echo ""
+          echo "======== Resumen ========"
+          echo "home(/) exit=$rc_home"
+          echo "FTP_REMOTE_DIR($REMOTE) exit=$rc_cfg"
+          echo "candidato(90dias.habitofirme.app) exit=$rc_legacy"
+          if [ "$rc_home" -eq 0 ] && [ "$rc_legacy" -ne 0 ]; then
+            echo "Diagnóstico: el home del usuario lista OK y 90dias.habitofirme.app no."
+            echo "Para este usuario FTP el path correcto es '.' (raíz del jail)."
+            echo "Deja FTP_REMOTE_DIR vacío o '.' — no uses 90dias.habitofirme.app."
+          elif [ "$rc_legacy" -eq 0 ]; then
+            echo "Diagnóstico: 90dias.habitofirme.app lista OK (usuario tipo cuenta principal)."
+            echo "Configura el secreto/variable FTP_REMOTE_DIR=90dias.habitofirme.app"
+          elif [ "$rc_home" -ne 0 ]; then
+            echo "Diagnóstico: no se pudo listar el home. Revisar login, TLS o modo pasivo."
+            exit 1
+          fi
+
+      - name: Listar remoto con lftp (debug, sin subir)
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          REMOTE: ${{ steps.remote.outputs.remote }}
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq lftp
+          # debug a archivo; filtramos líneas que puedan arrastrar el password del argv
+          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "ftps://$FTP_SERVER" -e "
+            set ftp:ssl-force true;
+            set ftp:ssl-protect-data true;
+            set ftp:ssl-protect-list true;
+            set ftp:passive-mode true;
+            set ftp:prefer-epsv false;
+            set ssl:verify-certificate no;
+            set ssl:priority NORMAL:-VERS-SSL3.0:-VERS-TLS1.0:-VERS-TLS1.1:+VERS-TLS1.2;
+            set net:max-retries 2;
+            set net:timeout 20;
+            set cmd:verbose true;
+            pwd;
+            cls -la;
+            echo '--- try cd $REMOTE ---';
+            cd $REMOTE;
+            pwd;
+            cls -la;
+            echo '--- try cd 90dias.habitofirme.app ---';
+            cd;
+            cd 90dias.habitofirme.app;
+            pwd;
+            cls -la;
+            bye
+          " 2>&1 | sed -E 's/(-u |USER |PASS |PASSWOR[A-Z]* )[^[:space:]]+/\1***/Ig' | tee /tmp/lftp-diagnose.txt
+          echo "lftp diagnose finished (ver log arriba)."
+
+  # -------------------------------------------------------------------------
+  # Deploy: solo desde main
+  # -------------------------------------------------------------------------
+  deploy:
+    if: >
+      github.ref == 'refs/heads/main' && (
+        github.event_name == 'push' ||
+        (github.event_name == 'workflow_dispatch' && inputs.mode == 'deploy')
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4.2.2
 
@@ -49,16 +205,13 @@ jobs:
       - name: Build de producción
         run: npm run build
         env:
-          VITE_API_BASE: https://api.yggdra.cl
+          VITE_API_BASE: ${{ env.VITE_API_BASE }}
 
       - name: Comprobar salida del build
         run: |
           test -f dist/client/index.html
           test -d dist/client/assets
           ls -la dist/client dist/client/assets | head -40
-
-      - name: Instalar lftp
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq lftp
 
       - name: Validar secretos FTP
         env:
@@ -67,51 +220,89 @@ jobs:
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
         run: |
           missing=0
-          if [ -z "$FTP_SERVER" ]; then echo "::error::Falta el secreto FTP_SERVER (hostname, ej. ftp.habitofirme.app)"; missing=1; fi
+          if [ -z "$FTP_SERVER" ]; then echo "::error::Falta el secreto FTP_SERVER"; missing=1; fi
           if [ -z "$FTP_USERNAME" ]; then echo "::error::Falta el secreto FTP_USERNAME"; missing=1; fi
           if [ -z "$FTP_PASSWORD" ]; then echo "::error::Falta el secreto FTP_PASSWORD"; missing=1; fi
-          if [ "$missing" -ne 0 ]; then
-            echo "Crea los tres secretos en Settings → Secrets and variables → Actions y vuelve a correr el workflow."
-            exit 1
-          fi
-          echo "Secretos FTP presentes (servidor: $FTP_SERVER)."
+          if [ "$missing" -ne 0 ]; then exit 1; fi
+          echo "Secretos FTP presentes."
 
-      # FTPS + TLS 1.2, equivalente al script manual:
-      #   ftp://ftp.habitofirme.app/90dias.habitofirme.app  (--ssl)
-      # Sin --delete: no se borran archivos remotos ajenos al build.
+      - name: Resolver FTP_REMOTE_DIR
+        id: remote
+        env:
+          FTP_REMOTE_DIR_SECRET: ${{ secrets.FTP_REMOTE_DIR }}
+          FTP_REMOTE_DIR_VAR: ${{ vars.FTP_REMOTE_DIR }}
+        run: |
+          REMOTE="${FTP_REMOTE_DIR_SECRET:-}"
+          if [ -z "$REMOTE" ]; then REMOTE="${FTP_REMOTE_DIR_VAR:-}"; fi
+          if [ -z "$REMOTE" ] || [ "$REMOTE" = "/" ]; then REMOTE="."; fi
+          if [ "$REMOTE" != "." ]; then REMOTE="${REMOTE%/}"; fi
+          echo "remote=$REMOTE" >> "$GITHUB_OUTPUT"
+          echo "FTP_REMOTE_DIR efectivo: $REMOTE"
+          if [ "$REMOTE" = "90dias.habitofirme.app" ]; then
+            echo "::warning::Si el usuario FTP es una cuenta cPanel jailed (p. ej. 90dias@…), este path suele ser incorrecto. Corre mode=diagnose."
+          fi
+
+      # Subida con curl FTPS (AUTH TLS), alineada al script manual que funcionó.
+      # --ftp-pasv evita EPSV; --ftp-create-dirs crea assets/ si hace falta.
+      # No hay --delete / mirror destructivo.
       - name: Subir assets (sin index.html)
         env:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          REMOTE: ${{ steps.remote.outputs.remote }}
         run: |
-          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "ftps://$FTP_SERVER" -e '
-            set ftp:ssl-force true;
-            set ftp:ssl-protect-data true;
-            set ssl:verify-certificate no;
-            set ssl:priority NORMAL:-VERS-SSL3.0:-VERS-TLS1.0:-VERS-TLS1.1:+VERS-TLS1.2;
-            set net:max-retries 3;
-            set net:timeout 20;
-            mirror -R --verbose --exclude-glob index.html dist/client 90dias.habitofirme.app;
-            bye
-          '
+          set -euo pipefail
+          if [ "$REMOTE" = "." ]; then
+            PREFIX=""
+          else
+            PREFIX="${REMOTE}/"
+          fi
+          echo "Prefijo remoto: '${PREFIX:-<raíz del jail>}'"
+
+          upload() {
+            local src="$1" dest="$2"
+            echo "PUT $src → ftp://<server>/${PREFIX}${dest}"
+            curl --fail --show-error --silent \
+              --ssl-reqd -k --tlsv1.2 --tls-max 1.2 \
+              --ftp-pasv --ftp-create-dirs \
+              --connect-timeout 20 --max-time 120 \
+              --retry 3 --retry-delay 2 \
+              --user "$FTP_USERNAME:$FTP_PASSWORD" \
+              -T "$src" \
+              "ftp://${FTP_SERVER}/${PREFIX}${dest}"
+          }
+
+          while IFS= read -r -d '' f; do
+            rel="${f#dist/client/}"
+            upload "$f" "$rel"
+          done < <(find dist/client -type f ! -name index.html -print0 | sort -z)
+
+          echo "Assets subidos OK."
 
       - name: Subir index.html al final
         env:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          REMOTE: ${{ steps.remote.outputs.remote }}
         run: |
-          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "ftps://$FTP_SERVER" -e '
-            set ftp:ssl-force true;
-            set ftp:ssl-protect-data true;
-            set ssl:verify-certificate no;
-            set ssl:priority NORMAL:-VERS-SSL3.0:-VERS-TLS1.0:-VERS-TLS1.1:+VERS-TLS1.2;
-            set net:max-retries 3;
-            set net:timeout 20;
-            put -O 90dias.habitofirme.app dist/client/index.html;
-            bye
-          '
+          set -euo pipefail
+          if [ "$REMOTE" = "." ]; then
+            PREFIX=""
+          else
+            PREFIX="${REMOTE}/"
+          fi
+          echo "PUT index.html → ftp://<server>/${PREFIX}index.html"
+          curl --fail --show-error --silent \
+            --ssl-reqd -k --tlsv1.2 --tls-max 1.2 \
+            --ftp-pasv --ftp-create-dirs \
+            --connect-timeout 20 --max-time 60 \
+            --retry 3 --retry-delay 2 \
+            --user "$FTP_USERNAME:$FTP_PASSWORD" \
+            -T dist/client/index.html \
+            "ftp://${FTP_SERVER}/${PREFIX}index.html"
+          echo "index.html subido OK."
 
       - name: Verificar despliegue
         run: |
