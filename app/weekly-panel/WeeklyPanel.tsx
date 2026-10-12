@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { panelConfigCanEdit } from "../panel-week-adherence";
 import { weekStartWeekdayLabel } from "../timezone";
 import { fetchPanelConfig, fetchWeek, fetchWeeks } from "./api";
 import { PanelLegend } from "./Legend";
@@ -48,6 +49,7 @@ export function WeeklyPanel({
   const showRoutine = true;
   const showNutrition = true;
   const isAdmin = role === "admin";
+  const canEditRules = panelConfigCanEdit(role, config);
   // Cerrada si el backend lo marca, o si no es la semana en curso (compat. sin is_closed).
   const weekClosed =
     Boolean(weekData?.week.is_closed) || weekData?.week.is_current === false;
@@ -134,6 +136,7 @@ export function WeeklyPanel({
       {showConfig && isAdmin ? (
         <PanelConfigView
           config={config}
+          canEdit={canEditRules}
           onSaved={async () => {
             // Solo aplicamos la config del re-GET. Si falla, no sustituimos por defaults.
             let fresh: PanelConfig;

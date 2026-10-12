@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { PanelApiError, patchPanelConfig, probePanelConfigWritable } from "./api";
+import { PanelApiError, patchPanelConfig } from "./api";
 import {
   deepEqual,
   habitWeightsFormulaText,
@@ -16,8 +16,8 @@ import type {
   PanelConfigPatch,
 } from "./types";
 
-/** Draft editable: campos PATCH (sin can_comment, config_version ni panel_enabled). */
-type Draft = Omit<PanelConfig, "can_comment" | "config_version" | "panel_enabled">;
+/** Draft editable: campos PATCH (sin can_comment, config_version, panel_enabled ni can_edit). */
+type Draft = Omit<PanelConfig, "can_comment" | "config_version" | "panel_enabled" | "can_edit">;
 
 type FieldErrors = Record<string, string>;
 
@@ -527,17 +527,19 @@ function ReadOnlyRows({ config }: { config: PanelConfig }) {
 export function PanelConfigView({
   config,
   onSaved,
+  canEdit = true,
 }: {
   config: PanelConfig;
   /** Debe re-GET la config; si falla, rechazar para no sustituir por defaults. */
   onSaved: (saved: PanelConfig) => void | Promise<void>;
+  /** Rol admin o can_edit del GET — sin probe PATCH. */
+  canEdit?: boolean;
 }) {
   const [baseline, setBaseline] = useState(() => toDraft(config));
   const [draft, setDraft] = useState(() => toDraft(config));
   const [milestoneDaysText, setMilestoneDaysText] = useState(() =>
     milestoneDaysToText(config.milestone_days),
   );
-  const [writable, setWritable] = useState<boolean | null>(null);
   const [localErrors, setLocalErrors] = useState<FieldErrors>({});
   const [serverErrors, setServerErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState("");
@@ -560,18 +562,10 @@ export function PanelConfigView({
     }
   }, [config]);
 
-  useEffect(() => {
-    const ac = new AbortController();
-    probePanelConfigWritable(ac.signal)
-      .then(setWritable)
-      .catch(() => setWritable(false));
-    return () => ac.abort();
-  }, []);
-
   const patch = useMemo(() => buildPatch(baseline, draft), [baseline, draft]);
   const dirty = Object.keys(patch).length > 0;
   const errors = { ...localErrors, ...serverErrors };
-  const readOnly = writable === false;
+  const readOnly = !canEdit;
 
   function touch(updater: (prev: Draft) => Draft) {
     setDraft(updater);
@@ -710,14 +704,12 @@ export function PanelConfigView({
         </div>
       </header>
 
-      {writable === null ? <p className="wp-habit-hint">Comprobando si se pueden guardar…</p> : null}
-
       {readOnly ? (
         <div className="wp-config-readonly" role="status">
           <b>Solo lectura</b>
           <p>
-            Por ahora solo puedes ver las reglas. Cuando el equipo active el guardado, podrás
-            editarlas desde esta pantalla.
+            Solo el administrador puede editar las reglas. Si necesitas un cambio, pídeselo al
+            admin del proyecto.
           </p>
         </div>
       ) : (

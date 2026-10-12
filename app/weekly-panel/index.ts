@@ -1,7 +1,7 @@
 export { WeeklyPanel } from "./WeeklyPanel";
 export { PANEL_SCREEN, normalizeScreen, navShortLabel, staffPanelActive } from "./screen";
 export { setPanelFilterIntent } from "./usePanelWeek";
-export { fetchPanelConfig, patchPanelConfig, probePanelConfigWritable } from "./api";
+export { fetchPanelConfig, patchPanelConfig } from "./api";
 export {
   habitWeightsFormulaText,
   macrosDayStatus,

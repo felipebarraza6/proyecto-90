@@ -78,34 +78,6 @@ export async function fetchPanelConfig(signal?: AbortSignal): Promise<PanelConfi
   return normalizePanelConfig(raw);
 }
 
-/** True si el backend admite PATCH (Allow incluye PATCH). Prod viejo → false. */
-export async function probePanelConfigWritable(signal?: AbortSignal): Promise<boolean> {
-  try {
-    const res = await fetch(apiUrl(`${PREFIX}/config`), {
-      method: "OPTIONS",
-      headers: authHeaders(),
-      signal,
-      cache: "no-store",
-    });
-    const allow = `${res.headers.get("allow") || ""} ${res.headers.get("Access-Control-Allow-Methods") || ""}`.toUpperCase();
-    if (allow.includes("PATCH")) return true;
-    // Allow explícito sin PATCH → solo lectura (caso producción actual).
-    if (/\bGET\b/.test(allow) && !allow.includes("PATCH")) return false;
-    // Allow vacío/no confiable: sondear con campo inválido (400 ≠ mutación).
-    const probe = await fetch(apiUrl(`${PREFIX}/config`), {
-      method: "PATCH",
-      headers: { ...authHeaders(), "content-type": "application/json" },
-      body: JSON.stringify({ __writable_probe__: true }),
-      signal,
-      cache: "no-store",
-    });
-    if (probe.status === 405 || probe.status === 404) return false;
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 export async function patchPanelConfig(
   body: PanelConfigPatch,
   signal?: AbortSignal,

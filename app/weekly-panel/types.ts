@@ -63,6 +63,11 @@ export type PanelConfig = {
   comment_delete_policy: string;
   /** Versión optimista del backend; no se envía en PATCH. */
   config_version?: number;
+  /**
+   * Si el GET /config lo envía, define si se pueden editar Reglas.
+   * Si falta, el front usa el rol admin (P90_ADMIN).
+   */
+  can_edit?: boolean;
 
   habit_weights: HabitWeights;
   adherence_equal_weights_as_40_40_20: boolean;
@@ -120,7 +125,7 @@ export type PanelConfig = {
  * Sin can_comment, config_version ni panel_enabled (el front no edita ni envía ese flag).
  */
 export type PanelConfigPatch = Partial<
-  Omit<PanelConfig, "can_comment" | "config_version" | "panel_enabled">
+  Omit<PanelConfig, "can_comment" | "config_version" | "panel_enabled" | "can_edit">
 >;
 
 export type WeekOption = { start: string; end: string; label: string };

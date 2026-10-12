@@ -253,6 +253,7 @@ export function normalizePanelConfig(raw: Partial<PanelConfig> | null | undefine
     ai_max_tokens: asNumber(base.ai_max_tokens, d.ai_max_tokens),
     ai_timeout_s: asNumber(base.ai_timeout_s, d.ai_timeout_s),
     config_version: base.config_version == null ? undefined : asNumber(base.config_version, 0),
+    ...(base.can_edit != null ? { can_edit: asBool(base.can_edit, false) } : {}),
   };
 }
 
