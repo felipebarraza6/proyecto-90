@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { weekStartWeekdayLabel } from "../timezone";
 import { fetchPanelConfig, fetchWeek, fetchWeeks } from "./api";
 import { PanelLegend } from "./Legend";
 import { PanelConfigView } from "./PanelConfigView";
@@ -37,7 +38,10 @@ export function WeeklyPanel({
   const [error, setError] = useState("");
   const [weeksError, setWeeksError] = useState("");
   const [reload, setReload] = useState(0);
+  const [weeksReload, setWeeksReload] = useState(0);
   const [showConfig, setShowConfig] = useState(false);
+  /** Sube tras guardar Reglas → la ficha fuerza refresh del análisis. */
+  const [rulesEpoch, setRulesEpoch] = useState(0);
   const weekGen = useRef(0);
 
   // Marce 07-10: admin, coach y nutri ven la ficha completa (rutina y macros).
@@ -47,6 +51,8 @@ export function WeeklyPanel({
   // Cerrada si el backend lo marca, o si no es la semana en curso (compat. sin is_closed).
   const weekClosed =
     Boolean(weekData?.week.is_closed) || weekData?.week.is_current === false;
+
+  const weekStartName = weekStartWeekdayLabel(config.week_start_weekday);
 
   useEffect(() => {
     const ac = new AbortController();
@@ -62,9 +68,9 @@ export function WeeklyPanel({
         setWeeksError(err instanceof Error ? err.message : "No fue posible cargar las semanas");
       });
     return () => ac.abort();
-    // weekStart/setWeekStart omitted: only seed once when empty
+    // weekStart/setWeekStart omitted: only seed once when empty; weeksReload re-fetches list
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [weeksReload]);
 
   useEffect(() => {
     if (!weekStart) return;
@@ -96,7 +102,11 @@ export function WeeklyPanel({
   const emptyCopy =
     weekData?.empty_reason === "no_match_filter"
       ? "Prueba con Todos o elige otra semana."
-      : "Los alumnos aparecen desde el lunes de la semana en que inicia su desafío.";
+      : `Los alumnos aparecen desde el ${weekStartName} de la semana en que inicia su desafío.`;
+
+  const canWriteComments =
+    Boolean(config.can_comment) &&
+    !(role === "reviewer" && (config.reviewer_access === "read" || config.reviewer_access === "none"));
 
   return (
     <PanelStatsProvider config={config}>
@@ -124,14 +134,25 @@ export function WeeklyPanel({
       {showConfig && isAdmin ? (
         <PanelConfigView
           config={config}
-          onSaved={async (next) => {
-            onConfigChange?.(next);
+          onSaved={async () => {
+            // Solo aplicamos la config del re-GET. Si falla, no sustituimos por defaults.
+            let fresh: PanelConfig;
             try {
-              const fresh = await fetchPanelConfig();
-              onConfigChange?.(fresh);
+              fresh = await fetchPanelConfig();
             } catch {
-              /* Se conserva la respuesta del PATCH. */
+              throw new Error(
+                "Los cambios se guardaron, pero no se pudo volver a cargar la configuración. Recarga la página.",
+              );
             }
+            onConfigChange?.(fresh);
+            try {
+              const weeksRes = await fetchWeeks();
+              setWeeks(weeksRes.weeks);
+              setCurrentWeek(weeksRes.current);
+            } catch {
+              setWeeksReload((n) => n + 1);
+            }
+            setRulesEpoch((n) => n + 1);
             setReload((n) => n + 1);
           }}
         />
@@ -139,7 +160,7 @@ export function WeeklyPanel({
       {!showConfig ? (
         <>
       {weeksError ? (
-        <RetryError message={weeksError} onRetry={() => window.location.reload()} />
+        <RetryError message={weeksError} onRetry={() => setWeeksReload((n) => n + 1)} />
       ) : (
         <WeekSelector
           weeks={weeks}
@@ -196,13 +217,14 @@ export function WeeklyPanel({
           staffUserId={viewerId}
           role={role}
           specialty={specialty}
-          canComment={config.can_comment}
+          canComment={canWriteComments}
           showRoutine={showRoutine}
           showNutrition={showNutrition}
           isMobile={mobile}
           weekClosed={weekClosed}
           defaultSessionsPerWeek={config.default_sessions_per_week}
           defaultWaterGoalMl={config.default_water_goal_ml}
+          rulesEpoch={rulesEpoch}
           onWeekChange={setWeekStart}
           onSelectClient={setSelectedClientId}
           onClose={() => setSelectedClientId(null)}

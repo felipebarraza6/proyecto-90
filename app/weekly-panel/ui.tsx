@@ -69,7 +69,11 @@ export function PercentChip({
     greenGt: stats.thresholds.green_gt,
     yellowGte: stats.thresholds.yellow_gte,
   };
-  const aria = chipAriaLabel({ date, pct, label });
+  const aria = chipAriaLabel(
+    { date, pct, label, color },
+    places,
+    stats.thresholds,
+  );
   if (onOpen) {
     return (
       <button type="button" className={className} aria-label={aria} onClick={onOpen}>

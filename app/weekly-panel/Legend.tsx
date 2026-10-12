@@ -1,7 +1,9 @@
 import {
   formatRangeHint,
   habitWeightsFormulaText,
+  MACRO_KEYS,
   macroKeyLabel,
+  PANEL_CONFIG_DEFAULTS,
   policyLabel,
   type MacroKey,
 } from "./panelConfig";
@@ -21,15 +23,13 @@ export function PanelLegend({
     config?.adherence_equal_weights_as_40_40_20,
   );
   const restCounts = policyLabel(config?.rest_day_counts || "exclude");
-  const requires = (config?.macro_met_requires || ["calories", "protein"])
+  const requires = (config?.macro_met_requires || PANEL_CONFIG_DEFAULTS.macro_met_requires)
     .map((k) => macroKeyLabel(k as MacroKey))
     .join(" y ");
-  const ranges = config?.macro_ranges;
-  const rangeHints = ranges
-    ? (["calories", "protein", "carbs", "fats"] as MacroKey[])
-        .map((k) => `${macroKeyLabel(k)} ${formatRangeHint(ranges[k])}`)
-        .join(" · ")
-    : "kcal ≤ 110 % · proteína ≥ 90 % · carbs/grasas 90–110 % (solo color)";
+  const ranges = config?.macro_ranges || PANEL_CONFIG_DEFAULTS.macro_ranges;
+  const rangeHints = MACRO_KEYS.map(
+    (k) => `${macroKeyLabel(k)} ${formatRangeHint(ranges[k])}`,
+  ).join(" · ");
 
   return (
     <div className="wp-legend" aria-label="Leyenda">

@@ -52,6 +52,7 @@ export function HabitPlanEditor({
   const [fromMode, setFromMode] = useState<"start" | "week" | "date">("week");
   const [customDate, setCustomDate] = useState(weekStart);
   const [hasPrior, setHasPrior] = useState(false);
+  const [canEdit, setCanEdit] = useState(true);
 
   useEffect(() => {
     const ac = new AbortController();
@@ -60,6 +61,7 @@ export function HabitPlanEditor({
     setOk(false);
     fetchHabitPlan(clientId, ac.signal)
       .then((res: HabitPlanResponse) => {
+        setCanEdit(res.can_edit !== false);
         const current = res.current;
         const prior = Boolean(current) || (res.history && res.history.length > 0);
         setHasPrior(prior);
@@ -98,6 +100,7 @@ export function HabitPlanEditor({
   }, [clientId, weekStart, defaultSessionsPerWeek, defaultWaterGoalMl]);
 
   function toggleDay(day: number) {
+    if (!canEdit) return;
     setRest((prev) => {
       if (prev.includes(day)) return prev.filter((d) => d !== day);
       if (prev.length >= 6) return prev;
@@ -108,7 +111,7 @@ export function HabitPlanEditor({
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    if (saving) return;
+    if (saving || !canEdit) return;
     setSaving(true);
     setError("");
     setOk(false);
@@ -146,7 +149,10 @@ export function HabitPlanEditor({
     <form className="wp-habit-editor" onSubmit={onSubmit}>
       <h2>Plan de hábitos</h2>
       {loading ? <p className="wp-habit-hint">Cargando plan…</p> : null}
-      <fieldset className="wp-habit-days" disabled={loading || saving}>
+      {!loading && !canEdit ? (
+        <p className="wp-readonly-note">Solo lectura: no puedes editar el plan de este alumno.</p>
+      ) : null}
+      <fieldset className="wp-habit-days" disabled={loading || saving || !canEdit}>
         <legend>Días de descanso</legend>
         <div className="wp-habit-toggles">
           {DAY_TOGGLES.map((item) => {
@@ -177,7 +183,7 @@ export function HabitPlanEditor({
             setWaterL(e.target.value);
             setOk(false);
           }}
-          disabled={loading || saving}
+          disabled={loading || saving || !canEdit}
         />
       </label>
       <label className="wp-habit-field">
@@ -192,7 +198,7 @@ export function HabitPlanEditor({
             setSessions(e.target.value);
             setOk(false);
           }}
-          disabled={loading || saving}
+          disabled={loading || saving || !canEdit}
           aria-describedby="wp-sessions-hint"
         />
         <small id="wp-sessions-hint" className="wp-habit-hint">
@@ -204,7 +210,7 @@ export function HabitPlanEditor({
         <select
           value={fromMode}
           onChange={(e) => setFromMode(e.target.value as "start" | "week" | "date")}
-          disabled={loading || saving}
+          disabled={loading || saving || !canEdit}
         >
           {!hasPrior ? <option value="start">Inicio del desafío</option> : null}
           <option value="week">Desde la semana del {formatDateShort(weekStart)}</option>
@@ -218,7 +224,7 @@ export function HabitPlanEditor({
             type="date"
             value={customDate}
             onChange={(e) => setCustomDate(e.target.value)}
-            disabled={loading || saving}
+            disabled={loading || saving || !canEdit}
           />
         </label>
       ) : null}
@@ -228,9 +234,11 @@ export function HabitPlanEditor({
         </p>
       ) : null}
       {ok ? <p className="wp-sent">Guardado</p> : null}
-      <button type="submit" className="primary" disabled={loading || saving}>
-        {saving ? "Guardando…" : "Guardar"}
-      </button>
+      {canEdit ? (
+        <button type="submit" className="primary" disabled={loading || saving}>
+          {saving ? "Guardando…" : "Guardar"}
+        </button>
+      ) : null}
     </form>
   );
 }

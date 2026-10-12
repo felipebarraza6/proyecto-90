@@ -32,6 +32,7 @@ export function StudentDrawer({
   weekClosed,
   defaultSessionsPerWeek,
   defaultWaterGoalMl,
+  rulesEpoch = 0,
   onWeekChange,
   onSelectClient,
   onClose,
@@ -51,6 +52,8 @@ export function StudentDrawer({
   weekClosed?: boolean;
   defaultSessionsPerWeek?: number;
   defaultWaterGoalMl?: number;
+  /** >0 tras guardar Reglas → análisis con refresh=true. */
+  rulesEpoch?: number;
   onWeekChange: (start: string) => void;
   onSelectClient: (id: number) => void;
   onClose: () => void;
@@ -64,7 +67,7 @@ export function StudentDrawer({
   const [posted, setPosted] = useState<CommentItem[]>([]);
   const [reload, setReload] = useState(0);
   const [analysisReload, setAnalysisReload] = useState(0);
-  const analysisRefresh = useRef(false);
+  const analysisRefresh = useRef(rulesEpoch > 0);
   const studentGen = useRef(0);
   const analysisGen = useRef(0);
   const [scope, setScope] = useState(`${clientId}:${weekStart}`);
@@ -150,7 +153,7 @@ export function StudentDrawer({
     () => data?.profile.name || rows.find((r) => r.client_id === clientId)?.name || "Alumno",
     [data, rows, clientId],
   );
-  const canEditHabits =
+  const roleCanEditHabits =
     role === "admin" || (role === "professional" && specialty === "coach");
 
   return (
@@ -206,7 +209,7 @@ export function StudentDrawer({
                 weekClosed={weekClosed}
               />
               <StudentWeekTable data={data} />
-              {canEditHabits ? (
+              {roleCanEditHabits ? (
                 <details className="wp-habit-details">
                   <summary>Editar plan de hábitos (descansos, agua y sesiones)</summary>
                   <HabitPlanEditor

@@ -7,6 +7,7 @@ import {
   PANEL_CONFIG_DEFAULTS,
   type MacroKey,
 } from "./weekly-panel/panelConfig";
+import { todayIsoInTimezone } from "./timezone";
 import type { PanelConfig } from "./weekly-panel/types";
 
 type Row = Record<string, unknown>;
@@ -18,13 +19,7 @@ const habits = {
 const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 const addDays = (date: Date, days: number) => new Date(date.getTime() + days * 86400000);
 const iso = (date: Date) => date.toISOString().slice(0, 10);
-const chileToday = () =>
-  new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Santiago",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date());
+const chileToday = (timezone?: string | null) => todayIsoInTimezone(timezone);
 const dateAt = (value: unknown) =>
   new Date(`${String(value || new Date().toISOString()).slice(0, 10)}T12:00:00Z`);
 const initialWeek = (start: Date, weeks = challengeWeeks()) =>

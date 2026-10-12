@@ -115,9 +115,12 @@ export type PanelConfig = {
   ai_timeout_s: number;
 };
 
-/** Body parcial de PATCH /api/p90/panel/config (sin can_comment ni config_version). */
+/**
+ * Body parcial de PATCH /api/p90/panel/config.
+ * Sin can_comment, config_version ni panel_enabled (el front no edita ni envía ese flag).
+ */
 export type PanelConfigPatch = Partial<
-  Omit<PanelConfig, "can_comment" | "config_version">
+  Omit<PanelConfig, "can_comment" | "config_version" | "panel_enabled">
 >;
 
 export type WeekOption = { start: string; end: string; label: string };

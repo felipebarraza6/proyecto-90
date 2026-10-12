@@ -10,6 +10,7 @@ import {
   type MacroKey,
 } from "./weekly-panel/panelConfig";
 import { formatGoalPctLabel } from "./weekly-panel/format";
+import { todayIsoInTimezone } from "./timezone";
 import type { PanelConfig } from "./weekly-panel/types";
 
 type Row = Record<string, unknown>;
@@ -22,13 +23,7 @@ const metrics = [
 ] as const;
 const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 const iso = (date: Date) => date.toISOString().slice(0, 10);
-const chileToday = () =>
-  new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Santiago",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date());
+const chileToday = (timezone?: string | null) => todayIsoInTimezone(timezone);
 const dateAt = (value: unknown) => {
   const raw = String(value || new Date().toISOString()).slice(0, 10);
   return new Date(`${raw}T12:00:00Z`);

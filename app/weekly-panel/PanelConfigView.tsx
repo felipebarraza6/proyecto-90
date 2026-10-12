@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { PanelApiError, patchPanelConfig, probePanelConfigWritable } from "./api";
 import {
   deepEqual,
@@ -16,14 +16,13 @@ import type {
   PanelConfigPatch,
 } from "./types";
 
-/** Draft editable: todos los campos PATCH (sin can_comment ni config_version). */
-type Draft = Omit<PanelConfig, "can_comment" | "config_version">;
+/** Draft editable: campos PATCH (sin can_comment, config_version ni panel_enabled). */
+type Draft = Omit<PanelConfig, "can_comment" | "config_version" | "panel_enabled">;
 
 type FieldErrors = Record<string, string>;
 
 function toDraft(config: PanelConfig): Draft {
   return {
-    panel_enabled: config["panel_enabled"],
     thresholds: { ...config.thresholds },
     percent_decimals: config.percent_decimals,
     show_summary_cards: config.show_summary_cards,
@@ -530,7 +529,8 @@ export function PanelConfigView({
   onSaved,
 }: {
   config: PanelConfig;
-  onSaved: (next: PanelConfig) => void;
+  /** Debe re-GET la config; si falla, rechazar para no sustituir por defaults. */
+  onSaved: (saved: PanelConfig) => void | Promise<void>;
 }) {
   const [baseline, setBaseline] = useState(() => toDraft(config));
   const [draft, setDraft] = useState(() => toDraft(config));
@@ -543,6 +543,8 @@ export function PanelConfigView({
   const [formError, setFormError] = useState("");
   const [ok, setOk] = useState(false);
   const [saving, setSaving] = useState(false);
+  /** Evita que el refresh de config tras guardar borre el mensaje «Guardado». */
+  const keepOkAfterConfigSync = useRef(false);
 
   useEffect(() => {
     const next = toDraft(config);
@@ -551,7 +553,11 @@ export function PanelConfigView({
     setMilestoneDaysText(milestoneDaysToText(config.milestone_days));
     setLocalErrors({});
     setServerErrors({});
-    setOk(false);
+    if (keepOkAfterConfigSync.current) {
+      keepOkAfterConfigSync.current = false;
+    } else {
+      setOk(false);
+    }
   }, [config]);
 
   useEffect(() => {
@@ -653,9 +659,11 @@ export function PanelConfigView({
     setSaving(true);
     try {
       const saved = await patchPanelConfig(patch);
+      keepOkAfterConfigSync.current = true;
+      await onSaved(saved);
       setOk(true);
-      onSaved(saved);
     } catch (err: unknown) {
+      keepOkAfterConfigSync.current = false;
       if (err instanceof PanelApiError) {
         if (err.status === 405) {
           setWritable(false);
@@ -670,7 +678,11 @@ export function PanelConfigView({
           setFormError(err.message || `Error ${err.status}`);
         }
       } else {
-        setFormError(err instanceof Error ? err.message : "No fue posible guardar");
+        setFormError(
+          err instanceof Error
+            ? err.message
+            : "No fue posible guardar",
+        );
       }
     } finally {
       setSaving(false);

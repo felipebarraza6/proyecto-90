@@ -1,5 +1,11 @@
 import type { HabitStatus, SemaforoColor } from "./types";
 
+/** Alineado a PANEL_CONFIG_DEFAULTS (sin import, para tests Node ESM). */
+const FALLBACK_GREEN_GT = 80;
+const FALLBACK_YELLOW_GTE = 70;
+const FALLBACK_PCT_DECIMALS = 1;
+const FALLBACK_TZ = "America/Santiago";
+
 export const WEEKDAYS_SHORT = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
 const DATE_ONLY: Intl.DateTimeFormatOptions = {
@@ -12,12 +18,6 @@ const DATE_NUM: Intl.DateTimeFormatOptions = {
   day: "2-digit",
   month: "2-digit",
   timeZone: "UTC",
-};
-
-const DATE_TIME: Intl.DateTimeFormatOptions = {
-  dateStyle: "short",
-  timeStyle: "short",
-  timeZone: "America/Santiago",
 };
 
 export function parseISODate(iso: string): Date {
@@ -51,11 +51,19 @@ export function formatDateLong(iso: string | null | undefined): string {
   });
 }
 
-export function formatDateTime(iso: string | null | undefined): string {
+export function formatDateTime(
+  iso: string | null | undefined,
+  timezone?: string | null,
+): string {
   if (!iso) return "—";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString("es-CL", DATE_TIME);
+  const tz = (timezone && String(timezone).trim()) || FALLBACK_TZ;
+  return d.toLocaleString("es-CL", {
+    dateStyle: "short",
+    timeStyle: "short",
+    timeZone: tz,
+  });
 }
 
 /**
@@ -107,8 +115,8 @@ export function alignPctDisplay(
   }
 
   const color = align?.color;
-  const greenGt = align?.greenGt ?? 80;
-  const yellowGte = align?.yellowGte ?? 70;
+  const greenGt = align?.greenGt ?? FALLBACK_GREEN_GT;
+  const yellowGte = align?.yellowGte ?? FALLBACK_YELLOW_GTE;
   if (color === "red") {
     n = Math.floor(n * factor + 1e-9) / factor;
     if (n >= yellowGte) n = Math.max(0, yellowGte - step);
@@ -132,7 +140,7 @@ export function alignPctDisplay(
 
 export function formatPct(
   value: number | null | undefined,
-  decimals: number = 1,
+  decimals: number = FALLBACK_PCT_DECIMALS,
   align?: Parameters<typeof alignPctDisplay>[2],
 ): string {
   if (value == null || Number.isNaN(Number(value))) return "—";
@@ -233,13 +241,25 @@ export function studentStatusLabels(status: string[]): { code: string; label: st
   return badges;
 }
 
-export function chipAriaLabel(day: {
-  date: string;
-  pct: number | null;
-  label: string;
-}): string {
+export function chipAriaLabel(
+  day: {
+    date: string;
+    pct: number | null;
+    label: string;
+    color?: string;
+  },
+  decimals: number = FALLBACK_PCT_DECIMALS,
+  thresholds: { green_gt: number; yellow_gte: number } = {
+    green_gt: FALLBACK_GREEN_GT,
+    yellow_gte: FALLBACK_YELLOW_GTE,
+  },
+): string {
   const head = formatDayShort(day.date);
-  const pct = formatPct(day.pct);
+  const pct = formatPct(day.pct, decimals, {
+    color: day.color,
+    greenGt: thresholds.green_gt,
+    yellowGte: thresholds.yellow_gte,
+  });
   return `${head}: ${pct}, ${day.label}`;
 }
 

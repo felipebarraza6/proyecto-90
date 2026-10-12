@@ -4,14 +4,13 @@ import { useMemo, useState } from "react";
 import { NutritionDailyReview } from "./nutrition-daily";
 import { TrainingDailyReview } from "./participant-adherence";
 import { StaffNotesPanel } from "./notes-notices";
+import { formatPct } from "./weekly-panel/format";
+import { PANEL_CONFIG_DEFAULTS } from "./weekly-panel/panelConfig";
 import type { PanelConfig } from "./weekly-panel/types";
 
 type Row = Record<string, unknown>;
 type Area = "nutrition" | "training";
 type Band = "all" | "red" | "yellow" | "green" | "pending";
-
-/** Defaults = bandas históricas del tracking (80 / 90) si aún no hay config. */
-const TRACKING_BAND_DEFAULTS = { green_gt: 90, yellow_gte: 80, risk: 80 };
 
 const nameOf = (row: Row) =>
   `${row.first_name || ""} ${row.last_name || ""}`.trim() || String(row.email || "Alumno");
@@ -22,10 +21,10 @@ const initials = (row: Row) =>
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase())
     .join("") || "90";
-const percent = (person: Row, area: Area) =>
+const percentValue = (person: Row, area: Area) =>
   Math.max(
     0,
-    Math.min(100, Math.round(Number(area === "nutrition" ? person.macros_pct : person.training_pct) || 0)),
+    Math.min(100, Number(area === "nutrition" ? person.macros_pct : person.training_pct) || 0),
   );
 
 function bandOf(
@@ -83,10 +82,11 @@ export function ProfessionalTracking({
         yellow_gte: panelConfig.thresholds.yellow_gte,
         risk: panelConfig.thresholds.risk,
       }
-    : TRACKING_BAND_DEFAULTS;
+    : PANEL_CONFIG_DEFAULTS.thresholds;
+  const pctDecimals = panelConfig?.percent_decimals ?? PANEL_CONFIG_DEFAULTS.percent_decimals;
   const bandCopy = bandCopyFor(thresholds);
   const bandFor = (person: Row, nextArea: Area): Exclude<Band, "all"> =>
-    notStarted(person) ? "pending" : bandOf(percent(person, nextArea), thresholds);
+    notStarted(person) ? "pending" : bandOf(percentValue(person, nextArea), thresholds);
 
   const counts = useMemo(
     () => ({
@@ -182,7 +182,7 @@ export function ProfessionalTracking({
             {filtered.map((person) => (
               <option key={String(person.id)} value={String(person.id)}>
                 {nameOf(person)} ·{" "}
-                {notStarted(person) ? "sin iniciar" : `${percent(person, area)}%`}
+                {notStarted(person) ? "sin iniciar" : formatPct(percentValue(person, area), pctDecimals)}
               </option>
             ))}
           </select>
@@ -215,7 +215,7 @@ export function ProfessionalTracking({
                 </>
               ) : (
                 <>
-                  <strong>{percent(selected, area)}%</strong>
+                  <strong>{formatPct(percentValue(selected, area), pctDecimals)}</strong>
                   <span>cumplimiento</span>
                 </>
               )}

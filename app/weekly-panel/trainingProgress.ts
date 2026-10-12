@@ -23,6 +23,10 @@ export function trainingProgressDisplay(
     plannedRaw == null || !Number.isFinite(Number(plannedRaw)) ? null : Number(plannedRaw);
   const weekClosed = Boolean(options?.weekClosed);
 
+  if (planned === 0) {
+    return { primary: "Sin sesiones planificadas" };
+  }
+
   if (planned != null && planned > 0 && done >= planned) {
     return {
       primary: `Plan cumplido · ${done} de ${planned}`,

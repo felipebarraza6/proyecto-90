@@ -1,6 +1,14 @@
 /**
  * Estatura siempre en centímetros en la UI.
- * Si el usuario escribe metros (valor > 0 y < 3), se convierte a cm.
+ *
+ * Regla de metros → cm:
+ * - Si 0 < n < 3 → metros (1,70 → 170).
+ * - Si 3 ≤ n < 10 → también metros (p. ej. 5 o 5,9 mal escritos como “medio metro”
+ *   o decimales omitidos); 5 → 500 se rechaza por rango; 1,75 ya cubierto arriba.
+ *   Valores típicos erróneos: alguien escribe “175” bien; “1.75” o “1,75” (<3);
+ *   “5.9” (pies mal) o “5” no son cm válidos (< min) → se intenta como metros *100
+ *   y si sigue fuera de rango, se muestra error claro.
+ * - Si n ≥ 10 → centímetros.
  */
 
 export type HeightRangeCm = { min: number; max: number };
@@ -14,7 +22,12 @@ export type HeightNormalizeResult = {
   convertedFromMeters?: boolean;
 };
 
-/** Interpreta un input como cm; convierte metros (< 3) a cm. */
+/** True si el número parece metros (no cm). */
+export function looksLikeMeters(n: number): boolean {
+  return Number.isFinite(n) && n > 0 && n < 10;
+}
+
+/** Interpreta un input como cm; convierte metros (< 10) a cm. */
 export function normalizeHeightInputCm(
   raw: string | number | null | undefined,
   ranges: HeightRangeCm,
@@ -33,7 +46,7 @@ export function normalizeHeightInputCm(
 
   let cm = n;
   let convertedFromMeters = false;
-  if (n > 0 && n < 3) {
+  if (looksLikeMeters(n)) {
     cm = Math.round(n * 100);
     convertedFromMeters = true;
   } else {
@@ -55,14 +68,13 @@ export function normalizeHeightInputCm(
 }
 
 /**
- * Para mostrar: si el dato guardado parece metros (< 3), lo muestra en cm.
- * Así la ficha no muestra "1,7 cm" por un ingreso erróneo antiguo.
+ * Para mostrar: si el dato guardado parece metros (< 10), lo muestra en cm.
  */
 export function heightCmForDisplay(raw: unknown): number | null {
   if (raw == null || raw === "") return null;
   const n = Number(String(raw).replace(",", "."));
   if (!Number.isFinite(n) || n <= 0) return null;
-  if (n > 0 && n < 3) return Math.round(n * 100);
+  if (looksLikeMeters(n)) return Math.round(n * 100);
   return n;
 }
 

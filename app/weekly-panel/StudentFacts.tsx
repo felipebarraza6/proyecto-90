@@ -1,3 +1,4 @@
+import { formatHeightCm } from "../height";
 import {
   formatDateLong,
   formatDateShort,
@@ -144,7 +145,7 @@ export function StudentFacts({
         </div>
         <div>
           <dt>Estatura</dt>
-          <dd>{profile.height_cm != null ? `${profile.height_cm} cm` : "No informada"}</dd>
+          <dd>{formatHeightCm(profile.height_cm, "No informada")}</dd>
         </div>
         <div>
           <dt>Objetivo</dt>
