@@ -18,8 +18,8 @@ const GIVE_UP_AFTER = 4;
 /**
  * EventSource con stream_token corto (yggdra_infra #105).
  * Eventos: connected | message | heartbeat | timeout.
- * Tras timeout/error pide un token nuevo (el anterior expira a ~120 s) y reconecta.
- * Si el stream no está disponible, `live` queda false → poll de fallback.
+ * `onopen` marca live de inmediato (no esperar al primer heartbeat ~15 s).
+ * Tras timeout/error pide un token nuevo y reconecta.
  */
 export function useMessageStream(opts: {
   enabled?: boolean;
@@ -51,24 +51,28 @@ export function useMessageStream(opts: {
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
     let failCount = 0;
 
-    const onConnected = () => {
+    const markLive = () => {
       if (cancelled) return;
       failCount = 0;
       setLive(true);
     };
 
-    const onMessage = (event: MessageEvent) => {
+    const handlePayload = (raw: string) => {
       if (cancelled) return;
-      const msg = parseStreamMessageEvent(String(event.data || ""), clientId);
+      const msg = parseStreamMessageEvent(raw, clientId);
       if (!msg) return;
+      markLive();
       onMessagesRef.current([msg]);
     };
 
-    const onHeartbeat = () => {
-      if (cancelled) return;
-      failCount = 0;
-      setLive(true);
+    const onConnected = () => markLive();
+    const onNamedMessage = (event: Event) => {
+      handlePayload(String((event as MessageEvent).data || ""));
     };
+    const onDefaultMessage = (event: MessageEvent) => {
+      handlePayload(String(event.data || ""));
+    };
+    const onHeartbeat = () => markLive();
 
     const scheduleReconnect = (immediate = false) => {
       if (cancelled) return;
@@ -85,7 +89,6 @@ export function useMessageStream(opts: {
 
     const onTimeout = () => {
       if (cancelled) return;
-      // Token ~120 s; el servidor cierra a ~300 s → pedir token nuevo y reconectar.
       cleanupSource();
       scheduleReconnect(true);
     };
@@ -99,9 +102,11 @@ export function useMessageStream(opts: {
     function cleanupSource() {
       if (!source) return;
       source.removeEventListener(SSE_EVENT_CONNECTED, onConnected);
-      source.removeEventListener(SSE_EVENT_MESSAGE, onMessage as EventListener);
+      source.removeEventListener(SSE_EVENT_MESSAGE, onNamedMessage);
       source.removeEventListener(SSE_EVENT_HEARTBEAT, onHeartbeat);
       source.removeEventListener(SSE_EVENT_TIMEOUT, onTimeout);
+      source.onmessage = null;
+      source.onopen = null;
       source.onerror = null;
       source.close();
       source = null;
@@ -109,7 +114,6 @@ export function useMessageStream(opts: {
 
     async function connect() {
       if (cancelled) return;
-      // Siempre token nuevo: el stream_token expira (~120 s).
       const tokenInfo = await fetchMessageStreamToken();
       if (cancelled) return;
       if (!tokenInfo) {
@@ -125,10 +129,14 @@ export function useMessageStream(opts: {
         return;
       }
 
+      // Conexión abierta → live ya (antes el UI esperaba el heartbeat ~15 s).
+      source.onopen = markLive;
       source.addEventListener(SSE_EVENT_CONNECTED, onConnected);
-      source.addEventListener(SSE_EVENT_MESSAGE, onMessage as EventListener);
+      source.addEventListener(SSE_EVENT_MESSAGE, onNamedMessage);
       source.addEventListener(SSE_EVENT_HEARTBEAT, onHeartbeat);
       source.addEventListener(SSE_EVENT_TIMEOUT, onTimeout);
+      // Respaldo si el servidor omite `event:` (tipo default = message).
+      source.onmessage = onDefaultMessage;
       source.onerror = onError;
     }
 

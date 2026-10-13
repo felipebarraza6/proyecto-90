@@ -43,6 +43,25 @@ describe("messageStream helpers (yggdra_infra #105)", () => {
     assert.equal(msg?.body, "hola");
   });
 
+  it("mergeMessageThread conserva mensajes SSE al mezclar un fetch posterior", () => {
+    const live = parseStreamMessageEvent(
+      JSON.stringify({
+        type: "message",
+        client_id: 42,
+        message: { id: 50, body: "live", created_at: "2026-10-13T12:00:01Z" },
+      }),
+    );
+    assert.ok(live);
+    const fromFetch = [
+      { id: 10, body: "old", created_at: "2026-10-13T11:00:00Z" },
+    ];
+    const merged = mergeMessageThread([live], fromFetch);
+    assert.deepEqual(
+      merged.map((m) => m.id),
+      [10, 50],
+    );
+  });
+
   it("parseStreamMessageEvent filtra por client_id del hilo abierto", () => {
     const raw = JSON.stringify({
       type: "message",

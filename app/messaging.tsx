@@ -4,7 +4,6 @@ import { FormEvent, useEffect, useState } from "react";
 import {
   fetchMyMessages,
   fetchParticipantMessages,
-  postBroadcastMessage,
   postMyMessage,
   postParticipantMessage,
 } from "./weekly-panel/api";
@@ -99,14 +98,15 @@ export function ParticipantMessaging() {
 
   useEffect(() => {
     const ac = new AbortController();
-    setLoading(true);
+    // Solo spinner en la primera carga; el poll no debe ocultar mensajes SSE ya mostrados.
+    if (reload === 0) setLoading(true);
     setError("");
     fetchMyMessages(ac.signal)
-      .then((items) => setThread(sortMessages(items)))
+      .then((items) => setThread((cur) => mergeMessageThread(cur, sortMessages(items))))
       .catch((err: unknown) => {
         if ((err as Error).name === "AbortError") return;
         setError(err instanceof Error ? err.message : "No fue posible cargar tus mensajes");
-        setThread([]);
+        if (reload === 0) setThread([]);
       })
       .finally(() => setLoading(false));
     return () => ac.abort();
@@ -144,7 +144,11 @@ export function ParticipantMessaging() {
           <p>Elige nutricionista o administración. Las respuestas quedan en este hilo.</p>
         </div>
       </header>
-      {loading ? <p className="wp-habit-hint">Cargando mensajes…</p> : <MessageList items={thread} />}
+      {loading && !thread.length ? (
+        <p className="wp-habit-hint">Cargando mensajes…</p>
+      ) : (
+        <MessageList items={thread} />
+      )}
       <form className="staff-note-form messaging-compose" onSubmit={submit}>
         <label>
           Destinatario
@@ -220,19 +224,25 @@ export function StaffParticipantThread({
   });
 
   useEffect(() => {
+    setThread([]);
+    setReload(0);
+    setLoading(true);
+  }, [clientId]);
+
+  useEffect(() => {
     if (coachBlocked || !Number.isFinite(clientId)) {
       setThread([]);
       return;
     }
     const ac = new AbortController();
-    setLoading(true);
+    if (reload === 0) setLoading(true);
     setError("");
     fetchParticipantMessages(clientId, ac.signal)
-      .then((items) => setThread(sortMessages(items)))
+      .then((items) => setThread((cur) => mergeMessageThread(cur, sortMessages(items))))
       .catch((err: unknown) => {
         if ((err as Error).name === "AbortError") return;
         setError(err instanceof Error ? err.message : "No fue posible cargar el hilo");
-        setThread([]);
+        if (reload === 0) setThread([]);
       })
       .finally(() => setLoading(false));
     return () => ac.abort();
@@ -251,13 +261,11 @@ export function StaffParticipantThread({
     setSaving(true);
     setError("");
     try {
+      // Un solo POST: reply_to_all basta para el aviso general (sin /messages/broadcast).
       await postParticipantMessage(clientId, {
         body,
         reply_to_all: Boolean(broadcast && canBroadcast),
       });
-      if (broadcast && canBroadcast) {
-        await postBroadcastMessage({ body });
-      }
       setText("");
       setBroadcast(false);
       setReload((n) => n + 1);
@@ -283,7 +291,11 @@ export function StaffParticipantThread({
           <p>Por defecto la respuesta va solo a este alumno.</p>
         </div>
       </header>
-      {loading ? <p className="wp-habit-hint">Cargando hilo…</p> : <MessageList items={thread} />}
+      {loading && !thread.length ? (
+        <p className="wp-habit-hint">Cargando hilo…</p>
+      ) : (
+        <MessageList items={thread} />
+      )}
       <form className="staff-note-form messaging-compose" onSubmit={submit}>
         <label>
           Respuesta a {name}
@@ -320,7 +332,7 @@ export function StaffParticipantThread({
 
 /**
  * Nutri/admin (y coach si messaging_coach_enabled):
- * GET/POST /participants/{id}/messages (reply_to_all) + POST /messages/broadcast
+ * GET/POST /participants/{id}/messages (reply_to_all opcional; sin broadcast extra).
  */
 export function StaffMessagingInbox({
   people,
@@ -356,19 +368,25 @@ export function StaffMessagingInbox({
   });
 
   useEffect(() => {
+    setThread([]);
+    setReload(0);
+    setLoading(true);
+  }, [clientId]);
+
+  useEffect(() => {
     if (coachBlocked || !Number.isFinite(clientId)) {
       setThread([]);
       return;
     }
     const ac = new AbortController();
-    setLoading(true);
+    if (reload === 0) setLoading(true);
     setError("");
     fetchParticipantMessages(clientId, ac.signal)
-      .then((items) => setThread(sortMessages(items)))
+      .then((items) => setThread((cur) => mergeMessageThread(cur, sortMessages(items))))
       .catch((err: unknown) => {
         if ((err as Error).name === "AbortError") return;
         setError(err instanceof Error ? err.message : "No fue posible cargar el hilo");
-        setThread([]);
+        if (reload === 0) setThread([]);
       })
       .finally(() => setLoading(false));
     return () => ac.abort();
@@ -387,13 +405,11 @@ export function StaffMessagingInbox({
     setSaving(true);
     setError("");
     try {
+      // Un solo POST: reply_to_all basta para el aviso general (sin /messages/broadcast).
       await postParticipantMessage(clientId, {
         body,
         reply_to_all: Boolean(broadcast && canBroadcast),
       });
-      if (broadcast && canBroadcast) {
-        await postBroadcastMessage({ body });
-      }
       setText("");
       setBroadcast(false);
       setReload((n) => n + 1);
@@ -455,7 +471,11 @@ export function StaffMessagingInbox({
           </select>
         </label>
       </header>
-      {loading ? <p className="wp-habit-hint">Cargando hilo…</p> : <MessageList items={thread} />}
+      {loading && !thread.length ? (
+        <p className="wp-habit-hint">Cargando hilo…</p>
+      ) : (
+        <MessageList items={thread} />
+      )}
       <form className="staff-note-form messaging-compose" onSubmit={submit}>
         <label>
           Respuesta a{" "}
