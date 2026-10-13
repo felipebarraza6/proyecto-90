@@ -281,6 +281,31 @@
 .bmr-tag{display:inline-block;padding:2px 7px;border-radius:99px;background:#1b2520;color:#9fb0a6;font-size:8px}
 .bmr-tag.manual{background:#2b2a14;color:#f0d77a}
 .nutrition-recalc-note{font-size:8px;color:#89948d;margin:8px 0 0;line-height:1.5}
+.macro-period-targets{margin:0 0 14px;padding:14px 16px;border:1px solid #2c3d33;border-radius:11px;background:#101511;display:grid;gap:12px}
+.macro-period-targets>header h4{margin:6px 0 0;font-size:14px}
+.macro-period-targets>header p{margin:5px 0 0;font-size:9px;color:#9daaa2;line-height:1.5}
+.macro-period-rows{display:grid;gap:12px}
+.macro-period-row{padding:12px;border:1px solid var(--line);border-radius:10px;background:#0d130f;display:grid;gap:10px}
+.macro-period-row.proposal-field{border-color:#3d6a4c}
+.macro-period-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.macro-period-head b{font-size:13px;color:var(--green)}
+.macro-period-head label{font-size:9px;color:var(--muted);display:grid;gap:4px}
+.macro-period-row em{display:block;margin-top:4px;font-size:8px;color:var(--amber);font-style:normal}
+.messaging-panel{margin:0 0 18px;padding:18px 20px;border:1px solid #2f4a39;border-radius:16px;background:linear-gradient(145deg,#111914,#0c110e);display:grid;gap:14px}
+.messaging-panel-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.messaging-panel-head h2{margin:4px 0 0;font-size:18px}
+.messaging-panel-head p{margin:4px 0 0;font-size:10px;color:var(--muted);max-width:62ch;line-height:1.45}
+.messaging-panel-head label{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.messaging-panel-head select{display:block;min-width:180px;margin-top:6px;padding:9px 11px;border:1px solid #344139;border-radius:8px;background:#0b100d;color:var(--text)}
+.messaging-compose select{padding:9px 11px;border:1px solid #344139;border-radius:8px;background:#0b100d;color:var(--text)}
+.messaging-broadcast-check{display:flex!important;align-items:flex-start;gap:8px;font-size:12px!important;color:var(--text)!important;line-height:1.4}
+.messaging-broadcast-check input{margin-top:2px;width:16px;height:16px;flex:0 0 auto}
+.messaging-thread li.from-student{border-color:#3a433c}
+.messaging-thread li.from-staff{border-color:#275b38;background:#101812}
+.participant-habit-cell.with-pct{font-size:11px;font-weight:700;min-width:48px}
+.wp-macro-day-pct{display:inline-flex;align-items:center;justify-content:center;min-width:52px;padding:6px 8px;border:1px solid #275b38;border-radius:8px;background:#13271a}
+.wp-macro-day-pct b{font-size:12px;color:var(--green)}
+@media(max-width:720px){.macro-period-head,.messaging-panel-head{flex-direction:column;align-items:stretch}.messaging-panel-head select{width:100%}}
 .nutrition-proposal-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding:11px 13px;border:1px solid #5b5326;border-radius:9px;background:#1d1c10}
 .nutrition-proposal-banner b{color:#f0d77a;font-size:11px}
 .nutrition-proposal-banner p{margin:4px 0 0;font-size:9px;color:#d9d3b0;line-height:1.5}

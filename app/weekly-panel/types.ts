@@ -31,6 +31,14 @@ export type HabitWeights = {
   water: number;
 };
 
+/** Pesos relativos (o %) de cada macro dentro del día de macros. Default 40/40/10/10. */
+export type MacroWeights = {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fats: number;
+};
+
 export type MacroRange = {
   min: number | null;
   max: number | null;
@@ -71,6 +79,8 @@ export type PanelConfig = {
 
   habit_weights: HabitWeights;
   adherence_equal_weights_as_40_40_20: boolean;
+  /** Peso de cada macro en el % del día. Ausente en API antigua → default 40/40/10/10. */
+  macro_weights: MacroWeights;
   partial_day_policy: string;
   missing_day_policy: string;
   macro_met_requires: MacroMetKey[];
@@ -82,6 +92,11 @@ export type PanelConfig = {
   summary_avg_mode: string;
   allow_student_rest: boolean;
   rest_day_counts: string;
+  /**
+   * Si el coach participa en la mensajería alumno↔equipo.
+   * Ausente o false → el coach no ve ni responde mensajes.
+   */
+  messaging_coach_enabled: boolean;
   default_water_goal_ml: number;
   default_sessions_per_week: number;
   training_mode: string;
@@ -232,7 +247,65 @@ export type HabitPlanSaveResponse = {
   habit_plan: HabitPlan;
 };
 
-export type HabitCell = { status: HabitStatus | string; label: string };
+export type MacroPeriodKey = "1-30" | "31-60" | "61-90";
+
+export type MacroTargetRecord = {
+  id?: number;
+  period: MacroPeriodKey | string;
+  calories: number | null;
+  protein: number | null;
+  carbs: number | null;
+  fats: number | null;
+  effective_from: string | null;
+  note?: string | null;
+};
+
+export type MacroTargetsResponse = {
+  items?: MacroTargetRecord[];
+  targets?: MacroTargetRecord[];
+  can_edit?: boolean;
+};
+
+export type MacroTargetSaveBody = {
+  period: MacroPeriodKey;
+  effective_from?: string | null;
+  calories: number;
+  protein: number;
+  carbs?: number | null;
+  fats?: number | null;
+  note?: string | null;
+};
+
+export type PanelMessage = {
+  id: number | string;
+  body?: string;
+  text?: string;
+  note?: string;
+  author_name?: string;
+  author_role?: string;
+  role_label?: string;
+  created_at?: string;
+  created?: string;
+  recipient_role?: string;
+  reply_to_all?: boolean;
+  is_broadcast?: boolean;
+  broadcast?: boolean;
+  client_id?: number;
+  user_id?: number | string;
+  direction?: string;
+};
+
+export type PanelMessagesResponse = {
+  items?: PanelMessage[];
+  messages?: PanelMessage[];
+};
+
+export type HabitCell = {
+  status: HabitStatus | string;
+  label: string;
+  /** % del día de macros (cuando el backend lo envía; si falta, el front muestra ✓/✗). */
+  pct?: number | null;
+};
 export type MacroCell = {
   value: number | null;
   pct: number | null;

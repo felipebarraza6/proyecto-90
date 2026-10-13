@@ -11,22 +11,32 @@ import type {
   MacroMetKey,
   MacroRange,
   MacroRanges,
+  MacroWeights,
   MilestoneWindows,
   PanelConfig,
 } from "./types";
 
 export type MacroKey = MacroMetKey;
-export type { HabitWeights, MacroRange, MacroRanges, MilestoneWindows };
+export type { HabitWeights, MacroRange, MacroRanges, MacroWeights, MilestoneWindows };
+
+export const DEFAULT_MACRO_WEIGHTS: MacroWeights = {
+  calories: 40,
+  protein: 40,
+  carbs: 10,
+  fats: 10,
+};
 
 /** Defaults exactos del contrato backend. */
 export const PANEL_CONFIG_DEFAULTS = {
   habit_weights: { training: 1, macros: 1, water: 1 } satisfies HabitWeights,
   adherence_equal_weights_as_40_40_20: true,
+  macro_weights: { ...DEFAULT_MACRO_WEIGHTS } satisfies MacroWeights,
+  messaging_coach_enabled: false,
   partial_day_policy: "reported_only" as const,
   missing_day_policy: "exclude" as const,
   macro_met_requires: ["calories", "protein"] as MacroKey[],
   macro_ranges: {
-    calories: { min: null, max: 1.1 },
+    calories: { min: 0.85, max: 1.05 },
     protein: { min: 0.9, max: null },
     carbs: { min: 0.9, max: 1.1 },
     fats: { min: 0.9, max: 1.1 },
@@ -39,7 +49,7 @@ export const PANEL_CONFIG_DEFAULTS = {
   allow_student_rest: false,
   rest_day_counts: "exclude" as const,
   default_water_goal_ml: 2000,
-  default_sessions_per_week: 3,
+  default_sessions_per_week: 4,
   training_mode: "auto" as const,
   macros_source: "computed_then_manual" as const,
   thresholds: { green_gt: 80, yellow_gte: 70, risk: 70 },
@@ -127,6 +137,23 @@ function normalizeWeights(raw: unknown): HabitWeights {
   };
 }
 
+export function normalizeMacroWeights(raw: unknown): MacroWeights {
+  const d = DEFAULT_MACRO_WEIGHTS;
+  if (!raw || typeof raw !== "object") return { ...d };
+  const rec = raw as Record<string, unknown>;
+  const pick = (key: keyof MacroWeights) => {
+    if (!(key in rec)) return d[key];
+    const n = Number(rec[key]);
+    return Number.isFinite(n) && n >= 0 ? n : d[key];
+  };
+  return {
+    calories: pick("calories"),
+    protein: pick("protein"),
+    carbs: pick("carbs"),
+    fats: pick("fats"),
+  };
+}
+
 function normalizeMacroRequires(raw: unknown): MacroKey[] {
   const allowed: MacroKey[] = ["calories", "protein", "carbs", "fats"];
   if (!Array.isArray(raw)) return [...PANEL_CONFIG_DEFAULTS.macro_met_requires];
@@ -199,6 +226,7 @@ export function normalizePanelConfig(raw: Partial<PanelConfig> | null | undefine
       base.adherence_equal_weights_as_40_40_20,
       d.adherence_equal_weights_as_40_40_20,
     ),
+    macro_weights: normalizeMacroWeights(base.macro_weights),
     partial_day_policy: asString(base.partial_day_policy, d.partial_day_policy),
     missing_day_policy: asString(base.missing_day_policy, d.missing_day_policy),
     macro_met_requires: normalizeMacroRequires(base.macro_met_requires),
@@ -210,6 +238,7 @@ export function normalizePanelConfig(raw: Partial<PanelConfig> | null | undefine
     summary_avg_mode: asString(base.summary_avg_mode, d.summary_avg_mode),
     allow_student_rest: asBool(base.allow_student_rest, d.allow_student_rest),
     rest_day_counts: asString(base.rest_day_counts, d.rest_day_counts),
+    messaging_coach_enabled: asBool(base.messaging_coach_enabled, d.messaging_coach_enabled),
     default_water_goal_ml: asNumber(base.default_water_goal_ml, d.default_water_goal_ml),
     default_sessions_per_week: asNumber(base.default_sessions_per_week, d.default_sessions_per_week),
     training_mode: asString(base.training_mode, d.training_mode),

@@ -7,9 +7,14 @@ import type {
   HabitPlanResponse,
   HabitPlanSaveBody,
   HabitPlanSaveResponse,
+  MacroTargetRecord,
+  MacroTargetSaveBody,
+  MacroTargetsResponse,
   PanelConfig,
   PanelConfigPatch,
   PanelFilter,
+  PanelMessage,
+  PanelMessagesResponse,
   StudentWeekResponse,
   WeekResponse,
   WeeksResponse,
@@ -197,6 +202,102 @@ export function saveHabitPlan(
   signal?: AbortSignal,
 ): Promise<HabitPlanSaveResponse> {
   return panelFetch<HabitPlanSaveResponse>(`/participants/${clientId}/habit-plan`, {
+    method: "POST",
+    body: JSON.stringify(body),
+    signal,
+  });
+}
+
+function normalizeMessageList(raw: PanelMessagesResponse | PanelMessage[] | null | undefined): PanelMessage[] {
+  if (Array.isArray(raw)) return raw;
+  if (!raw || typeof raw !== "object") return [];
+  if (Array.isArray(raw.items)) return raw.items;
+  if (Array.isArray(raw.messages)) return raw.messages;
+  return [];
+}
+
+function normalizeMacroTargetList(
+  raw: MacroTargetsResponse | MacroTargetRecord[] | null | undefined,
+): { items: MacroTargetRecord[]; can_edit: boolean } {
+  if (Array.isArray(raw)) return { items: raw, can_edit: true };
+  if (!raw || typeof raw !== "object") return { items: [], can_edit: true };
+  const items = Array.isArray(raw.items)
+    ? raw.items
+    : Array.isArray(raw.targets)
+      ? raw.targets
+      : [];
+  return { items, can_edit: raw.can_edit !== false };
+}
+
+export async function fetchMacroTargets(
+  clientId: number,
+  signal?: AbortSignal,
+): Promise<{ items: MacroTargetRecord[]; can_edit: boolean }> {
+  const raw = await panelFetch<MacroTargetsResponse | MacroTargetRecord[]>(
+    `/participants/${clientId}/macro-targets`,
+    { signal },
+  );
+  return normalizeMacroTargetList(raw);
+}
+
+export function saveMacroTarget(
+  clientId: number,
+  body: MacroTargetSaveBody,
+  signal?: AbortSignal,
+): Promise<MacroTargetRecord | { item: MacroTargetRecord }> {
+  return panelFetch(`/participants/${clientId}/macro-targets`, {
+    method: "POST",
+    body: JSON.stringify(body),
+    signal,
+  });
+}
+
+export async function fetchParticipantMessages(
+  clientId: number,
+  signal?: AbortSignal,
+): Promise<PanelMessage[]> {
+  const raw = await panelFetch<PanelMessagesResponse | PanelMessage[]>(
+    `/participants/${clientId}/messages`,
+    { signal },
+  );
+  return normalizeMessageList(raw);
+}
+
+export function postParticipantMessage(
+  clientId: number,
+  body: { body: string; reply_to_all?: boolean },
+  signal?: AbortSignal,
+): Promise<PanelMessage | { item: PanelMessage }> {
+  return panelFetch(`/participants/${clientId}/messages`, {
+    method: "POST",
+    body: JSON.stringify(body),
+    signal,
+  });
+}
+
+export async function fetchMyMessages(signal?: AbortSignal): Promise<PanelMessage[]> {
+  const raw = await panelFetch<PanelMessagesResponse | PanelMessage[]>(`/messages/me`, {
+    signal,
+  });
+  return normalizeMessageList(raw);
+}
+
+export function postMyMessage(
+  body: { body: string; recipient_role: "nutrition" | "admin" },
+  signal?: AbortSignal,
+): Promise<PanelMessage | { item: PanelMessage }> {
+  return panelFetch(`/messages/me`, {
+    method: "POST",
+    body: JSON.stringify(body),
+    signal,
+  });
+}
+
+export function postBroadcastMessage(
+  body: { body: string },
+  signal?: AbortSignal,
+): Promise<PanelMessage | { item: PanelMessage } | { ok?: boolean }> {
+  return panelFetch(`/messages/broadcast`, {
     method: "POST",
     body: JSON.stringify(body),
     signal,

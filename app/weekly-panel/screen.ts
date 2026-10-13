@@ -4,11 +4,13 @@ export { PANEL_SCREEN };
 
 export function normalizeScreen(name: string): string {
   if (name === "Adherencia" || name === "Seguimiento") return PANEL_SCREEN;
+  if (name === "Comentarios") return "Mensajes";
   return name;
 }
 
 export function navShortLabel(name: string): string {
   if (name === PANEL_SCREEN) return "Adherencia";
+  if (name === "Mensajes" || name === "Comentarios") return "Mensajes";
   if (name.includes("/")) return name.split("/")[0];
   return name;
 }

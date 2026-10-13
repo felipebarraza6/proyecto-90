@@ -1,13 +1,13 @@
-import { formatGoalPctLabel, formatMlAsLiters, habitDisplay, WEEKDAYS_SHORT } from "./format";
+import { formatGoalPctLabel, formatMlAsLiters, formatPct, habitDisplay, WEEKDAYS_SHORT } from "./format";
 import { usePanelStats } from "./PanelStatsContext";
 import { HabitMark, PercentChip } from "./ui";
-import type { MacroCell, MacroRanges, StudentWeekResponse, TableRow } from "./types";
+import type { HabitCell, MacroCell, MacroRanges, StudentWeekResponse, TableRow } from "./types";
 
 const ROW_LABELS: Record<string, string> = {
   daily_total: "Adherencia diaria · total",
   training: "Entrenamientos",
   water: "Consumo de agua",
-  macros: "Macros · cumplimiento",
+  macros: "Macros · % del día",
   calories: "Calorías",
   protein: "Proteínas",
   carbs: "Carbohidratos",
@@ -64,8 +64,19 @@ function renderCell(row: TableRow, cell: TableRow["cells"][number], date: string
     if (macro.value == null && pending(String(macro.status))) return <HabitMark status="today" />;
     return <MacroMark cell={macro} metric={row.key} />;
   }
-  const habit = cell as { status: string };
-  if (pending(habit.status)) return <HabitMark status="today" />;
+  const habit = cell as HabitCell;
+  if (row.key === "macros") {
+    if (habit.pct != null && Number.isFinite(Number(habit.pct))) {
+      return (
+        <span className="wp-macro-day-pct" title={habit.label || undefined}>
+          <b>{formatPct(habit.pct, 0)}</b>
+        </span>
+      );
+    }
+    if (pending(String(habit.status))) return <HabitMark status="today" />;
+    return <HabitMark status={habit.status} />;
+  }
+  if (pending(String(habit.status))) return <HabitMark status="today" />;
   // Sin plan de descansos, un día sin registro de entrenamiento no penaliza
   // (backend: not_required). Se muestra como "Sin reportar", igual que el mock.
   if (row.key === "training" && habit.status === "not_required") {

@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { PanelApiError, patchPanelConfig } from "./api";
 import {
+  MACRO_SCORE_HINTS,
+  REST_DAY_WEIGHT_HINT,
+  macroWeightsTotal,
+} from "./macroScore";
+import {
   deepEqual,
   habitWeightsFormulaText,
   MACRO_KEYS,
@@ -11,6 +16,7 @@ import {
 } from "./panelConfig";
 import type {
   HabitWeights,
+  MacroWeights,
   MilestoneWindows,
   PanelConfig,
   PanelConfigPatch,
@@ -31,6 +37,7 @@ function toDraft(config: PanelConfig): Draft {
     comment_delete_policy: config.comment_delete_policy,
     habit_weights: { ...config.habit_weights },
     adherence_equal_weights_as_40_40_20: config.adherence_equal_weights_as_40_40_20,
+    macro_weights: { ...config.macro_weights },
     partial_day_policy: config.partial_day_policy,
     missing_day_policy: config.missing_day_policy,
     macro_met_requires: [...config.macro_met_requires],
@@ -47,6 +54,7 @@ function toDraft(config: PanelConfig): Draft {
     summary_avg_mode: config.summary_avg_mode,
     allow_student_rest: config.allow_student_rest,
     rest_day_counts: config.rest_day_counts,
+    messaging_coach_enabled: config.messaging_coach_enabled,
     default_water_goal_ml: config.default_water_goal_ml,
     default_sessions_per_week: config.default_sessions_per_week,
     training_mode: config.training_mode,
@@ -146,6 +154,12 @@ function validateDraft(draft: Draft): FieldErrors {
   const w = draft.habit_weights;
   if (w.training < 0 || w.macros < 0 || w.water < 0) {
     errors.habit_weights = "Los pesos no pueden ser negativos.";
+  }
+  const mw = draft.macro_weights;
+  if (mw.calories < 0 || mw.protein < 0 || mw.carbs < 0 || mw.fats < 0) {
+    errors.macro_weights = "Los pesos de cada macro no pueden ser negativos.";
+  } else if (macroWeightsTotal(mw) <= 0) {
+    errors.macro_weights = "Al menos un peso de macro debe ser mayor que 0.";
   }
   if (!draft.macro_met_requires.length) {
     errors.macro_met_requires = "Elige al menos una macro que defina el cumplimiento.";
@@ -397,6 +411,17 @@ function ReadOnlyRows({ config }: { config: PanelConfig }) {
         <ul className="wp-config-list">
           <li>
             <div>
+              <h3>Peso de cada macro</h3>
+              <p>Calorías · proteína · carbos · grasas</p>
+            </div>
+            <strong>
+              {draft.macro_weights.calories}/{draft.macro_weights.protein}/
+              {draft.macro_weights.carbs}/{draft.macro_weights.fats} (total{" "}
+              {macroWeightsTotal(draft.macro_weights)})
+            </strong>
+          </li>
+          <li>
+            <div>
               <h3>Macros que definen el cumplimiento</h3>
             </div>
             <strong>{draft.macro_met_requires.map(macroKeyLabel).join(", ")}</strong>
@@ -406,6 +431,12 @@ function ReadOnlyRows({ config }: { config: PanelConfig }) {
               <h3>Origen de macros</h3>
             </div>
             <strong>{policyOptLabel(POLICY_OPTIONS.macros_source, draft.macros_source)}</strong>
+          </li>
+          <li>
+            <div>
+              <h3>Coach en mensajería</h3>
+            </div>
+            <strong>{draft.messaging_coach_enabled ? "Sí" : "No"}</strong>
           </li>
         </ul>
       </ConfigSection>
@@ -581,6 +612,15 @@ export function PanelConfigView({
     }));
   }
 
+  function setMacroWeight(key: keyof MacroWeights, raw: string) {
+    const n = Number(raw.replace(",", "."));
+    if (!Number.isFinite(n)) return;
+    touch((prev) => ({
+      ...prev,
+      macro_weights: { ...prev.macro_weights, [key]: n },
+    }));
+  }
+
   function setRange(key: MacroKey, side: "min" | "max", pctRaw: string) {
     const ratio = pctToRatio(pctRaw);
     touch((prev) => ({
@@ -660,7 +700,6 @@ export function PanelConfigView({
       keepOkAfterConfigSync.current = false;
       if (err instanceof PanelApiError) {
         if (err.status === 405) {
-          setWritable(false);
           setFormError("Todavía no se pueden guardar reglas desde aquí. Queda en solo lectura.");
         } else if (err.status === 403) {
           setFormError("Solo un administrador puede cambiar estas reglas.");
@@ -979,6 +1018,18 @@ export function PanelConfigView({
                   }
                 />
               </div>
+              <div className="wp-config-switch-row">
+                <span>El coach participa en la mensajería</span>
+                <Switch
+                  label="El coach participa en la mensajería"
+                  checked={draft.messaging_coach_enabled}
+                  onChange={(v) => touch((p) => ({ ...p, messaging_coach_enabled: v }))}
+                />
+              </div>
+              <p className="wp-config-help">
+                Apagado por defecto. Con el interruptor en no, el preparador físico no ve ni responde
+                los hilos de Mensajes (sí puede seguir dejando comentarios de la semana en el panel).
+              </p>
               <FieldError id="comment_max_length" errors={errors} />
               <FieldError id="duplicate_window_seconds" errors={errors} />
             </fieldset>
@@ -1077,13 +1128,45 @@ export function PanelConfigView({
           <ConfigSection
             id="sec-macros"
             title="Macros"
-            help="Qué macros definen el ✓ del día, rangos % de la meta y origen de los datos."
+            help="Peso de cada macro en el % del día, rangos de la meta y origen de los datos."
           >
+            <fieldset className="wp-config-block" disabled={saving}>
+              <legend>Peso de cada macro</legend>
+              <p className="wp-config-help">
+                Cómo se arma el % del día de macros. Por defecto 40 / 40 / 10 / 10. Total actual:{" "}
+                <b>{macroWeightsTotal(draft.macro_weights)}</b>.
+              </p>
+              <div className="wp-config-grid two">
+                {(
+                  [
+                    ["calories", "Calorías"],
+                    ["protein", "Proteína"],
+                    ["carbs", "Carbohidratos"],
+                    ["fats", "Grasas"],
+                  ] as const
+                ).map(([key, label]) => (
+                  <label key={key}>
+                    {label}
+                    <input
+                      type="number"
+                      min={0}
+                      step={1}
+                      value={draft.macro_weights[key]}
+                      onChange={(e) => setMacroWeight(key, e.target.value)}
+                    />
+                    <span className="wp-config-help">{MACRO_SCORE_HINTS[key]}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="wp-config-help">{REST_DAY_WEIGHT_HINT}</p>
+              <FieldError id="macro_weights" errors={errors} />
+            </fieldset>
+
             <fieldset className="wp-config-block" disabled={saving}>
               <legend>Cumplimiento y rangos</legend>
               <p className="wp-config-help">
-                Solo las macros marcadas deciden el ✓ / ✗ del día. Los rangos se expresan como % de
-                la meta (vacío = sin umbral).
+                Los rangos se expresan como % de la meta (vacío = sin umbral). Las macros marcadas
+                siguen usándose donde el sistema aún exige un ✓ / ✗ binario.
               </p>
               <div className="wp-config-checks">
                 {MACRO_KEYS.map((key) => (

@@ -56,7 +56,9 @@ describe("auditoría gaps 2026-10-12 (arreglado)", () => {
 
   it("defaults de leyenda macros vienen del contrato (no 90/80 literales sueltos)", () => {
     assert.equal(PANEL_CONFIG_DEFAULTS.macro_ranges.protein.min, 0.9);
-    assert.equal(PANEL_CONFIG_DEFAULTS.macro_ranges.calories.max, 1.1);
+    assert.equal(PANEL_CONFIG_DEFAULTS.macro_ranges.calories.min, 0.85);
+    assert.equal(PANEL_CONFIG_DEFAULTS.macro_ranges.calories.max, 1.05);
+    assert.equal(PANEL_CONFIG_DEFAULTS.default_sessions_per_week, 4);
     assert.equal(PANEL_CONFIG_DEFAULTS.thresholds.green_gt, 80);
   });
 });

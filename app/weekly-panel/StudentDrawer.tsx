@@ -4,6 +4,7 @@ import { AnalysisPanel } from "./AnalysisPanel";
 import { CommentsThread } from "./CommentsThread";
 import { FeedbackBox } from "./FeedbackBox";
 import { HabitPlanEditor } from "./HabitPlanEditor";
+import { MacroTargetsEditor } from "./MacroTargetsEditor";
 import { StudentFacts } from "./StudentFacts";
 import { StudentWeekTable } from "./StudentWeekTable";
 import { RetryError, SkeletonTable } from "./ui";
@@ -218,6 +219,19 @@ export function StudentDrawer({
                     challengeStart={data.profile.challenge_start}
                     defaultSessionsPerWeek={defaultSessionsPerWeek}
                     defaultWaterGoalMl={defaultWaterGoalMl}
+                    onSaved={() => {
+                      analysisRefresh.current = true;
+                      setReload((n) => n + 1);
+                      setAnalysisReload((n) => n + 1);
+                    }}
+                  />
+                </details>
+              ) : null}
+              {showNutrition && roleCanEditHabits ? (
+                <details className="wp-habit-details">
+                  <summary>Editar metas de macros por tramo (1–30 / 31–60 / 61–90)</summary>
+                  <MacroTargetsEditor
+                    clientId={clientId}
                     onSaved={() => {
                       analysisRefresh.current = true;
                       setReload((n) => n + 1);

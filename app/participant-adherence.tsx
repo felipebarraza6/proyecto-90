@@ -7,6 +7,8 @@ import {
   PANEL_CONFIG_DEFAULTS,
   type MacroKey,
 } from "./weekly-panel/panelConfig";
+import { formatMacroDayPct, macroDayPct } from "./weekly-panel/macroScore";
+import { DEFAULT_MACRO_WEIGHTS } from "./weekly-panel/panelConfig";
 import { todayIsoInTimezone } from "./timezone";
 import type { PanelConfig } from "./weekly-panel/types";
 
@@ -71,7 +73,28 @@ export function ParticipantHabitMatrix({
     macro_ranges: PANEL_CONFIG_DEFAULTS.macro_ranges,
     calories_min_enabled: PANEL_CONFIG_DEFAULTS.calories_min_enabled,
     calories_low_ratio: PANEL_CONFIG_DEFAULTS.calories_low_ratio,
+    macro_weights: PANEL_CONFIG_DEFAULTS.macro_weights,
   };
+
+  function targetsFor() {
+    return {
+      calories: Number(plan?.calories || 0),
+      protein: Number(plan?.protein || 0),
+      carbs: Number(plan?.carbs || 0),
+      fats: Number(plan?.fats || 0),
+    } satisfies Partial<Record<MacroKey, number>>;
+  }
+
+  function valuesFor(date: string) {
+    const row = nutrition.get(date);
+    if (!row) return null;
+    return {
+      calories: Number(row.calories || 0),
+      protein: Number(row.protein || 0),
+      carbs: Number(row.carbs || 0),
+      fats: Number(row.fats || 0),
+    } satisfies Partial<Record<MacroKey, number>>;
+  }
 
   function statusFor(habit: keyof typeof habits, date: string): HabitStatus {
     if (habit !== "macros") {
@@ -79,21 +102,17 @@ export function ParticipantHabitMatrix({
       if (raw === "met" || raw === "missed" || raw === "rest") return raw;
       return "empty";
     }
-    const row = nutrition.get(date);
-    const targets: Partial<Record<MacroKey, number>> = {
-      calories: Number(plan?.calories || 0),
-      protein: Number(plan?.protein || 0),
-      carbs: Number(plan?.carbs || 0),
-      fats: Number(plan?.fats || 0),
-    };
-    const values: Partial<Record<MacroKey, number>> = {
-      calories: Number(row?.calories || 0),
-      protein: Number(row?.protein || 0),
-      carbs: Number(row?.carbs || 0),
-      fats: Number(row?.fats || 0),
-    };
-    if (!row) return "empty";
-    return macrosDayStatus(values, targets, macroConfig);
+    const values = valuesFor(date);
+    if (!values) return "empty";
+    return macrosDayStatus(values, targetsFor(), macroConfig);
+  }
+
+  function macrosPctFor(date: string): number | null {
+    const values = valuesFor(date);
+    if (!values) return null;
+    const ranges = macroConfig.macro_ranges || PANEL_CONFIG_DEFAULTS.macro_ranges;
+    const weights = panelConfig?.macro_weights || DEFAULT_MACRO_WEIGHTS;
+    return macroDayPct(values, targetsFor(), ranges, weights);
   }
 
   async function setStatus(
@@ -166,19 +185,31 @@ export function ParticipantHabitMatrix({
                   const status = statusFor(habit, date);
                   const disabled = date > chileToday();
                   if (habit === "macros") {
+                    const pct = macrosPctFor(date);
+                    const label =
+                      pct != null
+                        ? formatMacroDayPct(pct, 0)
+                        : status === "met"
+                          ? "✓"
+                          : status === "missed"
+                            ? "×"
+                            : "";
                     return (
                       <td key={date}>
                         <span
-                          className={`participant-habit-cell ${status}`}
+                          className={`participant-habit-cell ${status} ${pct != null ? "with-pct" : ""}`}
                           aria-label={
-                            status === "met"
-                              ? "Cumplido"
-                              : status === "missed"
-                                ? "No cumplido"
-                                : "Sin registro"
+                            pct != null
+                              ? `Macros ${label}`
+                              : status === "met"
+                                ? "Cumplido"
+                                : status === "missed"
+                                  ? "No cumplido"
+                                  : "Sin registro"
                           }
+                          title={pct != null ? label : undefined}
                         >
-                          {status === "met" ? "✓" : status === "missed" ? "×" : ""}
+                          {label}
                         </span>
                       </td>
                     );
