@@ -11,6 +11,7 @@ import {
   mergeMessageThread,
   parseStreamMessageEvent,
   participantCanOpenMessages,
+  withStreamToken,
 } from "../app/weekly-panel/messageStream.ts";
 
 describe("messageStream helpers (yggdra_infra #105)", () => {
@@ -88,6 +89,21 @@ describe("messageStream helpers (yggdra_infra #105)", () => {
     assert.equal(url, `${MESSAGES_STREAM_PATH}?stream_token=tok-abc`);
     assert.doesNotMatch(url, /(?:^|[?&])token=/);
     assert.equal(MESSAGES_STREAM_TOKEN_PATH, "/api/p90/panel/messages/stream-token");
+  });
+
+  it("withStreamToken agrega stream_token a stream_path sin query (evita 401)", () => {
+    assert.equal(
+      withStreamToken("/api/p90/panel/messages/stream", "abc123"),
+      "/api/p90/panel/messages/stream?stream_token=abc123",
+    );
+    assert.equal(
+      withStreamToken("/api/p90/panel/messages/stream?foo=1", "abc123"),
+      "/api/p90/panel/messages/stream?foo=1&stream_token=abc123",
+    );
+    assert.equal(
+      withStreamToken("/api/p90/panel/messages/stream?stream_token=old", "new"),
+      "/api/p90/panel/messages/stream?stream_token=new",
+    );
   });
 
   it("nombres de eventos SSE del contrato", () => {

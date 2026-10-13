@@ -104,8 +104,26 @@ export function parseStreamPayload(raw: string): PanelMessage[] {
 
 /** Ruta relativa del stream: solo stream_token (nunca el token de sesión). */
 export function buildStreamUrl(streamToken: string): string {
-  const params = new URLSearchParams({ [STREAM_TOKEN_QUERY_PARAM]: streamToken });
-  return `${MESSAGES_STREAM_PATH}?${params}`;
+  return withStreamToken(MESSAGES_STREAM_PATH, streamToken);
+}
+
+/**
+ * Asegura `stream_token` en la URL/path del stream.
+ * Si stream_path viene sin query (causa 401 en EventSource), lo agrega;
+ * si ya hay query usa `&`; si ya trae stream_token, lo reemplaza.
+ */
+export function withStreamToken(pathOrUrl: string, streamToken: string): string {
+  const token = String(streamToken || "").trim();
+  const base = String(pathOrUrl || "").trim() || MESSAGES_STREAM_PATH;
+  if (!token) return base;
+  const hashIdx = base.indexOf("#");
+  const withoutHash = hashIdx >= 0 ? base.slice(0, hashIdx) : base;
+  const hash = hashIdx >= 0 ? base.slice(hashIdx) : "";
+  const qIdx = withoutHash.indexOf("?");
+  const path = qIdx >= 0 ? withoutHash.slice(0, qIdx) : withoutHash;
+  const params = new URLSearchParams(qIdx >= 0 ? withoutHash.slice(qIdx + 1) : "");
+  params.set(STREAM_TOKEN_QUERY_PARAM, token);
+  return `${path}?${params}${hash}`;
 }
 
 /** El alumno puede abrir Mensajes aunque el cuestionario de 8 pasos no esté completo. */

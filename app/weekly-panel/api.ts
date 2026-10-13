@@ -2,6 +2,7 @@ import { apiUrl, authHeaders } from "../../src/api";
 import {
   MESSAGES_STREAM_TOKEN_PATH,
   buildStreamUrl,
+  withStreamToken,
   type StreamTokenResponse,
 } from "./messageStream";
 import { normalizePanelConfig } from "./panelConfig";
@@ -333,11 +334,14 @@ export async function fetchMessageStreamToken(
     const streamToken = String(json.stream_token || "").trim();
     if (!streamToken) return null;
     const streamPath = String(json.stream_path || "").trim();
-    const url = streamPath
-      ? streamPath.startsWith("http://") || streamPath.startsWith("https://")
-        ? streamPath
-        : apiUrl(streamPath)
-      : apiUrl(buildStreamUrl(streamToken));
+    // Siempre incluir stream_token: stream_path del backend suele venir sin query → 401 en EventSource.
+    const pathWithToken = streamPath
+      ? withStreamToken(streamPath, streamToken)
+      : buildStreamUrl(streamToken);
+    const url =
+      pathWithToken.startsWith("http://") || pathWithToken.startsWith("https://")
+        ? pathWithToken
+        : apiUrl(pathWithToken);
     const expiresIn = Number(json.expires_in);
     return {
       streamToken,
