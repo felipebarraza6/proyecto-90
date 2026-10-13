@@ -8,7 +8,12 @@ import {
   postMyMessage,
   postParticipantMessage,
 } from "./weekly-panel/api";
+import { mergeMessageThread } from "./weekly-panel/messageStream";
 import type { PanelMessage } from "./weekly-panel/types";
+import {
+  MESSAGE_FETCH_FALLBACK_MS,
+  useMessageStream,
+} from "./weekly-panel/useMessageStream";
 
 type Row = Record<string, unknown>;
 
@@ -78,7 +83,7 @@ function MessageList({ items }: { items: PanelMessage[] }) {
   );
 }
 
-/** Alumno: GET/POST /api/p90/panel/messages/me */
+/** Alumno: GET/POST /api/p90/panel/messages/me + SSE con fallback a fetch. */
 export function ParticipantMessaging() {
   const [recipient, setRecipient] = useState<MessageRecipient>("nutrition");
   const [text, setText] = useState("");
@@ -87,6 +92,10 @@ export function ParticipantMessaging() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [reload, setReload] = useState(0);
+
+  const { live } = useMessageStream({
+    onMessages: (incoming) => setThread((cur) => mergeMessageThread(cur, incoming)),
+  });
 
   useEffect(() => {
     const ac = new AbortController();
@@ -102,6 +111,12 @@ export function ParticipantMessaging() {
       .finally(() => setLoading(false));
     return () => ac.abort();
   }, [reload]);
+
+  useEffect(() => {
+    if (live) return;
+    const timer = setInterval(() => setReload((n) => n + 1), MESSAGE_FETCH_FALLBACK_MS);
+    return () => clearInterval(timer);
+  }, [live]);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -166,6 +181,144 @@ export function ParticipantMessaging() {
 }
 
 /**
+ * Hilo de un alumno en la Ficha (GET/POST /participants/{id}/messages).
+ * Nutricionista siempre; coach solo si messaging_coach_enabled.
+ */
+export function StaffParticipantThread({
+  clientId,
+  participantName,
+  viewerRole,
+  messagingCoachEnabled = false,
+  canBroadcast = false,
+  compact = false,
+}: {
+  clientId: number;
+  participantName?: string;
+  viewerRole?: string;
+  messagingCoachEnabled?: boolean;
+  canBroadcast?: boolean;
+  compact?: boolean;
+}) {
+  const specialty = String(viewerRole || "").toLowerCase();
+  const isCoach = specialty === "coach" || specialty.includes("coach");
+  const isNutrition = specialty === "nutrition" || specialty.includes("nutri");
+  const isAdmin = specialty === "admin" || specialty.includes("admin") || specialty.includes("owner");
+  const coachBlocked = isCoach && !messagingCoachEnabled && !isNutrition && !isAdmin;
+
+  const [text, setText] = useState("");
+  const [broadcast, setBroadcast] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [thread, setThread] = useState<PanelMessage[]>([]);
+  const [reload, setReload] = useState(0);
+
+  const { live } = useMessageStream({
+    enabled: !coachBlocked && Number.isFinite(clientId),
+    clientId,
+    onMessages: (incoming) => setThread((cur) => mergeMessageThread(cur, incoming)),
+  });
+
+  useEffect(() => {
+    if (coachBlocked || !Number.isFinite(clientId)) {
+      setThread([]);
+      return;
+    }
+    const ac = new AbortController();
+    setLoading(true);
+    setError("");
+    fetchParticipantMessages(clientId, ac.signal)
+      .then((items) => setThread(sortMessages(items)))
+      .catch((err: unknown) => {
+        if ((err as Error).name === "AbortError") return;
+        setError(err instanceof Error ? err.message : "No fue posible cargar el hilo");
+        setThread([]);
+      })
+      .finally(() => setLoading(false));
+    return () => ac.abort();
+  }, [clientId, reload, coachBlocked]);
+
+  useEffect(() => {
+    if (live || coachBlocked) return;
+    const timer = setInterval(() => setReload((n) => n + 1), MESSAGE_FETCH_FALLBACK_MS);
+    return () => clearInterval(timer);
+  }, [live, coachBlocked]);
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    const body = text.trim();
+    if (!body || !Number.isFinite(clientId)) return;
+    setSaving(true);
+    setError("");
+    try {
+      await postParticipantMessage(clientId, {
+        body,
+        reply_to_all: Boolean(broadcast && canBroadcast),
+      });
+      if (broadcast && canBroadcast) {
+        await postBroadcastMessage({ body });
+      }
+      setText("");
+      setBroadcast(false);
+      setReload((n) => n + 1);
+    } catch (err) {
+      setError(err instanceof Error && err.message ? err.message : "No fue posible enviar la respuesta.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (coachBlocked) {
+    return null;
+  }
+
+  const name = participantName || "alumno";
+
+  return (
+    <section className={`messaging-panel staff-participant-thread${compact ? " compact" : ""}`}>
+      <header className="messaging-panel-head">
+        <div>
+          <span className="eyebrow">MENSAJES</span>
+          <h2>Hilo con {name}</h2>
+          <p>Por defecto la respuesta va solo a este alumno.</p>
+        </div>
+      </header>
+      {loading ? <p className="wp-habit-hint">Cargando hilo…</p> : <MessageList items={thread} />}
+      <form className="staff-note-form messaging-compose" onSubmit={submit}>
+        <label>
+          Respuesta a {name}
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Escribe la respuesta…"
+            rows={3}
+            required
+          />
+        </label>
+        {canBroadcast ? (
+          <label className="messaging-broadcast-check">
+            <input
+              type="checkbox"
+              checked={broadcast}
+              onChange={(e) => setBroadcast(e.target.checked)}
+            />
+            Enviar también como aviso general a todos los alumnos
+          </label>
+        ) : null}
+        {error ? (
+          <p className="upload-error" role="alert">
+            {error}
+          </p>
+        ) : null}
+        <button className="primary" disabled={saving || !text.trim()}>
+          {saving ? "Enviando…" : "Responder"}
+        </button>
+      </form>
+    </section>
+  );
+}
+
+/**
  * Nutri/admin (y coach si messaging_coach_enabled):
  * GET/POST /participants/{id}/messages (reply_to_all) + POST /messages/broadcast
  */
@@ -196,6 +349,12 @@ export function StaffMessagingInbox({
   const selected = people.find((p) => String(p.id) === selectedId) || people[0];
   const clientId = selected ? Number(selected.id) : NaN;
 
+  const { live } = useMessageStream({
+    enabled: !coachBlocked && Number.isFinite(clientId),
+    clientId: Number.isFinite(clientId) ? clientId : null,
+    onMessages: (incoming) => setThread((cur) => mergeMessageThread(cur, incoming)),
+  });
+
   useEffect(() => {
     if (coachBlocked || !Number.isFinite(clientId)) {
       setThread([]);
@@ -215,6 +374,12 @@ export function StaffMessagingInbox({
     return () => ac.abort();
   }, [clientId, reload, coachBlocked]);
 
+  useEffect(() => {
+    if (live || coachBlocked) return;
+    const timer = setInterval(() => setReload((n) => n + 1), MESSAGE_FETCH_FALLBACK_MS);
+    return () => clearInterval(timer);
+  }, [live, coachBlocked]);
+
   async function submit(event: FormEvent) {
     event.preventDefault();
     const body = text.trim();
@@ -222,7 +387,6 @@ export function StaffMessagingInbox({
     setSaving(true);
     setError("");
     try {
-      // Hilo del alumno. Si marca aviso general: reply_to_all + /messages/broadcast.
       await postParticipantMessage(clientId, {
         body,
         reply_to_all: Boolean(broadcast && canBroadcast),

@@ -1,4 +1,9 @@
 import { apiUrl, authHeaders } from "../../src/api";
+import {
+  MESSAGES_STREAM_TOKEN_PATH,
+  buildStreamUrl,
+  type StreamTokenResponse,
+} from "./messageStream";
 import { normalizePanelConfig } from "./panelConfig";
 import type {
   AnalysisResponse,
@@ -302,4 +307,44 @@ export function postBroadcastMessage(
     body: JSON.stringify(body),
     signal,
   });
+}
+
+/**
+ * POST …/messages/stream-token (auth + X-Branch-ID).
+ * Respuesta: { stream_token, expires_in: 120, stream_path }.
+ * Si falla (404/etc.) retorna null → UI cae a poll.
+ */
+export async function fetchMessageStreamToken(
+  signal?: AbortSignal,
+): Promise<{ streamToken: string; url: string; expiresIn: number } | null> {
+  try {
+    const res = await fetch(apiUrl(MESSAGES_STREAM_TOKEN_PATH), {
+      method: "POST",
+      headers: {
+        ...authHeaders(),
+        "content-type": "application/json",
+      },
+      body: "{}",
+      signal,
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    const json = (await res.json()) as StreamTokenResponse;
+    const streamToken = String(json.stream_token || "").trim();
+    if (!streamToken) return null;
+    const streamPath = String(json.stream_path || "").trim();
+    const url = streamPath
+      ? streamPath.startsWith("http://") || streamPath.startsWith("https://")
+        ? streamPath
+        : apiUrl(streamPath)
+      : apiUrl(buildStreamUrl(streamToken));
+    const expiresIn = Number(json.expires_in);
+    return {
+      streamToken,
+      url,
+      expiresIn: Number.isFinite(expiresIn) && expiresIn > 0 ? expiresIn : 120,
+    };
+  } catch {
+    return null;
+  }
 }
