@@ -258,6 +258,26 @@ export function saveMacroTarget(
   });
 }
 
+export type InboxItem = {
+  client_id: number;
+  client_name: string;
+  last_message: PanelMessage;
+  replied: boolean;
+  in_challenge: boolean;
+  challenge_start: string | null;
+};
+
+/** Bandeja del equipo. Devuelve null si el backend aún no tiene el endpoint. */
+export async function fetchMessagesInbox(signal?: AbortSignal): Promise<InboxItem[] | null> {
+  try {
+    const raw = await panelFetch<{ items?: InboxItem[] }>("/messages/inbox", { signal });
+    return Array.isArray(raw?.items) ? raw.items : null;
+  } catch (err) {
+    if ((err as Error).name === "AbortError") throw err;
+    return null;
+  }
+}
+
 export async function fetchParticipantMessages(
   clientId: number,
   signal?: AbortSignal,

@@ -4,6 +4,8 @@ import { FormEvent, useEffect, useState } from "react";
 import {
   fetchMyMessages,
   fetchParticipantMessages,
+  fetchMessagesInbox,
+  type InboxItem,
   postMyMessage,
   postParticipantMessage,
 } from "./weekly-panel/api";
@@ -358,8 +360,22 @@ export function StaffMessagingInbox({
   const [thread, setThread] = useState<PanelMessage[]>([]);
   const [reload, setReload] = useState(0);
 
+  const [inbox, setInbox] = useState<InboxItem[] | null>(null);
+  const [onlyActive, setOnlyActive] = useState(true);
+
   const selected = people.find((p) => String(p.id) === selectedId) || people[0];
   const clientId = selected ? Number(selected.id) : NaN;
+
+  useEffect(() => {
+    if (coachBlocked) return;
+    const ac = new AbortController();
+    fetchMessagesInbox(ac.signal)
+      .then(setInbox)
+      .catch(() => undefined);
+    return () => ac.abort();
+  }, [reload, coachBlocked, thread.length]);
+
+  const inboxRows = (inbox || []).filter((item) => !onlyActive || item.in_challenge);
 
   const { live } = useMessageStream({
     enabled: !coachBlocked && Number.isFinite(clientId),
@@ -471,6 +487,52 @@ export function StaffMessagingInbox({
           </select>
         </label>
       </header>
+      {inbox ? (
+        <div className="messaging-inbox">
+          <div className="messaging-inbox-head">
+            <b>Todos los mensajes</b>
+            <label className="messaging-broadcast-check">
+              <input
+                type="checkbox"
+                checked={onlyActive}
+                onChange={(e) => setOnlyActive(e.target.checked)}
+              />
+              Solo alumnos dentro de sus 90 días
+            </label>
+          </div>
+          {inboxRows.length ? (
+            <ul>
+              {inboxRows.map((item) => (
+                <li key={item.client_id}>
+                  <button
+                    type="button"
+                    className={String(item.client_id) === String(selected?.id) ? "active" : ""}
+                    onClick={() => {
+                      setSelectedId(String(item.client_id));
+                      setText("");
+                      setBroadcast(false);
+                      setError("");
+                    }}
+                  >
+                    <span className="messaging-inbox-top">
+                      <b>{item.client_name}</b>
+                      <small>{formatWhen(item.last_message?.created)}</small>
+                    </span>
+                    <span className="messaging-inbox-body">
+                      {roleLabel(item.last_message?.author_role)}: {messageBody(item.last_message)}
+                    </span>
+                    <span className={`messaging-tag ${item.replied ? "replied" : "pending"}`}>
+                      {item.replied ? "Respondido" : "Sin responder"}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="wp-habit-hint">No hay mensajes con este filtro.</p>
+          )}
+        </div>
+      ) : null}
       {loading && !thread.length ? (
         <p className="wp-habit-hint">Cargando hilo…</p>
       ) : (
