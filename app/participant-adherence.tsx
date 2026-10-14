@@ -132,7 +132,9 @@ export function ParticipantHabitMatrix({
   }
 
   const restHint = allowRest
-    ? "En entreno también puedes marcar D (descanso) si tu coach lo habilita."
+    ? mobile
+      ? "En entreno también puedes elegir Descanso si tu coach lo habilita."
+      : "En entreno también puedes marcar D (descanso) si tu coach lo habilita."
     : "Vacío significa que todavía no registras ese día.";
 
   return (
@@ -142,7 +144,7 @@ export function ParticipantHabitMatrix({
           <span className="eyebrow">REGISTRO PROPIO · PROYECTO 90</span>
           <h2>Mi adherencia semanal</h2>
           <p>
-            Elige ✓ si cumpliste o × si no cumpliste. {restHint}
+            {mobile ? "Elige Sí o No en la lista de cada día." : "Elige ✓ si cumpliste o × si no cumpliste."} {restHint}
           </p>
         </div>
         <label>
