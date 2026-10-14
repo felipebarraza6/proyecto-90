@@ -10,6 +10,7 @@ import {
 import { formatMacroDayPct, macroDayPct } from "./weekly-panel/macroScore";
 import { DEFAULT_MACRO_WEIGHTS } from "./weekly-panel/panelConfig";
 import { todayIsoInTimezone } from "./timezone";
+import { useIsMobile } from "./weekly-panel/useIsMobile";
 import type { PanelConfig } from "./weekly-panel/types";
 
 type Row = Record<string, unknown>;
@@ -68,6 +69,7 @@ export function ParticipantHabitMatrix({
     [nutritionRecords],
   );
   const allowRest = Boolean(panelConfig?.allow_student_rest);
+  const mobile = useIsMobile();
   const macroConfig = panelConfig || {
     macro_met_requires: PANEL_CONFIG_DEFAULTS.macro_met_requires,
     macro_ranges: PANEL_CONFIG_DEFAULTS.macro_ranges,
@@ -215,6 +217,32 @@ export function ParticipantHabitMatrix({
                     );
                   }
                   const showRest = habit === "training" && allowRest;
+                  if (mobile) {
+                    return (
+                      <td key={date}>
+                        <select
+                          className={`habit-select ${status}`}
+                          disabled={disabled}
+                          value={status === "empty" ? "" : status}
+                          aria-label={`${habits[habit].label} ${date}`}
+                          onChange={(event) => {
+                            const next = event.target.value;
+                            void act({
+                              action: "habit.self.set",
+                              habit,
+                              date,
+                              status: next,
+                            });
+                          }}
+                        >
+                          <option value="">—</option>
+                          <option value="met">Sí</option>
+                          <option value="missed">No</option>
+                          {showRest ? <option value="rest">Descanso</option> : null}
+                        </select>
+                      </td>
+                    );
+                  }
                   return (
                     <td key={date}>
                       <div
