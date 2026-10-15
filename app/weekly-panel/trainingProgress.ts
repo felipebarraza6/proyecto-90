@@ -6,6 +6,8 @@ export type TrainingProgressInput = {
   done: number;
   planned: number | null;
   partial?: boolean | null;
+  /** % semanal (min 100, sesiones / planificadas); si viene, se muestra. */
+  pct?: number | null;
 };
 
 export type TrainingProgressDisplay = {
@@ -22,6 +24,9 @@ export function trainingProgressDisplay(
   const planned =
     plannedRaw == null || !Number.isFinite(Number(plannedRaw)) ? null : Number(plannedRaw);
   const weekClosed = Boolean(options?.weekClosed);
+  const pctRaw = progress.pct;
+  const pctText =
+    pctRaw == null || !Number.isFinite(Number(pctRaw)) ? "" : ` · ${Math.round(Number(pctRaw))} %`;
 
   if (planned === 0) {
     return { primary: "Sin sesiones planificadas" };
@@ -29,12 +34,12 @@ export function trainingProgressDisplay(
 
   if (planned != null && planned > 0 && done >= planned) {
     return {
-      primary: `Plan cumplido · ${done} de ${planned}`,
+      primary: `Plan cumplido · ${done} de ${planned}${pctText}`,
       note: done > planned ? "Meta superada" : undefined,
     };
   }
 
-  const primary = `${done} de ${planned ?? "—"}`;
+  const primary = `${done} de ${planned ?? "—"}${pctText}`;
   if (progress.partial && !weekClosed) {
     return { primary, note: "Avance parcial (semana en curso)" };
   }

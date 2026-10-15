@@ -373,6 +373,8 @@ export type StudentWeekResponse = {
     done: number;
     planned: number | null;
     partial: boolean;
+    /** % semanal: min(100, sesiones / planificadas). Opcional (backend #119). */
+    pct?: number | null;
   };
 };
 
