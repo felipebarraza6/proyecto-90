@@ -34,12 +34,12 @@ export function trainingProgressDisplay(
 
   if (planned != null && planned > 0 && done >= planned) {
     return {
-      primary: `Plan cumplido · ${done} de ${planned}${pctText}`,
+      primary: `Plan cumplido · ${done} de ${planned} entrenamientos${pctText}`,
       note: done > planned ? "Meta superada" : undefined,
     };
   }
 
-  const primary = `${done} de ${planned ?? "—"}${pctText}`;
+  const primary = `${done} de ${planned ?? "—"} entrenamientos${pctText}`;
   if (progress.partial && !weekClosed) {
     return { primary, note: "Avance parcial (semana en curso)" };
   }
