@@ -242,6 +242,28 @@ export function buildPlanSyncMacroTargetBody(input: {
   };
 }
 
+/**
+ * POST …/macro-targets del tramo vigente solo al aprobar/publicar.
+ * pending_review / rejected guardan el plan sin tocar la meta del tramo
+ * (la meta tiene prioridad sobre el plan para el alumno).
+ */
+export function shouldPostPlanMacroTarget(input: {
+  status: unknown;
+  calories: unknown;
+  protein: unknown;
+  clientId: unknown;
+}): boolean {
+  const calories = numOrNull(input.calories);
+  const protein = numOrNull(input.protein);
+  const clientId = Number(input.clientId);
+  return (
+    String(input.status) === "approved" &&
+    calories != null &&
+    protein != null &&
+    Number.isFinite(clientId)
+  );
+}
+
 function numOrNull(value: unknown): number | null {
   if (value == null || value === "") return null;
   const n = Number(value);
