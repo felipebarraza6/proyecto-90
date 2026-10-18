@@ -6,6 +6,7 @@ import {
   buildMacroTargetSaveBodies,
   buildPlanSyncMacroTargetBody,
   periodForChallengeDay,
+  shouldPostPlanMacroTarget,
 } from "../app/weekly-panel/macroScore.ts";
 
 describe("periodForChallengeDay", () => {
@@ -113,6 +114,16 @@ describe("buildPlanSyncMacroTargetBody", () => {
   });
 });
 
+describe("shouldPostPlanMacroTarget (Guardar plan / Aprobar)", () => {
+  it("approved → POST; pending_review / rejected → sin POST", () => {
+    const base = { calories: 2000, protein: 150, clientId: 42 };
+    assert.equal(shouldPostPlanMacroTarget({ ...base, status: "approved" }), true);
+    assert.equal(shouldPostPlanMacroTarget({ ...base, status: "pending_review" }), false);
+    assert.equal(shouldPostPlanMacroTarget({ ...base, status: "rejected" }), false);
+    assert.equal(shouldPostPlanMacroTarget({ status: "approved", calories: null, protein: 150, clientId: 42 }), false);
+  });
+});
+
 describe("canEditMacroTargets (requisito Felipe: nutri + admin)", () => {
   it("nutri y admin pueden editar; coach no", () => {
     assert.equal(canEditMacroTargets("admin"), true);
@@ -139,8 +150,11 @@ describe("rutas UI: calorías editables para nutri y admin", () => {
     // Campo calorías editable en el plan (name=calories → Guardar plan / sync).
     assert.match(recalc, /key: "calories", label: "Calorías sugeridas"/);
     assert.match(recalc, /name=\{item\.key\}/);
-    // Guardar plan sincroniza macro-targets (persistencia panel/ficha).
-    assert.match(functional, /saveMacroTarget/);
+    // Guardar plan (solo approved) y «Aprobar plan nutricional» sincronizan vía el mismo helper.
+    assert.match(functional, /syncApprovedPlanMacroTarget/);
+    assert.match(functional, /shouldPostPlanMacroTarget\(\{status:values\.status/);
+    assert.match(functional, /shouldPostPlanMacroTarget\(\{status:"approved"/);
+    assert.match(functional, /action:nutrition\?"nutrition\.review"/);
     assert.match(functional, /buildPlanSyncMacroTargetBody/);
   });
 
