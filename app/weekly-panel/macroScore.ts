@@ -158,6 +158,90 @@ export const MACRO_PERIODS: { period: MacroPeriodKey; label: string; dayFrom: nu
   { period: "61-90", label: "Días 61–90", dayFrom: 61, dayTo: 90 },
 ];
 
+/** Día del desafío → tramo de metas (día ≤0 o desconocido → 1–30). */
+export function periodForChallengeDay(day: number): MacroPeriodKey {
+  const d = Number(day);
+  if (!Number.isFinite(d) || d <= 30) return "1-30";
+  if (d <= 60) return "31-60";
+  return "61-90";
+}
+
+export type MacroTargetDraftInput = {
+  period: MacroPeriodKey;
+  calories: number | null;
+  protein: number | null;
+  carbs: number | null;
+  fats: number | null;
+  effective_from: string | null;
+  note: string | null;
+};
+
+export type MacroTargetSaveBodyLike = {
+  period: MacroPeriodKey;
+  calories: number;
+  protein: number;
+  carbs?: number | null;
+  fats?: number | null;
+  effective_from?: string | null;
+  note?: string | null;
+};
+
+/**
+ * Qué tramos POST-ear a …/macro-targets. Vacío arrastra el anterior;
+ * sin calorías+proteína efectivas no hay body (evita “éxito” sin request).
+ */
+export function buildMacroTargetSaveBodies(
+  drafts: MacroTargetDraftInput[],
+): MacroTargetSaveBodyLike[] {
+  const carried = carryForwardMacroPeriods(
+    drafts.map((row) => ({
+      calories: row.calories,
+      protein: row.protein,
+      carbs: row.carbs,
+      fats: row.fats,
+      effective_from: row.effective_from,
+    })),
+  );
+  const bodies: MacroTargetSaveBodyLike[] = [];
+  for (let i = 0; i < drafts.length; i++) {
+    const draft = drafts[i];
+    const effective = carried[i];
+    const calories = effective?.calories;
+    const protein = effective?.protein;
+    if (calories == null || protein == null) continue;
+    bodies.push({
+      period: draft.period,
+      calories,
+      protein,
+      carbs: effective?.carbs ?? null,
+      fats: effective?.fats ?? null,
+      effective_from: draft.effective_from?.trim() || effective?.effective_from || null,
+      note: draft.note?.trim() || null,
+    });
+  }
+  return bodies;
+}
+
+/** Sincronizar «Guardar plan» con el tramo vigente del alumno. */
+export function buildPlanSyncMacroTargetBody(input: {
+  day: number;
+  calories: number;
+  protein: number;
+  carbs?: number | null;
+  fats?: number | null;
+  effective_from?: string | null;
+}): MacroTargetSaveBodyLike {
+  return {
+    period: periodForChallengeDay(input.day),
+    calories: input.calories,
+    protein: input.protein,
+    carbs: input.carbs ?? null,
+    fats: input.fats ?? null,
+    effective_from: input.effective_from || null,
+    note: null,
+  };
+}
+
 function numOrNull(value: unknown): number | null {
   if (value == null || value === "") return null;
   const n = Number(value);

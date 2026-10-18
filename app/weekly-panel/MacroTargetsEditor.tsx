@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { fetchMacroTargets, saveMacroTarget } from "./api";
 import {
   MACRO_PERIODS,
+  buildMacroTargetSaveBodies,
   carryForwardMacroPeriods,
   type MacroPeriodKey,
 } from "./macroScore";
@@ -116,31 +117,27 @@ export function MacroTargetsEditor({
     setSaving(true);
     setError("");
     setOk(false);
-    const carried = carryForwardMacroPeriods(
+    const bodies = buildMacroTargetSaveBodies(
       drafts.map((row) => ({
+        period: row.period,
         calories: toNum(row.calories),
         protein: toNum(row.protein),
         carbs: toNum(row.carbs),
         fats: toNum(row.fats),
         effective_from: row.effective_from.trim() || null,
+        note: row.note.trim() || null,
       })),
     );
+    if (bodies.length === 0) {
+      setError(
+        "Indica al menos calorías y proteína en un tramo (o en el primero para arrastrar a los siguientes).",
+      );
+      setSaving(false);
+      return;
+    }
     try {
-      for (let i = 0; i < drafts.length; i++) {
-        const draft = drafts[i];
-        const effective = carried[i];
-        const calories = effective?.calories;
-        const protein = effective?.protein;
-        if (calories == null || protein == null) continue;
-        await saveMacroTarget(clientId, {
-          period: draft.period,
-          calories,
-          protein,
-          carbs: effective?.carbs ?? null,
-          fats: effective?.fats ?? null,
-          effective_from: draft.effective_from.trim() || effective?.effective_from || null,
-          note: draft.note.trim() || null,
-        });
+      for (const body of bodies) {
+        await saveMacroTarget(clientId, body);
       }
       setOk(true);
       onSaved?.();

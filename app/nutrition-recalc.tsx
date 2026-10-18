@@ -39,8 +39,8 @@ function fmt(value: unknown, unit: string) {
 
 /**
  * Bloque de macros del modal «Editar nutrición»: evaluación, recálculo y TMB.
- * Las metas por tramo (1–30 / 31–60 / 61–90) van en MacroTargetsEditor
- * (GET/POST …/macro-targets).
+ * «Guardar plan» también sincroniza el tramo vigente vía POST …/macro-targets
+ * (panel/alumno leen effective_macro_targets). Tramos 1–30/31–60/61–90: MacroTargetsEditor.
  */
 export function NutritionPlanFields({
   person,

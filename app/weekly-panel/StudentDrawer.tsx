@@ -4,6 +4,7 @@ import { AnalysisPanel } from "./AnalysisPanel";
 import { CommentsThread } from "./CommentsThread";
 import { FeedbackBox } from "./FeedbackBox";
 import { HabitPlanEditor } from "./HabitPlanEditor";
+import { canEditMacroTargets } from "./macroEditAccess";
 import { MacroTargetsEditor } from "./MacroTargetsEditor";
 import { StudentFacts } from "./StudentFacts";
 import { StudentWeekTable } from "./StudentWeekTable";
@@ -154,8 +155,10 @@ export function StudentDrawer({
     () => data?.profile.name || rows.find((r) => r.client_id === clientId)?.name || "Alumno",
     [data, rows, clientId],
   );
+  // Hábitos (descansos/agua/sesiones) = coach + admin. Macros = nutri + admin.
   const roleCanEditHabits =
     role === "admin" || (role === "professional" && specialty === "coach");
+  const roleCanEditMacros = canEditMacroTargets(role, specialty);
 
   return (
     <div className={`wp-drawer-backdrop ${isMobile ? "mobile" : ""}`}>
@@ -227,7 +230,7 @@ export function StudentDrawer({
                   />
                 </details>
               ) : null}
-              {showNutrition && roleCanEditHabits ? (
+              {showNutrition && roleCanEditMacros ? (
                 <details className="wp-habit-details">
                   <summary>Editar metas de macros por tramo (1–30 / 31–60 / 61–90)</summary>
                   <MacroTargetsEditor
