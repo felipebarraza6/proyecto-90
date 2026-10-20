@@ -283,6 +283,8 @@ export type PanelMessage = {
   note?: string;
   author_name?: string;
   author_role?: string;
+  /** User id del autor staff (null si mensaje de alumno / desconocido). */
+  author_id?: number | null;
   role_label?: string;
   created_at?: string;
   created?: string;
@@ -292,6 +294,11 @@ export type PanelMessage = {
   broadcast?: boolean;
   /** Id del aviso general; null/ausente si es mensaje 1:1. */
   broadcast_id?: number | string | null;
+  /**
+   * Si el viewer puede borrar este mensaje (backend viewer-aware).
+   * Ausente en API antigua → el front usa fallback por rol/author_id.
+   */
+  can_delete?: boolean;
   client_id?: number;
   user_id?: number | string;
   direction?: string;

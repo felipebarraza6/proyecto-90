@@ -19,6 +19,7 @@ import {
 import {
   messageDeleteErrorMessage,
   messageDeleteKind,
+  showMessageDelete,
 } from "../app/weekly-panel/messageDelete.ts";
 
 describe("messageStream helpers (yggdra_infra #105)", () => {
@@ -200,7 +201,12 @@ describe("messageStream helpers (yggdra_infra #105)", () => {
   it("messageDeleteErrorMessage es amable si el backend aún no existe", () => {
     assert.match(messageDeleteErrorMessage(Object.assign(new Error("Not Found"), { status: 404 })), /aún no está disponible/i);
     assert.match(messageDeleteErrorMessage(Object.assign(new Error("Method Not Allowed"), { status: 405 })), /aún no está disponible/i);
-    assert.match(messageDeleteErrorMessage(Object.assign(new Error("Forbidden"), { status: 403 })), /permiso/i);
+    assert.equal(
+      messageDeleteErrorMessage(
+        Object.assign(new Error("Solo puedes borrar tus propios mensajes"), { status: 403 }),
+      ),
+      "Solo puedes borrar tus propios mensajes",
+    );
     assert.equal(messageDeleteErrorMessage(Object.assign(new Error("falló"), { status: 500 })), "falló");
   });
 
@@ -208,6 +214,30 @@ describe("messageStream helpers (yggdra_infra #105)", () => {
     assert.equal(messageDeleteKind({ id: 1, broadcast_id: "bc-1" }), "broadcast");
     assert.equal(messageDeleteKind({ id: 2, broadcast_id: null }), "message");
     assert.equal(messageDeleteKind({ id: 3 }), "message");
+  });
+
+  it("showMessageDelete respeta can_delete y fallback API antigua", () => {
+    const admin = { isAdmin: true, isNutrition: false, viewerUserId: 1 };
+    const nutri = { isAdmin: false, isNutrition: true, viewerUserId: 7 };
+    const coach = { isAdmin: false, isNutrition: false, viewerUserId: 3 };
+
+    assert.equal(showMessageDelete({ id: 1, can_delete: true, author_role: "nutrition" }, nutri), true);
+    assert.equal(showMessageDelete({ id: 2, can_delete: false, author_role: "nutrition", author_id: 7 }, nutri), false);
+    assert.equal(showMessageDelete({ id: 3, can_delete: true, author_role: "admin", broadcast_id: 9 }, admin), true);
+
+    // API antigua (sin can_delete): admin sí; nutri solo la suya; sin viewerId → hide
+    assert.equal(showMessageDelete({ id: 4, author_role: "nutrition", author_id: 99 }, admin), true);
+    assert.equal(showMessageDelete({ id: 5, author_role: "nutrition", author_id: 7 }, nutri), true);
+    assert.equal(showMessageDelete({ id: 6, author_role: "nutrition", author_id: 8 }, nutri), false);
+    assert.equal(
+      showMessageDelete({ id: 7, author_role: "nutrition", author_id: 7 }, { ...nutri, viewerUserId: null }),
+      false,
+    );
+    assert.equal(showMessageDelete({ id: 8, author_role: "nutrition", author_id: 7 }, coach), false);
+    assert.equal(
+      showMessageDelete({ id: 9, author_role: "participant", can_delete: true }, admin),
+      false,
+    );
   });
 
   it("participantCanOpenMessages no bloquea Mensajes durante el cuestionario", () => {

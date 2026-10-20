@@ -11,7 +11,11 @@ import {
   postMyMessage,
   postParticipantMessage,
 } from "./weekly-panel/api";
-import { messageDeleteErrorMessage, messageDeleteKind } from "./weekly-panel/messageDelete";
+import {
+  messageDeleteErrorMessage,
+  messageDeleteKind,
+  showMessageDelete,
+} from "./weekly-panel/messageDelete";
 import {
   mergeMessageThread,
   removeMessagesFromThread,
@@ -70,11 +74,6 @@ function isBroadcastMessage(row: PanelMessage): boolean {
   return Boolean(row.broadcast || row.is_broadcast || row.reply_to_all);
 }
 
-/** Solo mensajes del staff / avisos generales (no los del alumno). */
-function canDeleteStaffMessage(row: PanelMessage): boolean {
-  return !isFromStudent(row);
-}
-
 function confirmDeleteMessage(row: PanelMessage): boolean {
   if (isBroadcastMessage(row)) {
     return confirm("Se eliminará para todos los alumnos");
@@ -117,12 +116,16 @@ function applyDeleteResponse(
 
 function MessageList({
   items,
-  canDelete = false,
+  isAdmin = false,
+  isNutrition = false,
+  viewerUserId = null,
   deletingId = null,
   onDelete,
 }: {
   items: PanelMessage[];
-  canDelete?: boolean;
+  isAdmin?: boolean;
+  isNutrition?: boolean;
+  viewerUserId?: number | string | null;
   deletingId?: string | number | null;
   onDelete?: (row: PanelMessage) => void;
 }) {
@@ -139,7 +142,9 @@ function MessageList({
       {items.map((row) => {
         const fromStudent = isFromStudent(row);
         const broadcast = isBroadcastMessage(row);
-        const showDelete = canDelete && canDeleteStaffMessage(row) && onDelete;
+        const showDelete =
+          Boolean(onDelete) &&
+          showMessageDelete(row, { isAdmin, isNutrition, viewerUserId });
         const busy = deletingId != null && String(deletingId) === String(row.id);
         return (
           <li key={String(row.id)} className={fromStudent ? "from-student" : "from-staff"}>
@@ -156,7 +161,7 @@ function MessageList({
                 type="button"
                 className="danger-link"
                 disabled={busy}
-                onClick={() => onDelete(row)}
+                onClick={() => onDelete?.(row)}
               >
                 {busy ? "Eliminando…" : "Eliminar"}
               </button>
@@ -279,6 +284,7 @@ export function StaffParticipantThread({
   clientId,
   participantName,
   viewerRole,
+  viewerUserId = null,
   messagingCoachEnabled = false,
   canBroadcast = false,
   compact = false,
@@ -286,6 +292,8 @@ export function StaffParticipantThread({
   clientId: number;
   participantName?: string;
   viewerRole?: string;
+  /** Id del viewer (fallback author_id cuando la API no manda can_delete). */
+  viewerUserId?: number | string | null;
   messagingCoachEnabled?: boolean;
   canBroadcast?: boolean;
   compact?: boolean;
@@ -295,7 +303,7 @@ export function StaffParticipantThread({
   const isNutrition = specialty === "nutrition" || specialty.includes("nutri");
   const isAdmin = specialty === "admin" || specialty.includes("admin") || specialty.includes("owner");
   const coachBlocked = isCoach && !messagingCoachEnabled && !isNutrition && !isAdmin;
-  const canDeleteMessages = isNutrition || isAdmin;
+  const deleteViewer = { isAdmin, isNutrition, viewerUserId };
 
   const [text, setText] = useState("");
   const [broadcast, setBroadcast] = useState(false);
@@ -367,7 +375,7 @@ export function StaffParticipantThread({
   }
 
   async function onDelete(row: PanelMessage) {
-    if (!canDeleteMessages || !canDeleteStaffMessage(row) || !Number.isFinite(clientId)) return;
+    if (!showMessageDelete(row, deleteViewer) || !Number.isFinite(clientId)) return;
     if (!confirmDeleteMessage(row)) return;
     setDeletingId(row.id);
     setError("");
@@ -404,7 +412,9 @@ export function StaffParticipantThread({
       ) : (
         <MessageList
           items={thread}
-          canDelete={canDeleteMessages}
+          isAdmin={isAdmin}
+          isNutrition={isNutrition}
+          viewerUserId={viewerUserId}
           deletingId={deletingId}
           onDelete={onDelete}
         />
@@ -451,11 +461,14 @@ export function StaffMessagingInbox({
   people,
   canBroadcast = true,
   viewerRole,
+  viewerUserId = null,
   messagingCoachEnabled = false,
 }: {
   people: Row[];
   canBroadcast?: boolean;
   viewerRole?: string;
+  /** Id del viewer (fallback author_id cuando la API no manda can_delete). */
+  viewerUserId?: number | string | null;
   messagingCoachEnabled?: boolean;
 }) {
   const specialty = String(viewerRole || "").toLowerCase();
@@ -463,7 +476,7 @@ export function StaffMessagingInbox({
   const isNutrition = specialty === "nutrition" || specialty.includes("nutri");
   const isAdmin = specialty === "admin" || specialty.includes("admin") || specialty.includes("owner");
   const coachBlocked = isCoach && !messagingCoachEnabled;
-  const canDeleteMessages = isNutrition || isAdmin;
+  const deleteViewer = { isAdmin, isNutrition, viewerUserId };
 
   const [selectedId, setSelectedId] = useState(() => String(people[0]?.id || ""));
   const [text, setText] = useState("");
@@ -553,7 +566,7 @@ export function StaffMessagingInbox({
   }
 
   async function onDelete(row: PanelMessage) {
-    if (!canDeleteMessages || !canDeleteStaffMessage(row) || !Number.isFinite(clientId)) return;
+    if (!showMessageDelete(row, deleteViewer) || !Number.isFinite(clientId)) return;
     if (!confirmDeleteMessage(row)) return;
     setDeletingId(row.id);
     setError("");
@@ -672,7 +685,9 @@ export function StaffMessagingInbox({
       ) : (
         <MessageList
           items={thread}
-          canDelete={canDeleteMessages}
+          isAdmin={isAdmin}
+          isNutrition={isNutrition}
+          viewerUserId={viewerUserId}
           deletingId={deletingId}
           onDelete={onDelete}
         />

@@ -364,7 +364,7 @@ export function deleteBroadcastMessage(
   });
 }
 
-export { messageDeleteErrorMessage, messageDeleteKind } from "./messageDelete";
+export { messageDeleteErrorMessage, messageDeleteKind, showMessageDelete } from "./messageDelete";
 
 /**
  * POST …/messages/stream-token (auth + X-Branch-ID).
