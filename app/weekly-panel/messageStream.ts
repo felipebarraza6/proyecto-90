@@ -11,8 +11,15 @@ export const MESSAGES_STREAM_TOKEN_PATH = "/api/p90/panel/messages/stream-token"
 /** Eventos SSE nombrados del backend. */
 export const SSE_EVENT_CONNECTED = "connected";
 export const SSE_EVENT_MESSAGE = "message";
+export const SSE_EVENT_MESSAGE_DELETED = "message_deleted";
 export const SSE_EVENT_HEARTBEAT = "heartbeat";
 export const SSE_EVENT_TIMEOUT = "timeout";
+
+export type MessageDeletedPayload = {
+  messageIds: Array<string | number>;
+  broadcastId: string | number | null;
+  clientId: number | null;
+};
 
 export type StreamTokenResponse = {
   stream_token?: string;
@@ -42,6 +49,33 @@ export function mergeMessageThread(
   return [...byId.values()].sort((a, b) =>
     String(a.created_at || a.created || "").localeCompare(String(b.created_at || b.created || "")),
   );
+}
+
+/** Quita del hilo mensajes por id y/o por broadcast_id (borrado lógico / SSE). */
+export function removeMessagesFromThread(
+  current: PanelMessage[],
+  opts: {
+    messageIds?: Array<string | number> | null;
+    broadcastId?: string | number | null;
+  },
+): PanelMessage[] {
+  const ids = new Set((opts.messageIds || []).map((id) => String(id)));
+  const broadcastId =
+    opts.broadcastId != null && String(opts.broadcastId) !== ""
+      ? String(opts.broadcastId)
+      : null;
+  if (!ids.size && !broadcastId) return current;
+  return current.filter((row) => {
+    if (row?.id != null && ids.has(String(row.id))) return false;
+    if (
+      broadcastId &&
+      row?.broadcast_id != null &&
+      String(row.broadcast_id) === broadcastId
+    ) {
+      return false;
+    }
+    return true;
+  });
 }
 
 /**
@@ -74,6 +108,59 @@ export function parseStreamMessageEvent(
       return msg;
     }
     return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Payload del evento SSE `message_deleted`:
+ * { type:"message_deleted", message_ids?, broadcast_id?, client_id? }
+ * Tolera camelCase y `ids` como alias de message_ids.
+ */
+export function parseStreamMessageDeletedEvent(
+  raw: string,
+  filterClientId?: number | null,
+): MessageDeletedPayload | null {
+  const trimmed = String(raw || "").trim();
+  if (!trimmed) return null;
+  try {
+    const data = JSON.parse(trimmed) as unknown;
+    if (!data || typeof data !== "object" || Array.isArray(data)) return null;
+    const rec = data as Record<string, unknown>;
+    if (rec.type != null && String(rec.type) !== "message_deleted") return null;
+
+    if (filterClientId != null && Number.isFinite(Number(filterClientId))) {
+      if (rec.client_id != null && Number(rec.client_id) !== Number(filterClientId)) {
+        return null;
+      }
+    }
+
+    const rawIds =
+      rec.message_ids ?? rec.messageIds ?? rec.ids ?? rec.message_id ?? rec.messageId;
+    const messageIds: Array<string | number> = [];
+    if (Array.isArray(rawIds)) {
+      for (const id of rawIds) {
+        if (id != null && String(id) !== "") messageIds.push(id as string | number);
+      }
+    } else if (rawIds != null && String(rawIds) !== "") {
+      messageIds.push(rawIds as string | number);
+    }
+
+    const rawBroadcast = rec.broadcast_id ?? rec.broadcastId;
+    const broadcastId =
+      rawBroadcast != null && String(rawBroadcast) !== ""
+        ? (rawBroadcast as string | number)
+        : null;
+
+    if (!messageIds.length && broadcastId == null) return null;
+
+    const clientId =
+      rec.client_id != null && Number.isFinite(Number(rec.client_id))
+        ? Number(rec.client_id)
+        : null;
+
+    return { messageIds, broadcastId, clientId };
   } catch {
     return null;
   }

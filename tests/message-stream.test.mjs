@@ -6,13 +6,20 @@ import {
   SSE_EVENT_CONNECTED,
   SSE_EVENT_HEARTBEAT,
   SSE_EVENT_MESSAGE,
+  SSE_EVENT_MESSAGE_DELETED,
   SSE_EVENT_TIMEOUT,
   buildStreamUrl,
   mergeMessageThread,
+  parseStreamMessageDeletedEvent,
   parseStreamMessageEvent,
   participantCanOpenMessages,
+  removeMessagesFromThread,
   withStreamToken,
 } from "../app/weekly-panel/messageStream.ts";
+import {
+  messageDeleteErrorMessage,
+  messageDeleteKind,
+} from "../app/weekly-panel/messageDelete.ts";
 
 describe("messageStream helpers (yggdra_infra #105)", () => {
   it("mergeMessageThread deduplica por id y ordena por fecha", () => {
@@ -109,8 +116,72 @@ describe("messageStream helpers (yggdra_infra #105)", () => {
   it("nombres de eventos SSE del contrato", () => {
     assert.equal(SSE_EVENT_CONNECTED, "connected");
     assert.equal(SSE_EVENT_MESSAGE, "message");
+    assert.equal(SSE_EVENT_MESSAGE_DELETED, "message_deleted");
     assert.equal(SSE_EVENT_HEARTBEAT, "heartbeat");
     assert.equal(SSE_EVENT_TIMEOUT, "timeout");
+  });
+
+  it("removeMessagesFromThread quita por id y por broadcast_id", () => {
+    const thread = [
+      { id: 1, body: "a", created_at: "2026-10-01T10:00:00Z" },
+      { id: 2, body: "b", broadcast_id: "bc-9", created_at: "2026-10-01T11:00:00Z" },
+      { id: 3, body: "c", broadcast_id: "bc-9", created_at: "2026-10-01T12:00:00Z" },
+      { id: 4, body: "d", created_at: "2026-10-01T13:00:00Z" },
+    ];
+    assert.deepEqual(
+      removeMessagesFromThread(thread, { messageIds: [1] }).map((m) => m.id),
+      [2, 3, 4],
+    );
+    assert.deepEqual(
+      removeMessagesFromThread(thread, { broadcastId: "bc-9" }).map((m) => m.id),
+      [1, 4],
+    );
+    assert.deepEqual(
+      removeMessagesFromThread(thread, { messageIds: [4], broadcastId: "bc-9" }).map((m) => m.id),
+      [1],
+    );
+  });
+
+  it("parseStreamMessageDeletedEvent lee ids y broadcast_id", () => {
+    const raw = JSON.stringify({
+      type: "message_deleted",
+      client_id: 42,
+      message_ids: [10, 11],
+      broadcast_id: "bc-1",
+    });
+    const payload = parseStreamMessageDeletedEvent(raw);
+    assert.deepEqual(payload?.messageIds, [10, 11]);
+    assert.equal(payload?.broadcastId, "bc-1");
+    assert.equal(payload?.clientId, 42);
+    assert.equal(parseStreamMessageDeletedEvent(raw, 99), null);
+    assert.equal(parseStreamMessageDeletedEvent(raw, 42)?.broadcastId, "bc-1");
+  });
+
+  it("parseStreamMessageDeletedEvent tolera aliases y un solo id", () => {
+    const single = parseStreamMessageDeletedEvent(
+      JSON.stringify({ type: "message_deleted", message_id: 7 }),
+    );
+    assert.deepEqual(single?.messageIds, [7]);
+    const camel = parseStreamMessageDeletedEvent(
+      JSON.stringify({ type: "message_deleted", messageIds: [8], broadcastId: 99 }),
+    );
+    assert.deepEqual(camel?.messageIds, [8]);
+    assert.equal(camel?.broadcastId, 99);
+    assert.equal(parseStreamMessageDeletedEvent(JSON.stringify({ type: "message" })), null);
+    assert.equal(parseStreamMessageDeletedEvent(""), null);
+  });
+
+  it("messageDeleteErrorMessage es amable si el backend aún no existe", () => {
+    assert.match(messageDeleteErrorMessage(Object.assign(new Error("Not Found"), { status: 404 })), /aún no está disponible/i);
+    assert.match(messageDeleteErrorMessage(Object.assign(new Error("Method Not Allowed"), { status: 405 })), /aún no está disponible/i);
+    assert.match(messageDeleteErrorMessage(Object.assign(new Error("Forbidden"), { status: 403 })), /permiso/i);
+    assert.equal(messageDeleteErrorMessage(Object.assign(new Error("falló"), { status: 500 })), "falló");
+  });
+
+  it("messageDeleteKind elige broadcast vs mensaje 1:1", () => {
+    assert.equal(messageDeleteKind({ id: 1, broadcast_id: "bc-1" }), "broadcast");
+    assert.equal(messageDeleteKind({ id: 2, broadcast_id: null }), "message");
+    assert.equal(messageDeleteKind({ id: 3 }), "message");
   });
 
   it("participantCanOpenMessages no bloquea Mensajes durante el cuestionario", () => {

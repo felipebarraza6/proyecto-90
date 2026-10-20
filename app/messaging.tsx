@@ -2,6 +2,8 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import {
+  deleteBroadcastMessage,
+  deleteParticipantMessage,
   fetchMyMessages,
   fetchParticipantMessages,
   fetchMessagesInbox,
@@ -9,7 +11,12 @@ import {
   postMyMessage,
   postParticipantMessage,
 } from "./weekly-panel/api";
-import { mergeMessageThread } from "./weekly-panel/messageStream";
+import { messageDeleteErrorMessage, messageDeleteKind } from "./weekly-panel/messageDelete";
+import {
+  mergeMessageThread,
+  removeMessagesFromThread,
+  type MessageDeletedPayload,
+} from "./weekly-panel/messageStream";
 import type { PanelMessage } from "./weekly-panel/types";
 import {
   MESSAGE_FETCH_FALLBACK_MS,
@@ -50,7 +57,52 @@ function sortMessages(items: PanelMessage[]): PanelMessage[] {
   );
 }
 
-function MessageList({ items }: { items: PanelMessage[] }) {
+function isFromStudent(row: PanelMessage): boolean {
+  return (
+    String(row.direction || "") === "inbound" ||
+    String(row.author_role || "").toLowerCase().includes("participant") ||
+    String(row.author_role || "").toLowerCase() === "student"
+  );
+}
+
+function isBroadcastMessage(row: PanelMessage): boolean {
+  if (row.broadcast_id != null && String(row.broadcast_id) !== "") return true;
+  return Boolean(row.broadcast || row.is_broadcast || row.reply_to_all);
+}
+
+/** Solo mensajes del staff / avisos generales (no los del alumno). */
+function canDeleteStaffMessage(row: PanelMessage): boolean {
+  return !isFromStudent(row);
+}
+
+function confirmDeleteMessage(row: PanelMessage): boolean {
+  if (isBroadcastMessage(row)) {
+    return confirm("Se eliminará para todos los alumnos");
+  }
+  return confirm("¿Eliminar este mensaje? No se puede deshacer");
+}
+
+function applyMessageDeleted(
+  current: PanelMessage[],
+  payload: MessageDeletedPayload,
+): PanelMessage[] {
+  return removeMessagesFromThread(current, {
+    messageIds: payload.messageIds,
+    broadcastId: payload.broadcastId,
+  });
+}
+
+function MessageList({
+  items,
+  canDelete = false,
+  deletingId = null,
+  onDelete,
+}: {
+  items: PanelMessage[];
+  canDelete?: boolean;
+  deletingId?: string | number | null;
+  onDelete?: (row: PanelMessage) => void;
+}) {
   if (!items.length) {
     return (
       <div className="professional-file-empty">
@@ -62,11 +114,10 @@ function MessageList({ items }: { items: PanelMessage[] }) {
   return (
     <ul className="notes-list messaging-thread">
       {items.map((row) => {
-        const fromStudent =
-          String(row.direction || "") === "inbound" ||
-          String(row.author_role || "").toLowerCase().includes("participant") ||
-          String(row.author_role || "").toLowerCase() === "student";
-        const broadcast = Boolean(row.broadcast || row.is_broadcast || row.reply_to_all);
+        const fromStudent = isFromStudent(row);
+        const broadcast = isBroadcastMessage(row);
+        const showDelete = canDelete && canDeleteStaffMessage(row) && onDelete;
+        const busy = deletingId != null && String(deletingId) === String(row.id);
         return (
           <li key={String(row.id)} className={fromStudent ? "from-student" : "from-staff"}>
             <header>
@@ -77,6 +128,16 @@ function MessageList({ items }: { items: PanelMessage[] }) {
               </span>
             </header>
             <p>{messageBody(row)}</p>
+            {showDelete ? (
+              <button
+                type="button"
+                className="danger-link"
+                disabled={busy}
+                onClick={() => onDelete(row)}
+              >
+                {busy ? "Eliminando…" : "Eliminar"}
+              </button>
+            ) : null}
           </li>
         );
       })}
@@ -96,6 +157,7 @@ export function ParticipantMessaging() {
 
   const { live } = useMessageStream({
     onMessages: (incoming) => setThread((cur) => mergeMessageThread(cur, incoming)),
+    onMessagesDeleted: (payload) => setThread((cur) => applyMessageDeleted(cur, payload)),
   });
 
   useEffect(() => {
@@ -210,6 +272,7 @@ export function StaffParticipantThread({
   const isNutrition = specialty === "nutrition" || specialty.includes("nutri");
   const isAdmin = specialty === "admin" || specialty.includes("admin") || specialty.includes("owner");
   const coachBlocked = isCoach && !messagingCoachEnabled && !isNutrition && !isAdmin;
+  const canDeleteMessages = isNutrition || isAdmin;
 
   const [text, setText] = useState("");
   const [broadcast, setBroadcast] = useState(false);
@@ -218,11 +281,13 @@ export function StaffParticipantThread({
   const [error, setError] = useState("");
   const [thread, setThread] = useState<PanelMessage[]>([]);
   const [reload, setReload] = useState(0);
+  const [deletingId, setDeletingId] = useState<string | number | null>(null);
 
   const { live } = useMessageStream({
     enabled: !coachBlocked && Number.isFinite(clientId),
     clientId,
     onMessages: (incoming) => setThread((cur) => mergeMessageThread(cur, incoming)),
+    onMessagesDeleted: (payload) => setThread((cur) => applyMessageDeleted(cur, payload)),
   });
 
   useEffect(() => {
@@ -278,6 +343,28 @@ export function StaffParticipantThread({
     }
   }
 
+  async function onDelete(row: PanelMessage) {
+    if (!canDeleteMessages || !canDeleteStaffMessage(row) || !Number.isFinite(clientId)) return;
+    if (!confirmDeleteMessage(row)) return;
+    setDeletingId(row.id);
+    setError("");
+    try {
+      if (messageDeleteKind(row) === "broadcast") {
+        await deleteBroadcastMessage(row.broadcast_id as string | number);
+        setThread((cur) =>
+          removeMessagesFromThread(cur, { broadcastId: row.broadcast_id, messageIds: [row.id] }),
+        );
+      } else {
+        await deleteParticipantMessage(clientId, row.id);
+        setThread((cur) => removeMessagesFromThread(cur, { messageIds: [row.id] }));
+      }
+    } catch (err) {
+      setError(messageDeleteErrorMessage(err));
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   if (coachBlocked) {
     return null;
   }
@@ -296,7 +383,12 @@ export function StaffParticipantThread({
       {loading && !thread.length ? (
         <p className="wp-habit-hint">Cargando hilo…</p>
       ) : (
-        <MessageList items={thread} />
+        <MessageList
+          items={thread}
+          canDelete={canDeleteMessages}
+          deletingId={deletingId}
+          onDelete={onDelete}
+        />
       )}
       <form className="staff-note-form messaging-compose" onSubmit={submit}>
         <label>
@@ -349,7 +441,10 @@ export function StaffMessagingInbox({
 }) {
   const specialty = String(viewerRole || "").toLowerCase();
   const isCoach = specialty === "coach" || specialty.includes("coach");
+  const isNutrition = specialty === "nutrition" || specialty.includes("nutri");
+  const isAdmin = specialty === "admin" || specialty.includes("admin") || specialty.includes("owner");
   const coachBlocked = isCoach && !messagingCoachEnabled;
+  const canDeleteMessages = isNutrition || isAdmin;
 
   const [selectedId, setSelectedId] = useState(() => String(people[0]?.id || ""));
   const [text, setText] = useState("");
@@ -359,6 +454,7 @@ export function StaffMessagingInbox({
   const [error, setError] = useState("");
   const [thread, setThread] = useState<PanelMessage[]>([]);
   const [reload, setReload] = useState(0);
+  const [deletingId, setDeletingId] = useState<string | number | null>(null);
 
   const [inbox, setInbox] = useState<InboxItem[] | null>(null);
   const [onlyActive, setOnlyActive] = useState(true);
@@ -381,6 +477,7 @@ export function StaffMessagingInbox({
     enabled: !coachBlocked && Number.isFinite(clientId),
     clientId: Number.isFinite(clientId) ? clientId : null,
     onMessages: (incoming) => setThread((cur) => mergeMessageThread(cur, incoming)),
+    onMessagesDeleted: (payload) => setThread((cur) => applyMessageDeleted(cur, payload)),
   });
 
   useEffect(() => {
@@ -433,6 +530,28 @@ export function StaffMessagingInbox({
       setError(err instanceof Error && err.message ? err.message : "No fue posible enviar la respuesta.");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function onDelete(row: PanelMessage) {
+    if (!canDeleteMessages || !canDeleteStaffMessage(row) || !Number.isFinite(clientId)) return;
+    if (!confirmDeleteMessage(row)) return;
+    setDeletingId(row.id);
+    setError("");
+    try {
+      if (messageDeleteKind(row) === "broadcast") {
+        await deleteBroadcastMessage(row.broadcast_id as string | number);
+        setThread((cur) =>
+          removeMessagesFromThread(cur, { broadcastId: row.broadcast_id, messageIds: [row.id] }),
+        );
+      } else {
+        await deleteParticipantMessage(clientId, row.id);
+        setThread((cur) => removeMessagesFromThread(cur, { messageIds: [row.id] }));
+      }
+    } catch (err) {
+      setError(messageDeleteErrorMessage(err));
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -536,7 +655,12 @@ export function StaffMessagingInbox({
       {loading && !thread.length ? (
         <p className="wp-habit-hint">Cargando hilo…</p>
       ) : (
-        <MessageList items={thread} />
+        <MessageList
+          items={thread}
+          canDelete={canDeleteMessages}
+          deletingId={deletingId}
+          onDelete={onDelete}
+        />
       )}
       <form className="staff-note-form messaging-compose" onSubmit={submit}>
         <label>

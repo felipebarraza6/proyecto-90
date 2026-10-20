@@ -330,6 +330,31 @@ export function postBroadcastMessage(
   });
 }
 
+/** DELETE …/participants/{id}/messages/{msg_id} — borrado lógico de un mensaje 1:1. */
+export function deleteParticipantMessage(
+  clientId: number,
+  messageId: number | string,
+  signal?: AbortSignal,
+): Promise<void> {
+  return panelFetch(`/participants/${clientId}/messages/${encodeURIComponent(String(messageId))}`, {
+    method: "DELETE",
+    signal,
+  });
+}
+
+/** DELETE …/messages/broadcast/{broadcast_id} — borra el aviso general para todos. */
+export function deleteBroadcastMessage(
+  broadcastId: number | string,
+  signal?: AbortSignal,
+): Promise<void> {
+  return panelFetch(`/messages/broadcast/${encodeURIComponent(String(broadcastId))}`, {
+    method: "DELETE",
+    signal,
+  });
+}
+
+export { messageDeleteErrorMessage, messageDeleteKind } from "./messageDelete";
+
 /**
  * POST …/messages/stream-token (auth + X-Branch-ID).
  * Respuesta: { stream_token, expires_in: 120, stream_path }.

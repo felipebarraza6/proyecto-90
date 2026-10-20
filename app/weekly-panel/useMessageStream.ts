@@ -6,8 +6,11 @@ import {
   SSE_EVENT_CONNECTED,
   SSE_EVENT_HEARTBEAT,
   SSE_EVENT_MESSAGE,
+  SSE_EVENT_MESSAGE_DELETED,
   SSE_EVENT_TIMEOUT,
+  parseStreamMessageDeletedEvent,
   parseStreamMessageEvent,
+  type MessageDeletedPayload,
 } from "./messageStream";
 import type { PanelMessage } from "./types";
 
@@ -17,7 +20,7 @@ const GIVE_UP_AFTER = 4;
 
 /**
  * EventSource con stream_token corto (yggdra_infra #105).
- * Eventos: connected | message | heartbeat | timeout.
+ * Eventos: connected | message | message_deleted | heartbeat | timeout.
  * `onopen` marca live de inmediato (no esperar al primer heartbeat ~15 s).
  * Tras timeout/error pide un token nuevo y reconecta.
  */
@@ -26,15 +29,21 @@ export function useMessageStream(opts: {
   /** Filtra eventos `message` al hilo del alumno abierto (staff) o al propio (omitir). */
   clientId?: number | null;
   onMessages: (incoming: PanelMessage[]) => void;
+  onMessagesDeleted?: (payload: MessageDeletedPayload) => void;
 }): { live: boolean } {
   const enabled = opts.enabled !== false;
   const clientId = opts.clientId ?? null;
   const onMessagesRef = useRef(opts.onMessages);
+  const onMessagesDeletedRef = useRef(opts.onMessagesDeleted);
   const [live, setLive] = useState(false);
 
   useEffect(() => {
     onMessagesRef.current = opts.onMessages;
   }, [opts.onMessages]);
+
+  useEffect(() => {
+    onMessagesDeletedRef.current = opts.onMessagesDeleted;
+  }, [opts.onMessagesDeleted]);
 
   useEffect(() => {
     if (!enabled) {
@@ -59,6 +68,12 @@ export function useMessageStream(opts: {
 
     const handlePayload = (raw: string) => {
       if (cancelled) return;
+      const deleted = parseStreamMessageDeletedEvent(raw, clientId);
+      if (deleted) {
+        markLive();
+        onMessagesDeletedRef.current?.(deleted);
+        return;
+      }
       const msg = parseStreamMessageEvent(raw, clientId);
       if (!msg) return;
       markLive();
@@ -68,6 +83,16 @@ export function useMessageStream(opts: {
     const onConnected = () => markLive();
     const onNamedMessage = (event: Event) => {
       handlePayload(String((event as MessageEvent).data || ""));
+    };
+    const onNamedDeleted = (event: Event) => {
+      if (cancelled) return;
+      const deleted = parseStreamMessageDeletedEvent(
+        String((event as MessageEvent).data || ""),
+        clientId,
+      );
+      if (!deleted) return;
+      markLive();
+      onMessagesDeletedRef.current?.(deleted);
     };
     const onDefaultMessage = (event: MessageEvent) => {
       handlePayload(String(event.data || ""));
@@ -103,6 +128,7 @@ export function useMessageStream(opts: {
       if (!source) return;
       source.removeEventListener(SSE_EVENT_CONNECTED, onConnected);
       source.removeEventListener(SSE_EVENT_MESSAGE, onNamedMessage);
+      source.removeEventListener(SSE_EVENT_MESSAGE_DELETED, onNamedDeleted);
       source.removeEventListener(SSE_EVENT_HEARTBEAT, onHeartbeat);
       source.removeEventListener(SSE_EVENT_TIMEOUT, onTimeout);
       source.onmessage = null;
@@ -133,6 +159,7 @@ export function useMessageStream(opts: {
       source.onopen = markLive;
       source.addEventListener(SSE_EVENT_CONNECTED, onConnected);
       source.addEventListener(SSE_EVENT_MESSAGE, onNamedMessage);
+      source.addEventListener(SSE_EVENT_MESSAGE_DELETED, onNamedDeleted);
       source.addEventListener(SSE_EVENT_HEARTBEAT, onHeartbeat);
       source.addEventListener(SSE_EVENT_TIMEOUT, onTimeout);
       // Respaldo si el servidor omite `event:` (tipo default = message).

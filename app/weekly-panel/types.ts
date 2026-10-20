@@ -290,6 +290,8 @@ export type PanelMessage = {
   reply_to_all?: boolean;
   is_broadcast?: boolean;
   broadcast?: boolean;
+  /** Id del aviso general; null/ausente si es mensaje 1:1. */
+  broadcast_id?: number | string | null;
   client_id?: number;
   user_id?: number | string;
   direction?: string;
