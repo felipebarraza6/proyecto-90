@@ -142,19 +142,32 @@ describe("messageStream helpers (yggdra_infra #105)", () => {
     );
   });
 
-  it("parseStreamMessageDeletedEvent lee ids y broadcast_id", () => {
+  it("parseStreamMessageDeletedEvent lee el shape #148 (client_ids, notice_ids)", () => {
     const raw = JSON.stringify({
       type: "message_deleted",
-      client_id: 42,
+      branch_id: 1,
+      client_ids: [42, 43],
       message_ids: [10, 11],
+      notice_ids: [90],
       broadcast_id: "bc-1",
     });
     const payload = parseStreamMessageDeletedEvent(raw);
     assert.deepEqual(payload?.messageIds, [10, 11]);
+    assert.deepEqual(payload?.noticeIds, [90]);
     assert.equal(payload?.broadcastId, "bc-1");
-    assert.equal(payload?.clientId, 42);
+    assert.deepEqual(payload?.clientIds, [42, 43]);
     assert.equal(parseStreamMessageDeletedEvent(raw, 99), null);
     assert.equal(parseStreamMessageDeletedEvent(raw, 42)?.broadcastId, "bc-1");
+  });
+
+  it("parseStreamMessageDeletedEvent sin client_ids aplica en cualquier hilo (broadcast)", () => {
+    const raw = JSON.stringify({
+      type: "message_deleted",
+      message_ids: [5],
+      notice_ids: [],
+      broadcast_id: "bc-2",
+    });
+    assert.equal(parseStreamMessageDeletedEvent(raw, 99)?.broadcastId, "bc-2");
   });
 
   it("parseStreamMessageDeletedEvent tolera aliases y un solo id", () => {
@@ -162,6 +175,7 @@ describe("messageStream helpers (yggdra_infra #105)", () => {
       JSON.stringify({ type: "message_deleted", message_id: 7 }),
     );
     assert.deepEqual(single?.messageIds, [7]);
+    assert.deepEqual(single?.noticeIds, []);
     const camel = parseStreamMessageDeletedEvent(
       JSON.stringify({ type: "message_deleted", messageIds: [8], broadcastId: 99 }),
     );
@@ -169,6 +183,18 @@ describe("messageStream helpers (yggdra_infra #105)", () => {
     assert.equal(camel?.broadcastId, 99);
     assert.equal(parseStreamMessageDeletedEvent(JSON.stringify({ type: "message" })), null);
     assert.equal(parseStreamMessageDeletedEvent(""), null);
+  });
+
+  it("removeMessagesFromThread también quita notice_ids", () => {
+    const thread = [
+      { id: 1, body: "a" },
+      { id: 90, body: "aviso" },
+      { id: 2, body: "b" },
+    ];
+    assert.deepEqual(
+      removeMessagesFromThread(thread, { noticeIds: [90] }).map((m) => m.id),
+      [1, 2],
+    );
   });
 
   it("messageDeleteErrorMessage es amable si el backend aún no existe", () => {

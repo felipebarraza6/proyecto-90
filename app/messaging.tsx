@@ -88,7 +88,30 @@ function applyMessageDeleted(
 ): PanelMessage[] {
   return removeMessagesFromThread(current, {
     messageIds: payload.messageIds,
+    noticeIds: payload.noticeIds,
     broadcastId: payload.broadcastId,
+  });
+}
+
+function applyDeleteResponse(
+  current: PanelMessage[],
+  row: PanelMessage,
+  res: {
+    message_id?: number | string;
+    broadcast_id?: number | string | null;
+    message_ids?: Array<number | string>;
+    notice_ids?: Array<number | string>;
+  },
+): PanelMessage[] {
+  const messageIds = [
+    row.id,
+    ...(res.message_ids || []),
+    ...(res.message_id != null ? [res.message_id] : []),
+  ];
+  return removeMessagesFromThread(current, {
+    messageIds,
+    noticeIds: res.notice_ids,
+    broadcastId: res.broadcast_id ?? row.broadcast_id ?? null,
   });
 }
 
@@ -349,15 +372,11 @@ export function StaffParticipantThread({
     setDeletingId(row.id);
     setError("");
     try {
-      if (messageDeleteKind(row) === "broadcast") {
-        await deleteBroadcastMessage(row.broadcast_id as string | number);
-        setThread((cur) =>
-          removeMessagesFromThread(cur, { broadcastId: row.broadcast_id, messageIds: [row.id] }),
-        );
-      } else {
-        await deleteParticipantMessage(clientId, row.id);
-        setThread((cur) => removeMessagesFromThread(cur, { messageIds: [row.id] }));
-      }
+      const res =
+        messageDeleteKind(row) === "broadcast"
+          ? await deleteBroadcastMessage(row.broadcast_id as string | number)
+          : await deleteParticipantMessage(clientId, row.id);
+      setThread((cur) => applyDeleteResponse(cur, row, res || {}));
     } catch (err) {
       setError(messageDeleteErrorMessage(err));
     } finally {
@@ -539,15 +558,11 @@ export function StaffMessagingInbox({
     setDeletingId(row.id);
     setError("");
     try {
-      if (messageDeleteKind(row) === "broadcast") {
-        await deleteBroadcastMessage(row.broadcast_id as string | number);
-        setThread((cur) =>
-          removeMessagesFromThread(cur, { broadcastId: row.broadcast_id, messageIds: [row.id] }),
-        );
-      } else {
-        await deleteParticipantMessage(clientId, row.id);
-        setThread((cur) => removeMessagesFromThread(cur, { messageIds: [row.id] }));
-      }
+      const res =
+        messageDeleteKind(row) === "broadcast"
+          ? await deleteBroadcastMessage(row.broadcast_id as string | number)
+          : await deleteParticipantMessage(clientId, row.id);
+      setThread((cur) => applyDeleteResponse(cur, row, res || {}));
     } catch (err) {
       setError(messageDeleteErrorMessage(err));
     } finally {

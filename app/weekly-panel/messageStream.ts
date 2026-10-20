@@ -15,10 +15,15 @@ export const SSE_EVENT_MESSAGE_DELETED = "message_deleted";
 export const SSE_EVENT_HEARTBEAT = "heartbeat";
 export const SSE_EVENT_TIMEOUT = "timeout";
 
+/**
+ * Payload SSE `message_deleted` (yggdra_infra #148):
+ * { type, branch_id, message_ids, notice_ids, client_ids, broadcast_id }
+ */
 export type MessageDeletedPayload = {
   messageIds: Array<string | number>;
+  noticeIds: Array<string | number>;
   broadcastId: string | number | null;
-  clientId: number | null;
+  clientIds: number[];
 };
 
 export type StreamTokenResponse = {
@@ -51,15 +56,18 @@ export function mergeMessageThread(
   );
 }
 
-/** Quita del hilo mensajes por id y/o por broadcast_id (borrado lógico / SSE). */
+/** Quita del hilo por message_ids / notice_ids y/o broadcast_id (borrado lógico / SSE). */
 export function removeMessagesFromThread(
   current: PanelMessage[],
   opts: {
     messageIds?: Array<string | number> | null;
+    noticeIds?: Array<string | number> | null;
     broadcastId?: string | number | null;
   },
 ): PanelMessage[] {
-  const ids = new Set((opts.messageIds || []).map((id) => String(id)));
+  const ids = new Set(
+    [...(opts.messageIds || []), ...(opts.noticeIds || [])].map((id) => String(id)),
+  );
   const broadcastId =
     opts.broadcastId != null && String(opts.broadcastId) !== ""
       ? String(opts.broadcastId)
@@ -76,6 +84,18 @@ export function removeMessagesFromThread(
     }
     return true;
   });
+}
+
+function collectIdList(raw: unknown): Array<string | number> {
+  const out: Array<string | number> = [];
+  if (Array.isArray(raw)) {
+    for (const id of raw) {
+      if (id != null && String(id) !== "") out.push(id as string | number);
+    }
+  } else if (raw != null && String(raw) !== "") {
+    out.push(raw as string | number);
+  }
+  return out;
 }
 
 /**
@@ -114,9 +134,9 @@ export function parseStreamMessageEvent(
 }
 
 /**
- * Payload del evento SSE `message_deleted`:
- * { type:"message_deleted", message_ids?, broadcast_id?, client_id? }
- * Tolera camelCase y `ids` como alias de message_ids.
+ * Payload del evento SSE `message_deleted` (#148):
+ * { type, branch_id, message_ids, notice_ids, client_ids, broadcast_id }
+ * Tolera camelCase y client_id singular legacy.
  */
 export function parseStreamMessageDeletedEvent(
   raw: string,
@@ -130,22 +150,21 @@ export function parseStreamMessageDeletedEvent(
     const rec = data as Record<string, unknown>;
     if (rec.type != null && String(rec.type) !== "message_deleted") return null;
 
+    const clientIds = collectIdList(rec.client_ids ?? rec.clientIds ?? rec.client_id ?? rec.clientId)
+      .map((id) => Number(id))
+      .filter((id) => Number.isFinite(id));
+
     if (filterClientId != null && Number.isFinite(Number(filterClientId))) {
-      if (rec.client_id != null && Number(rec.client_id) !== Number(filterClientId)) {
+      // Sin client_ids → evento global (p. ej. broadcast); con lista → solo el hilo abierto.
+      if (clientIds.length > 0 && !clientIds.includes(Number(filterClientId))) {
         return null;
       }
     }
 
-    const rawIds =
-      rec.message_ids ?? rec.messageIds ?? rec.ids ?? rec.message_id ?? rec.messageId;
-    const messageIds: Array<string | number> = [];
-    if (Array.isArray(rawIds)) {
-      for (const id of rawIds) {
-        if (id != null && String(id) !== "") messageIds.push(id as string | number);
-      }
-    } else if (rawIds != null && String(rawIds) !== "") {
-      messageIds.push(rawIds as string | number);
-    }
+    const messageIds = collectIdList(
+      rec.message_ids ?? rec.messageIds ?? rec.ids ?? rec.message_id ?? rec.messageId,
+    );
+    const noticeIds = collectIdList(rec.notice_ids ?? rec.noticeIds);
 
     const rawBroadcast = rec.broadcast_id ?? rec.broadcastId;
     const broadcastId =
@@ -153,14 +172,9 @@ export function parseStreamMessageDeletedEvent(
         ? (rawBroadcast as string | number)
         : null;
 
-    if (!messageIds.length && broadcastId == null) return null;
+    if (!messageIds.length && !noticeIds.length && broadcastId == null) return null;
 
-    const clientId =
-      rec.client_id != null && Number.isFinite(Number(rec.client_id))
-        ? Number(rec.client_id)
-        : null;
-
-    return { messageIds, broadcastId, clientId };
+    return { messageIds, noticeIds, broadcastId, clientIds };
   } catch {
     return null;
   }

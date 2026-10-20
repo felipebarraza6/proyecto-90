@@ -330,12 +330,23 @@ export function postBroadcastMessage(
   });
 }
 
+/** Respuesta DELETE mensaje / broadcast (yggdra_infra #148). */
+export type MessageDeleteResponse = {
+  deleted?: boolean;
+  message_id?: number | string;
+  broadcast_id?: number | string | null;
+  message_ids?: Array<number | string>;
+  notice_ids?: Array<number | string>;
+  notices_deleted?: number;
+  messages_deleted?: number;
+};
+
 /** DELETE …/participants/{id}/messages/{msg_id} — borrado lógico de un mensaje 1:1. */
 export function deleteParticipantMessage(
   clientId: number,
   messageId: number | string,
   signal?: AbortSignal,
-): Promise<void> {
+): Promise<MessageDeleteResponse> {
   return panelFetch(`/participants/${clientId}/messages/${encodeURIComponent(String(messageId))}`, {
     method: "DELETE",
     signal,
@@ -346,7 +357,7 @@ export function deleteParticipantMessage(
 export function deleteBroadcastMessage(
   broadcastId: number | string,
   signal?: AbortSignal,
-): Promise<void> {
+): Promise<MessageDeleteResponse> {
   return panelFetch(`/messages/broadcast/${encodeURIComponent(String(broadcastId))}`, {
     method: "DELETE",
     signal,
