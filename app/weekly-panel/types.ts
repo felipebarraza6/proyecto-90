@@ -164,6 +164,11 @@ export type PanelRow = {
   email: string;
   days: DayChip[];
   weekly: { pct: number | null; color: SemaforoColor | string };
+  /**
+   * Consolidado acumulado (promedio de semanas completas, tope 100%).
+   * Ausente/null en APIs antiguas o sin semanas cerradas → el UI muestra "—".
+   */
+  panel_total_pct?: number | null;
   status: StudentStatus[] | string[];
 };
 

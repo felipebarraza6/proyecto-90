@@ -3,6 +3,8 @@ import { Login } from "./pages/Login";
 import { ResetPassword } from "./pages/ResetPassword";
 import { Landing } from "../app/landing";
 import { CheckoutReturn } from "../app/enroll";
+import { PayInstallmentPage } from "../app/pay-installment-page";
+import { installmentIdFromPath } from "../app/pay-installment";
 import { FunctionalApp } from "../app/functional-app";
 import { apiUrl } from "./api";
 
@@ -45,6 +47,7 @@ export function App() {
   const [initialData, setInitialData] = useState<unknown>(null);
   const [page, setPage] = useState<"landing" | "login">("landing");
   const [resetToken, setResetToken] = useState<string | null>(() => resetTokenFromPath(window.location.pathname));
+  const [installmentId, setInstallmentId] = useState<string | null>(() => installmentIdFromPath(window.location.pathname));
   const [loginNotice, setLoginNotice] = useState("");
 
   useEffect(() => {
@@ -109,6 +112,19 @@ export function App() {
 
   if (resetToken !== null) {
     return <ResetPassword token={resetToken} onDone={leaveReset} onCancel={() => leaveReset("")} />;
+  }
+
+  if (installmentId !== null) {
+    return (
+      <PayInstallmentPage
+        installmentId={installmentId}
+        onLogin={() => {
+          window.history.replaceState({}, "", "/");
+          setInstallmentId(null);
+          setPage("login");
+        }}
+      />
+    );
   }
 
   if (loading) {

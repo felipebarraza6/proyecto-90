@@ -364,6 +364,7 @@
 .wp-card header>span:nth-child(2){flex:1;min-width:0}
 .wp-card header b,.wp-card header small{display:block}
 .wp-card header small{color:var(--muted);font-size:8px;margin-top:2px}
+.wp-card-pcts{display:grid;justify-items:end;gap:2px;flex:0 0 auto}
 .wp-mini-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
 .wp-mini-days .wp-chip{min-width:0;width:100%;padding:5px 4px}
 @media(max-width:380px){.wp-mini-days{gap:2px}.wp-mini-days .wp-chip{padding:4px 2px}.wp-mini-days .wp-chip b{font-size:10px}.wp-mini-days .wp-chip small{display:none}}
@@ -574,3 +575,23 @@
 
 .habit-select{width:100%;min-width:64px;padding:7px 2px;-webkit-appearance:none;appearance:none;border:1px solid #303b34;border-radius:9px;background:#111713;color:var(--text);font-size:12px;font-weight:700;text-align:center}.habit-select.met{border-color:#347b4a;background:#173c24;color:var(--green)}.habit-select.missed{border-color:#874141;background:#411d1d;color:#ff9696}.habit-select.rest{border-color:#5c5c5c;background:#1a1f1c;color:#c5d0c9}.habit-select:disabled{opacity:.35}
 .messaging-compose label{display:grid;gap:6px;font-size:12px;font-weight:700;color:var(--muted)}.messaging-compose textarea{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #344139;border-radius:8px;background:#0b100d;color:var(--text);font:inherit;font-size:14px;font-weight:400;line-height:1.45}.messaging-compose textarea:focus{outline:none;border-color:var(--green)}.messaging-compose label.messaging-broadcast-check{font-weight:400}
+
+/* Biblioteca por categorías + pago de cuota */
+.content-category-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:8px}
+.content-category-card{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:18px 16px;text-align:left;color:var(--text);cursor:pointer;display:flex;flex-direction:column;gap:6px}
+.content-category-card:hover{border-color:#2c6940;background:#121a15}
+.content-category-card .eyebrow{font-size:9px;color:var(--green);letter-spacing:1.2px;font-weight:800}
+.content-category-card strong{font-size:28px;line-height:1;margin-top:4px}
+.content-category-card small{font-size:10px;color:var(--muted)}
+.content-category-toolbar{display:flex;align-items:center;gap:14px;margin:4px 0 16px}
+.content-category-toolbar h3{margin:0;font-size:18px}
+.content-category-empty{color:var(--muted);font-size:12px;padding:18px 4px}
+.pay-installment-card{max-width:640px;margin:0 auto}
+.pay-installment-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:28px auto 8px;max-width:520px;text-align:left}
+.pay-installment-summary div{border:1px solid #26352d;border-radius:12px;background:#0c110e;padding:14px 16px}
+.pay-installment-summary dt{font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:#8f9993;margin:0}
+.pay-installment-summary dd{margin:6px 0 0;font-size:1.15rem;color:#f6f8f6;font-weight:700}
+@media(max-width:760px){
+  .content-category-grid{grid-template-columns:repeat(2,1fr)}
+  .pay-installment-summary{grid-template-columns:1fr}
+}

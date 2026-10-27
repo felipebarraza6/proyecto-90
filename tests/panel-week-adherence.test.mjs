@@ -6,7 +6,9 @@ import {
   loadPanelWeekAdherence,
   orderedWeekStarts,
   panelConfigCanEdit,
+  panelTotalPctOf,
   personClientId,
+  semaforoFromPct,
   weekHasPctData,
 } from "../app/panel-week-adherence.ts";
 import { formatPct } from "../app/weekly-panel/format.ts";
@@ -128,5 +130,40 @@ describe("panelConfigCanEdit (sin probe PATCH)", () => {
   it("GET can_edit manda sobre el rol", () => {
     assert.equal(panelConfigCanEdit("professional", { can_edit: true }), true);
     assert.equal(panelConfigCanEdit("admin", { can_edit: false }), false);
+  });
+});
+
+describe("panel_total_pct (columna TOTAL del panel semanal)", () => {
+  const thresholds = { green_gt: 80, yellow_gte: 70 };
+
+  it("panelTotalPctOf lee el float o null si falta / no es finito", () => {
+    assert.equal(panelTotalPctOf({ panel_total_pct: 85.5 }), 85.5);
+    assert.equal(panelTotalPctOf({ panel_total_pct: null }), null);
+    assert.equal(panelTotalPctOf({}), null);
+    assert.equal(panelTotalPctOf({ panel_total_pct: Number.NaN }), null);
+  });
+
+  it("semaforoFromPct usa los umbrales del panel; null → neutral", () => {
+    assert.equal(semaforoFromPct(null, thresholds), "neutral");
+    assert.equal(semaforoFromPct(undefined, thresholds), "neutral");
+    assert.equal(semaforoFromPct(81, thresholds), "green");
+    assert.equal(semaforoFromPct(80, thresholds), "yellow");
+    assert.equal(semaforoFromPct(70, thresholds), "yellow");
+    assert.equal(semaforoFromPct(69.9, thresholds), "red");
+  });
+
+  it("TOTAL se formatea como SEMANA (formatPct + color); null → guion", () => {
+    assert.equal(formatPct(null, 1), "—");
+    const pct = panelTotalPctOf({ panel_total_pct: 71.4 });
+    const color = semaforoFromPct(pct, thresholds);
+    assert.equal(color, "yellow");
+    assert.equal(
+      formatPct(pct, 1, {
+        color,
+        greenGt: thresholds.green_gt,
+        yellowGte: thresholds.yellow_gte,
+      }),
+      "71,4 %",
+    );
   });
 });

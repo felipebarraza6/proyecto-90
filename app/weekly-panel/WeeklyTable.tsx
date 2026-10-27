@@ -1,3 +1,4 @@
+import { panelTotalPctOf, semaforoFromPct } from "../panel-week-adherence";
 import { formatPct, WEEKDAYS_SHORT } from "./format";
 import { usePanelStats } from "./PanelStatsContext";
 import { PercentChip, StatusBadges } from "./ui";
@@ -34,69 +35,95 @@ export function WeeklyTable({
               <th key={d}>{d}</th>
             ))}
             <th>Semana</th>
+            <th>Total</th>
             <th>Estado</th>
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => (
-            <tr
-              key={row.client_id}
-              role="button"
-              tabIndex={0}
-              onClick={() => onOpen(row.client_id)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  onOpen(row.client_id);
-                }
-              }}
-            >
-              <td>
-                <div className="person">
-                  <span className="avatar">{initials(row.name)}</span>
-                  <div>
-                    <button
-                      type="button"
-                      className="wp-name-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onOpen(row.client_id);
-                      }}
-                    >
-                      {row.name || row.email}
-                    </button>
-                    {showEmail ? <small>{row.email}</small> : null}
-                  </div>
-                </div>
-              </td>
-              {row.days.map((day) => (
-                <td key={day.date}>
-                  <PercentChip
-                    pct={day.pct}
-                    color={day.color}
-                    label={day.label}
-                    date={day.date}
-                    onOpen={() => onOpen(row.client_id)}
-                  />
-                </td>
-              ))}
-              <td>
-                <button
-                  type="button"
-                  className={`wp-week-pct ${row.weekly.color}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
+          {rows.map((row) => {
+            const totalPct = panelTotalPctOf(row);
+            const totalColor = semaforoFromPct(totalPct, thresholds);
+            return (
+              <tr
+                key={row.client_id}
+                role="button"
+                tabIndex={0}
+                onClick={() => onOpen(row.client_id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
                     onOpen(row.client_id);
-                  }}
-                >
-                  {formatPct(row.weekly.pct, percent_decimals, { color: String(row.weekly.color), greenGt: thresholds.green_gt, yellowGte: thresholds.yellow_gte })}
-                </button>
-              </td>
-              <td>
-                <StatusBadges status={row.status} />
-              </td>
-            </tr>
-          ))}
+                  }
+                }}
+              >
+                <td>
+                  <div className="person">
+                    <span className="avatar">{initials(row.name)}</span>
+                    <div>
+                      <button
+                        type="button"
+                        className="wp-name-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onOpen(row.client_id);
+                        }}
+                      >
+                        {row.name || row.email}
+                      </button>
+                      {showEmail ? <small>{row.email}</small> : null}
+                    </div>
+                  </div>
+                </td>
+                {row.days.map((day) => (
+                  <td key={day.date}>
+                    <PercentChip
+                      pct={day.pct}
+                      color={day.color}
+                      label={day.label}
+                      date={day.date}
+                      onOpen={() => onOpen(row.client_id)}
+                    />
+                  </td>
+                ))}
+                <td>
+                  <button
+                    type="button"
+                    className={`wp-week-pct ${row.weekly.color}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpen(row.client_id);
+                    }}
+                  >
+                    {formatPct(row.weekly.pct, percent_decimals, {
+                      color: String(row.weekly.color),
+                      greenGt: thresholds.green_gt,
+                      yellowGte: thresholds.yellow_gte,
+                    })}
+                  </button>
+                </td>
+                <td>
+                  <button
+                    type="button"
+                    className={`wp-week-pct ${totalColor}`}
+                    title="Consolidado acumulado (semanas completas)"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpen(row.client_id);
+                    }}
+                  >
+                    {formatPct(totalPct, percent_decimals, {
+                      color: totalColor,
+                      greenGt: thresholds.green_gt,
+                      yellowGte: thresholds.yellow_gte,
+                    })}
+                  </button>
+                </td>
+                <td>
+                  <StatusBadges status={row.status} />
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

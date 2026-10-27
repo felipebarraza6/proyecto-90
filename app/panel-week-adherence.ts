@@ -86,6 +86,33 @@ export function panelConfigCanEdit(
 }
 
 /**
+ * Consolidado acumulado de GET /api/p90/panel/week (`panel_total_pct`).
+ * null si el campo falta, es null o no es finito.
+ */
+export function panelTotalPctOf(row: {
+  panel_total_pct?: number | null;
+}): number | null {
+  const pct = row.panel_total_pct;
+  if (pct == null || !Number.isFinite(Number(pct))) return null;
+  return Number(pct);
+}
+
+/**
+ * Semáforo del panel a partir de un % y umbrales (verde > green_gt,
+ * amarillo ≥ yellow_gte). Sin dato → neutral.
+ */
+export function semaforoFromPct(
+  pct: number | null | undefined,
+  thresholds: { green_gt: number; yellow_gte: number },
+): "green" | "yellow" | "red" | "neutral" {
+  if (pct == null || !Number.isFinite(Number(pct))) return "neutral";
+  const n = Number(pct);
+  if (n > thresholds.green_gt) return "green";
+  if (n >= thresholds.yellow_gte) return "yellow";
+  return "red";
+}
+
+/**
  * Carga la semana actual del panel; si no trae %, prueba semanas anteriores.
  * null = el panel falló (usar histórico). Fetchers inyectados (tests sin API).
  */
