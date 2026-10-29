@@ -12,7 +12,8 @@
     "build": "node scripts/check-panel-gate.mjs && vite build",
     "preview": "vite preview",
     "lint": "eslint . --ignore-pattern dist",
-    "test": "node --experimental-strip-types --test tests/**/*.test.mjs"
+    "test": "node --experimental-strip-types --test tests/**/*.test.mjs",
+    "sync-contract": "node scripts/sync-contract.mjs"
   },
   "dependencies": {
     "react": "19.2.6",
@@ -29,6 +30,7 @@
     "eslint-plugin-react": "7.37.5",
     "eslint-plugin-react-hooks": "7.1.1",
     "globals": "16.4.0",
+    "openapi-typescript": "^7.13.0",
     "tailwindcss": "4.2.1",
     "typescript": "5.9.3",
     "typescript-eslint": "8.59.3",
