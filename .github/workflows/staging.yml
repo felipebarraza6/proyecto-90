@@ -26,7 +26,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      VITE_API_BASE: https://api.yggdra.cl
+      VITE_API_BASE: https://api-staging.yggdra.cl
       VITE_BASE_PATH: /${{ github.event.repository.name }}/
     steps:
       - uses: actions/checkout@v4
