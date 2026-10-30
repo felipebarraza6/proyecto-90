@@ -2,8 +2,8 @@
 #
 # Disparadores:
 #   - pull_request → verify (lint, check:panel, test, build; sin subir)
-#   - push a main → deploy
-#   - workflow_dispatch mode=deploy → deploy (solo si la ref es main)
+#   - push a production → deploy FTPS (main no publica)
+#   - workflow_dispatch mode=deploy → deploy (solo si la ref es production)
 #   - workflow_dispatch mode=diagnose → solo lista el remoto (NO sube; puede
 #     correrse desde cualquier rama para acertar FTP_REMOTE_DIR)
 #
@@ -31,11 +31,11 @@ name: Deploy Front (90dias)
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [production]
   workflow_dispatch:
     inputs:
       mode:
-        description: "diagnose = solo listar remoto (sin subir); deploy = publicar (solo en main)"
+        description: "diagnose = solo listar remoto (sin subir); deploy = publicar (solo en production)"
         type: choice
         options:
           - diagnose
@@ -209,11 +209,11 @@ jobs:
           echo "lftp diagnose finished (ver log arriba)."
 
   # -------------------------------------------------------------------------
-  # Deploy: solo desde main
+  # Deploy: solo desde production
   # -------------------------------------------------------------------------
   deploy:
     if: >
-      github.ref == 'refs/heads/main' && (
+      github.ref == 'refs/heads/production' && (
         github.event_name == 'push' ||
         (github.event_name == 'workflow_dispatch' && inputs.mode == 'deploy')
       )

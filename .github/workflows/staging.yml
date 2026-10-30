@@ -1,0 +1,63 @@
+# Staging de Proyecto 90 en GitHub Pages.
+#
+# Push a `dev` publica https://<owner>.github.io/<repo>/
+# El FTPS de https://90dias.habitofirme.app corre solo en `production`
+# (deploy-front.yml). `main` no despliega.
+#
+# Primera vez: Settings → Pages → Source = GitHub Actions.
+
+name: Staging (GitHub Pages)
+
+on:
+  push:
+    branches: [dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: staging-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      VITE_API_BASE: https://api.yggdra.cl
+      VITE_BASE_PATH: /${{ github.event.repository.name }}/
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Build estático (staging)
+        run: npm run build
+
+      - name: Preparar artefactos de Pages
+        run: |
+          set -e
+          cp dist/client/index.html dist/client/404.html
+          touch dist/client/.nojekyll
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/client
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
