@@ -1,6 +1,6 @@
 # Staging de Proyecto 90 en GitHub Pages.
 #
-# Push a `dev` publica https://<owner>.github.io/<repo>/
+# Push a `staging` publica https://<owner>.github.io/<repo>/
 # El FTPS de https://90dias.habitofirme.app corre solo en `production`
 # (deploy-front.yml). `main` no despliega.
 #
@@ -10,7 +10,7 @@ name: Staging (GitHub Pages)
 
 on:
   push:
-    branches: [dev]
+    branches: [staging]
   workflow_dispatch:
 
 permissions:
@@ -26,7 +26,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      VITE_API_BASE: https://api.yggdra.cl
+      VITE_API_BASE: https://api-staging.yggdra.cl
       VITE_BASE_PATH: /${{ github.event.repository.name }}/
     steps:
       - uses: actions/checkout@v4
