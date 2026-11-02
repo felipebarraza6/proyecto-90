@@ -23,6 +23,7 @@ export function ProgressMilestones({
   editable = false,
   act,
   panelConfig,
+  variant = "default",
 }: {
   person: Row;
   checkpoints?: Row[];
@@ -30,6 +31,7 @@ export function ProgressMilestones({
   editable?: boolean;
   act?: (payload: Row) => Promise<unknown>;
   panelConfig?: PanelConfig | null;
+  variant?: "default" | "weight-only";
 }) {
   const milestoneDays = panelConfig?.milestone_days?.length
     ? panelConfig.milestone_days
@@ -60,12 +62,12 @@ export function ProgressMilestones({
       <header>
         <div>
           <span className="eyebrow">HITOS DEL PROCESO</span>
-          <h2>Peso y adherencia</h2>
+          <h2>{variant === "weight-only" ? "Mi peso" : "Peso y adherencia"}</h2>
           <p>
             Una fotografía comparable de tu avance al inicio y en los días {daysLabel}.
           </p>
         </div>
-        <span className="milestone-formula">{formula}</span>
+        {variant === "default" && <span className="milestone-formula">{formula}</span>}
       </header>
       <div className="milestone-grid">
         {days.map((day) => {
@@ -107,12 +109,14 @@ export function ProgressMilestones({
                     </b>
                   )}
                 </span>
-                <span>
-                  <small>Adherencia</small>
-                  <b>
-                    {unlocked && adherence != null ? `${Math.round(Number(adherence))}%` : "—"}
-                  </b>
-                </span>
+                {variant === "default" && (
+                  <span>
+                    <small>Adherencia</small>
+                    <b>
+                      {unlocked && adherence != null ? `${Math.round(Number(adherence))}%` : "—"}
+                    </b>
+                  </span>
+                )}
               </div>
               {editable && day > 0 && unlocked && (
                 <button
