@@ -12,6 +12,7 @@ import { GuideEditor } from "./guide-editor";
 import { NutritionDailyReview, NutritionDailyTracker } from "./nutrition-daily";
 import { ProgressMilestones } from "./progress-milestones";
 import { missingWeightNotice, stageRows } from "./milestone-status";
+import { panelConfigBlocksStaff, reviewerMutationBlocked } from "./staff-guards";
 import { ProfessionalTracking } from "./professional-tracking";
 import { DailyClosure } from "./daily-closure";
 import { NoticesPanel, StaffNotesPanel } from "./notes-notices";
@@ -73,6 +74,8 @@ export function FunctionalApp({ initialViewer,initialData,onLogout }: { initialV
   const [credentials,setCredentials]=useState<Credentials>(null);
   const [previewTarget,setPreviewTarget]=useState("admin");
   const [panelConfig,setPanelConfig]=useState<PanelConfig|null>(null);
+  const [panelConfigError,setPanelConfigError]=useState(false);
+  const [panelConfigRetry,setPanelConfigRetry]=useState(0);
   const firstLoad=useRef(true);
   const activeRole=data?.viewer.role||initialViewer.role;
   const panelEnabled=staffPanelActive(panelConfig);
@@ -83,14 +86,15 @@ export function FunctionalApp({ initialViewer,initialData,onLogout }: { initialV
   useEffect(()=>{if(firstLoad.current){firstLoad.current=false;if(initialData)return}load()},[previewTarget]);
   useEffect(()=>{
     const ac=new AbortController();
-    fetchPanelConfig(ac.signal).then(setPanelConfig).catch((err:unknown)=>{
+    setPanelConfigError(false);
+    fetchPanelConfig(ac.signal).then(c=>{setPanelConfig(c);setPanelConfigError(false)}).catch((err:unknown)=>{
       if((err as Error).name==="AbortError") return;
       // Alumno suele recibir 403 en /panel/config: usamos defaults del PR #80.
       if(activeRole==="participant") setPanelConfig(normalizePanelConfig(null));
-      else setPanelConfig(null);
+      else {setPanelConfig(null);setPanelConfigError(true)}
     });
     return ()=>ac.abort();
-  },[activeRole,previewTarget]);
+  },[activeRole,previewTarget,panelConfigRetry]);
   useEffect(()=>{
     setScreen(s=>{
       if(panelEnabled) return normalizeScreen(s);
@@ -98,9 +102,9 @@ export function FunctionalApp({ initialViewer,initialData,onLogout }: { initialV
       return s;
     });
   },[panelEnabled,activeRole]);
-  async function act(payload:Row){if(previewTarget.startsWith("participant:")){setError("La vista de alumno es de solo lectura.");throw new Error("solo lectura")}setError("");const res=await fetch(apiUrl("/api/app"),{method:"POST",headers:{"content-type":"application/json",...authHeaders()},body:JSON.stringify(payload)});const json=await res.json();if(!res.ok){setError(json.error||"No fue posible guardar");throw new Error(json.error)}const tempPassword=String(json.tempPassword||"");if(tempPassword)setCredentials({email:payload.email?String(payload.email):"",password:tempPassword,emailed:json.credentialsEmailed!==false});setToast(json.message||"Guardado");setTimeout(()=>setToast(""),2600);await load();return json}
+  async function act(payload:Row){if(reviewerMutationBlocked(String(data?.viewer.role||initialViewer.role))){setError("Modo Revisor: solo lectura.");throw new Error("solo lectura")}if(previewTarget.startsWith("participant:")){setError("La vista de alumno es de solo lectura.");throw new Error("solo lectura")}setError("");const res=await fetch(apiUrl("/api/app"),{method:"POST",headers:{"content-type":"application/json",...authHeaders()},body:JSON.stringify(payload)});const json=await res.json();if(!res.ok){setError(json.error||"No fue posible guardar");throw new Error(json.error)}const tempPassword=String(json.tempPassword||"");if(tempPassword)setCredentials({email:payload.email?String(payload.email):"",password:tempPassword,emailed:json.credentialsEmailed!==false});setToast(json.message||"Guardado");setTimeout(()=>setToast(""),2600);await load();return json}
   function changePreview(value:string){setModal(null);setSelected([]);setError("");setScreen(value.startsWith("participant:")?"Inicio":"Resumen");setPreviewTarget(value)}
-  function open(next:Modal,row:Row={}){setContext(row);setError("");setModal(next)}
+  function open(next:Modal,row:Row={}){if(reviewerMutationBlocked(String(data?.viewer.role||initialViewer.role))&&next!=="intake-view"&&next!=="professional-student"){setError("Modo Revisor: solo lectura.");return}setContext(row);setError("");setModal(next)}
   function nextNutrition(currentId:string){const next=(data?.participants||[]).find(x=>!x.nutrition_id&&String(x.id)!==currentId);if(next)setContext(next);else setModal(null)}
   // Fichas abiertas se refrescan con los datos recargados (p. ej. tras corregir peso/estatura).
   const liveContext=(modal==="intake-view"||modal==="participant-body")&&context.id?{...context,...((data?.participants||[]).find(x=>String(x.id)===String(context.id))||{})}:context;
@@ -109,7 +113,9 @@ export function FunctionalApp({ initialViewer,initialData,onLogout }: { initialV
   return <div className={`app-shell ${data.viewer.role==="participant"?"participant-shell":"admin-shell"} role-${data.professionalSpecialty||data.viewer.role} ${data.viewer.role==="reviewer"?"reviewer-shell":""} ${data.preview?"admin-preview-shell":""} ${data.preview?.role==="participant"?"admin-preview-participant":""}`}>
     <aside className="sidebar"><button className="brand" onClick={()=>goScreen(nav[0])}><img className="brand-wordmark" src="/proyecto90-logo.jpg" alt="Proyecto 90" width="384" height="384"/><small>90 DÍAS · GENERACIÓN 01</small></button><nav>{nav.map(x=><button key={x} className={screen===x?"active":""} onClick={()=>goScreen(x)}><span className="nav-icon">{iconMap[x]}</span>{x}</button>)}</nav><div className="sidebar-spacer"/><div className="side-quote"><span>“</span><p>No buscamos hacerlo perfecto.<br/>Buscamos hacerlo parte de tu vida.</p></div><div className="profile-mini"><span className="avatar">{initials(data.viewer.name)}</span><span><strong>{data.viewer.name}</strong><small>{roleLabel(data.viewer.role)}</small></span></div></aside>
     <main><header className="topbar"><div className="mobile-brand"><img className="brand-wordmark" src="/proyecto90-logo.jpg" alt="Proyecto 90" width="384" height="384"/></div><div className="top-actions">{initialViewer.role==="admin"&&<label className="view-as-control"><span>Ver como</span><select value={previewTarget} onChange={e=>changePreview(e.target.value)}><option value="admin">Administrador</option><option value="coach">Coach</option><option value="nutrition">Nutricionista</option>{(previewTarget==="admin"?data.participants||[]:[]).length>0&&<optgroup label="Alumnos">{(data.participants||[]).map(p=><option key={String(p.id)} value={`participant:${String(p.id)}`}>{`${p.first_name||""} ${p.last_name||""}`.trim()||String(p.email)}</option>)}</optgroup>}{previewTarget.startsWith("participant:")&&<option value={previewTarget}>{data.preview?.label||"Alumno"}</option>}</select></label>}<span className="secure-pill">● Datos guardados</span><span className="user-email">{initialViewer.email}</span><button type="button" className="logout" onClick={()=>onLogout?onLogout():window.location.reload()}>Salir</button></div></header>{data.viewer.role==="reviewer"&&<div className="reviewer-banner">Modo Revisor · Navegación de solo lectura. No puedes guardar, aprobar ni eliminar información.</div>}{data.preview&&<div className="preview-banner"><div><b>Vista de prueba: {data.preview.label}</b><span>{data.preview.role==="participant"?"Estás revisando el perfil real de este alumno.":"Como administrador puedes probar, editar y aprobar desde esta vista profesional."}</span></div><button onClick={()=>changePreview("admin")}>Volver a Administrador</button></div>}<div className="page-wrap">
-      {data.viewer.role==="participant"
+      {panelConfigBlocksStaff(data.viewer.role, panelConfigError, panelConfig)
+        ? <div className="app-loading"><p>No fue posible cargar la configuración del panel.</p><button className="primary" onClick={()=>setPanelConfigRetry(n=>n+1)}>Reintentar</button></div>
+        : data.viewer.role==="participant"
         ? <ParticipantArea data={data} screen={screen} setScreen={setScreen} act={act} panelConfig={panelConfig}/>
         : data.viewer.role==="professional"
           ? <ProfessionalArea data={data} screen={screen} setScreen={goScreen} open={open} act={act} selected={selected} setSelected={setSelected} panelEnabled={panelEnabled} panelConfig={panelConfig} onPanelConfigChange={setPanelConfig}/>
@@ -136,7 +142,7 @@ function AdminArea({data,screen,setScreen,open,act,selected,setSelected,panelEna
   if(screen==="Profesionales")return <Professionals rows={data.professionals||[]} administrators={data.administrators||[]} viewerId={data.viewer.id} open={open} act={act}/>;
   if(screen==="Programas")return <ProgramManager data={data} open={open} act={act}/>;
   if(screen==="Nutrición")return <NutritionWorkspace people={people} open={open}/>;
-  if(screen==="Mensajes")return <><Title eyebrow="BANDEJA DEL EQUIPO" title="Mensajes" copy="Responde a cada alumno en su hilo. El aviso general es opcional y va aparte."/><StaffMessagingInbox people={people} viewerRole="admin" viewerUserId={data.viewer.id} messagingCoachEnabled canBroadcast/></>;
+  if(screen==="Mensajes")return <><Title eyebrow="BANDEJA DEL EQUIPO" title="Mensajes" copy="Responde a cada alumno en su hilo. El aviso general es opcional y va aparte."/><StaffMessagingInbox people={people} viewerRole={data.viewer.role} viewerUserId={data.viewer.id} messagingCoachEnabled canBroadcast={data.viewer.role==="admin"}/></>;
   if(screen===TOOLS)return <ContentManager rows={data.content||[]} open={open}/>;
   if(screen==="Sesiones")return <SessionWorkspace sessions={data.sessions||[]} meetings={data.meetingRequests||[]} open={open} act={act} viewerId={data.viewer.id} viewerRole={data.viewer.role} viewerName={data.viewer.name}/>;
   if(screen==="Primer ingreso")return <IntakeConfig questions={data.intakeQuestions||[]} act={act}/>;
@@ -249,7 +255,7 @@ function ProfessionalStudentFile({context,data,close,act,panelConfig}:{context:R
     {nutrition&&<section className="professional-file-section professional-intake"><div className="professional-file-heading"><div><span className="eyebrow">ANTECEDENTES DEL FORMULARIO</span><h3>Preguntas y respuestas del alumno</h3><p>Visibilidad: Nutrición + Ambos.</p></div></div><IntakeResponses participant={context} questions={data.intakeQuestions||[]} responses={data.intakeResponses||[]}/></section>}
     {nutrition&&<MacrosTrackingControls person={context} act={act}/>}
     <StaffNotesPanel notes={data.notes||[]} userId={String(context.id)} act={act} canDelete={data.viewer.role==="admin"}/>
-    {Number.isFinite(Number(context.id))&&(nutrition||data.viewer.role==="admin"||Boolean(panelConfig?.messaging_coach_enabled))?<StaffParticipantThread clientId={Number(context.id)} participantName={name} viewerRole={nutrition?"nutrition":data.viewer.role==="admin"?"admin":"coach"} viewerUserId={data.viewer.id} messagingCoachEnabled={Boolean(panelConfig?.messaging_coach_enabled)} canBroadcast={nutrition||data.viewer.role==="admin"} compact/>:null}
+    {Number.isFinite(Number(context.id))&&(nutrition||data.viewer.role==="admin"||Boolean(panelConfig?.messaging_coach_enabled))?<StaffParticipantThread clientId={Number(context.id)} participantName={name} viewerRole={reviewerMutationBlocked(data.viewer.role)?"reviewer":nutrition?"nutrition":data.viewer.role==="admin"?"admin":"coach"} viewerUserId={data.viewer.id} messagingCoachEnabled={Boolean(panelConfig?.messaging_coach_enabled)} canBroadcast={(nutrition||data.viewer.role==="admin")&&!reviewerMutationBlocked(data.viewer.role)} compact/>:null}
     <div className="professional-approval-bar"><div><span className={`approval-dot ${approved?"approved":""}`}>{approved?"✓":"!"}</span><span><b>{approved?"Asignación aprobada":"Revisión profesional pendiente"}</b><small>{approved?"El alumno puede guiarse por esta versión.":"Revisa la ficha completa antes de aprobar."}</small></span></div>{!approved&&nutrition?<label className="effective-from-field">Vigente desde<input type="date" value={effectiveFrom} onChange={e=>setEffectiveFrom(e.target.value||chileTodayIso(panelConfig?.timezone))}/><small>Por defecto hoy. Define desde cuándo aplica esta meta.</small></label>:null}{!approved&&<button className="primary" disabled={!canApprove} onClick={async()=>{try{if(nutrition&&shouldPostPlanMacroTarget({status:"approved",calories:context.calories,protein:context.protein,clientId:context.id})){const day=Number(context.adherence_elapsed_days)||dayOf90(context,panelConfig?.challenge_length_days);const carb=Number(context.carbs),fat=Number(context.fats);await syncApprovedPlanMacroTarget({clientId:Number(context.id),day,calories:Number(context.calories),protein:Number(context.protein),carbs:Number.isFinite(carb)?carb:null,fats:Number.isFinite(fat)?fat:null,effective_from:effectiveFrom||null})}await act({action:nutrition?"nutrition.review":"training.review",userId:context.id,...(nutrition?{effectiveFrom}:{})});close()}catch(error){alert(error instanceof Error&&error.message?error.message:"No fue posible guardar el plan o las metas de macros")}}}>{canApprove?nutrition?"Aprobar plan nutricional":"Aprobar rutina asignada":nutrition?"Primero calcula el plan":"Primero asigna una rutina"}</button>}</div>
   </section></div>
 }
