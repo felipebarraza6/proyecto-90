@@ -56,15 +56,15 @@ En el build de GitHub Actions el workflow fija `VITE_API_BASE` en la API públic
 | Disparo | Qué hace |
 |---------|----------|
 | Pull request | Lint, `check:panel`, tests y build. No sube archivos |
-| Push a `main` | El mismo build y subida FTPS al hosting de 90dias.habitofirme.app |
+| Push a `production` | El mismo build y subida FTPS al hosting de 90dias.habitofirme.app |
 | `workflow_dispatch` con `mode=diagnose` | Lista el remoto. Puede correr desde otra rama. No publica |
-| `workflow_dispatch` con `mode=deploy` | Publica solo si la ref es `main` |
+| `workflow_dispatch` con `mode=deploy` | Publica solo si la ref es `production` |
 
 Orden de subida: primero todo menos `index.html`, después `index.html`. No borra archivos remotos que no estén en el build. El build usa `VITE_API_BASE=https://api.yggdra.cl`.
 
 Nombres de secretos y de la variable opcional, sin valores: `FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD`, `FTP_REMOTE_DIR`. `FTP_REMOTE_DIR` también se acepta como variable de repo.
 
-`docs/CONSUMERS.yaml` registra el dominio `90dias.habitofirme.app`, deploy FTP desde `main`. Hay un fork nombrado en ese inventario: `marcelomoyavallejos-dotcom/proyecto-90`.
+`docs/CONSUMERS.yaml` registra el dominio `90dias.habitofirme.app`, deploy FTP desde `production`. Hay un fork nombrado en ese inventario: `marcelomoyavallejos-dotcom/proyecto-90`.
 
 El `Dockerfile` puede servir la SPA con nginx. No es el camino del sitio público.
 
