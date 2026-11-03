@@ -65,6 +65,10 @@ describe("stageRows", () => {
     assert.equal(formatMilestoneAdherence(person, 30, 45), "80%");
     assert.equal(formatMilestoneAdherence(person, 60, 45), "41% en curso");
     assert.equal(formatMilestoneAdherence(person, 90, 45), "en espera");
+    const current = stageRows(45, { day30: 80, day60: 41, day90: null, total: 70 }, person.adherence_stages)
+      .find((row) => row.label === "30–60");
+    assert.equal(current.value, "41%");
+    assert.equal(current.note, "en curso");
   });
 
   it("sin campos nuevos conserva el porcentaje solo si el día ya llegó", () => {

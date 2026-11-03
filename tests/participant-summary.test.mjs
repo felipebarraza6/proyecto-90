@@ -14,6 +14,18 @@ describe("formatWeightTrail", () => {
     assert.equal(trail.text, "— → — → — → — kg");
     assert.equal(trail.delta, "—");
   });
+
+  it("redondea pesos y la variación a 1 decimal es-CL", () => {
+    const trail = formatWeightTrail({
+      weight: 80.04,
+      weight_day_30: 76.39,
+      weight_day_60: 81,
+    });
+    assert.equal(trail.text, "80 → 76,4 → 81 → — kg");
+    assert.equal(trail.delta, "+1 kg");
+    const loss = formatWeightTrail({ weight: 80, weight_day_30: 80 - 3.650000000000057 });
+    assert.equal(loss.delta, "-3,7 kg");
+  });
 });
 
 describe("formatStageLine", () => {
@@ -79,5 +91,23 @@ describe("participantSummaryCsv", () => {
       '"Ana, Luz Pérez",ana@example.com,31,70,68,,,-2,80,,,72',
     );
     assert.equal(lines[2], "Sin Datos,sin@example.com,,,,,,,,,,");
+  });
+
+  it("exporta pesos y delta con 1 decimal es-CL y cita la coma decimal", () => {
+    const csv = participantSummaryCsv([
+      {
+        first_name: "Leo",
+        last_name: "Rojas",
+        email: "leo@example.com",
+        adherence_elapsed_days: 40,
+        weight: 80,
+        weight_day_30: 76.35,
+        adherence: 90,
+      },
+    ]);
+    assert.equal(
+      csv.split("\n")[1],
+      'Leo Rojas,leo@example.com,40,80,"76,4",,,"-3,7",,,,90',
+    );
   });
 });
