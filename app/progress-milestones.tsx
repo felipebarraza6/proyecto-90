@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { formatMilestoneAdherence } from "./milestone-status";
 import {
   milestoneWindowsHint,
   PANEL_CONFIG_DEFAULTS,
@@ -73,7 +74,7 @@ export function ProgressMilestones({
         {days.map((day) => {
           const unlocked = day === 0 || dayNow >= day;
           const weight = valueFor(person, checkpoints, day, "weight");
-          const adherence = valueFor(person, checkpoints, day, "adherence");
+          const adherenceText = formatMilestoneAdherence(person, day, dayNow);
           return (
             <article key={day} className={unlocked ? "unlocked" : "locked"}>
               <div className="milestone-day">
@@ -113,7 +114,7 @@ export function ProgressMilestones({
                   <span>
                     <small>Adherencia</small>
                     <b>
-                      {unlocked && adherence != null ? `${Math.round(Number(adherence))}%` : "—"}
+                      {adherenceText}
                     </b>
                   </span>
                 )}
