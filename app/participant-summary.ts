@@ -8,20 +8,40 @@ function finite(value: unknown): number | null {
   return Number.isFinite(num) ? num : null;
 }
 
+const kgFormat = new Intl.NumberFormat("es-CL", { maximumFractionDigits: 1, minimumFractionDigits: 0 });
+
+/** Peso con a lo más 1 decimal en es-CL (70, 70,5). */
+export function formatKgAmount(num: number): string {
+  const rounded = Math.round(num * 10) / 10;
+  return kgFormat.format(Object.is(rounded, -0) ? 0 : rounded);
+}
+
+/** Variación de peso: '+1 kg', '-3,7 kg', '0 kg'. */
+export function formatKgDelta(delta: number): string {
+  const rounded = Math.round(delta * 10) / 10;
+  const abs = formatKgAmount(Math.abs(rounded));
+  if (rounded > 0) return `+${abs} kg`;
+  if (rounded < 0) return `-${abs} kg`;
+  return `${abs} kg`;
+}
+
 export function formatWeightTrail(person: Row): { text: string; delta: string } {
   const nums = [person.weight, person.weight_day_30, person.weight_day_60, person.weight_day_90].map(finite);
-  const text = `${nums.map((num) => (num == null ? "—" : String(num))).join(" → ")} kg`;
+  const text = `${nums.map((num) => (num == null ? "—" : formatKgAmount(num))).join(" → ")} kg`;
   const start = nums[0];
   const later = nums.slice(1).filter((num): num is number => num != null);
   const last = later.length ? later[later.length - 1] : null;
-  const delta = start == null || last == null ? "—" : `${last - start} kg`;
+  const delta = start == null || last == null ? "—" : formatKgDelta(last - start);
   return { text, delta };
 }
 
 function stageCell(row: StageRow): string {
   if (row.label === "Total") return `Total ${row.value}`;
   if (row.note === "en espera") return `${row.label} en espera`;
-  if (row.note === "en curso") return `${row.label} ${row.value}`;
+  if (row.note === "en curso") {
+    const value = row.value === "—" || row.value === "en curso" ? "en curso" : `${row.value} en curso`;
+    return `${row.label} ${value}`;
+  }
   if (row.note === "Aún no") return `${row.label} —`;
   if (row.note === "En curso" && row.value === "—") return `${row.label} En curso`;
   return `${row.label} ${row.value}`;
@@ -47,20 +67,25 @@ function csvNum(value: unknown): string {
   return num == null ? "" : String(num);
 }
 
+function csvKg(value: unknown): string {
+  const num = finite(value);
+  return num == null ? "" : csvEscape(formatKgAmount(num));
+}
+
 export function participantSummaryCsv(people: Row[]): string {
   const header = "nombre,email,dia,peso_0,peso_30,peso_60,peso_90,delta_kg,adherencia_0_30,adherencia_30_60,adherencia_60_90,adherencia_total";
   const lines = people.map((person) => {
     const name = `${String(person.first_name || "")} ${String(person.last_name || "")}`.trim();
     const trail = formatWeightTrail(person);
-    const delta = trail.delta === "—" ? "" : trail.delta.replace(" kg", "");
+    const delta = trail.delta === "—" ? "" : csvEscape(trail.delta.replace(/ kg$/, ""));
     return [
       csvEscape(name),
       csvEscape(String(person.email || "")),
       csvNum(person.adherence_elapsed_days),
-      csvNum(person.weight),
-      csvNum(person.weight_day_30),
-      csvNum(person.weight_day_60),
-      csvNum(person.weight_day_90),
+      csvKg(person.weight),
+      csvKg(person.weight_day_30),
+      csvKg(person.weight_day_60),
+      csvKg(person.weight_day_90),
       delta,
       csvNum(person.adherence_day_30),
       csvNum(person.adherence_day_60),

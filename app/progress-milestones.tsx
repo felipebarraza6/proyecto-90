@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { formatMilestoneAdherence } from "./milestone-status";
+import { formatKgAmount } from "./participant-summary";
 import {
   milestoneWindowsHint,
   PANEL_CONFIG_DEFAULTS,
@@ -103,7 +104,7 @@ export function ProgressMilestones({
                   ) : (
                     <b>
                       {weight
-                        ? `${Number(weight).toFixed(1).replace(".0", "")} kg`
+                        ? `${formatKgAmount(Number(weight))} kg`
                         : unlocked
                           ? "Pendiente"
                           : "—"}

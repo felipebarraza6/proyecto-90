@@ -111,8 +111,7 @@ export function stageRows(
       : adherence[stage.key];
     if (status === "locked") return { label: stage.label, value: "en espera", note: "en espera" };
     if (status === "current") {
-      const value = formatPct(pct);
-      return { label: stage.label, value: value === "—" ? "en curso" : `${value} en curso`, note: "en curso" };
+      return { label: stage.label, value: formatPct(pct), note: "en curso" };
     }
     if (status === "done") return { label: stage.label, value: formatPct(pct), note: "Completado" };
     if (currentDay < stage.start) return { label: stage.label, value: "—", note: "Aún no" };
