@@ -28,6 +28,24 @@ describe("formatStageLine", () => {
     );
   });
 
+  it("con adherencia parcial marca en curso y en espera", () => {
+    assert.equal(
+      formatStageLine({
+        adherence_elapsed_days: 45,
+        adherence_day_30: 80,
+        adherence_day_60: 41,
+        adherence_day_60_partial: true,
+        adherence: 70,
+        adherence_stages: [
+          { day: 30, start: 1, end: 30, pct: 80, status: "done" },
+          { day: 60, start: 31, end: 60, pct: 41, status: "current" },
+          { day: 90, start: 61, end: 90, pct: null, status: "locked" },
+        ],
+      }),
+      "0–30 80% · 30–60 41% en curso · 60–90 en espera · Total 70%",
+    );
+  });
+
   it("un total vacío se escribe Total —", () => {
     assert.equal(
       formatStageLine({ adherence_elapsed_days: 31, adherence_day_30: 80 }),

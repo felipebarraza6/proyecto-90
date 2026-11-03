@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { missingWeightNotice, stageRows } from "../app/milestone-status.ts";
+import { formatMilestoneAdherence, missingWeightNotice, stageRows } from "../app/milestone-status.ts";
 
 const days = [30, 60, 90];
 
@@ -49,6 +49,27 @@ describe("stageRows", () => {
     assert.equal(byLabel["30–60"].value, "—");
     assert.equal(byLabel.Total.value, "72%");
     assert.equal(byLabel.Total.note, "0–hoy");
+  });
+
+  it("usa adherencia parcial y etapas cuando el backend las envía", () => {
+    const person = {
+      adherence_day_30: 80,
+      adherence_day_60: 41,
+      adherence_day_60_partial: true,
+      adherence_stages: [
+        { day: 30, end: 30, pct: 80, status: "done" },
+        { day: 60, end: 60, pct: 41, status: "current" },
+        { day: 90, end: 90, pct: null, status: "locked" },
+      ],
+    };
+    assert.equal(formatMilestoneAdherence(person, 30, 45), "80%");
+    assert.equal(formatMilestoneAdherence(person, 60, 45), "41% en curso");
+    assert.equal(formatMilestoneAdherence(person, 90, 45), "en espera");
+  });
+
+  it("sin campos nuevos conserva el porcentaje solo si el día ya llegó", () => {
+    assert.equal(formatMilestoneAdherence({ adherence_day_30: 80 }, 30, 20), "—");
+    assert.equal(formatMilestoneAdherence({ adherence_day_30: 80 }, 30, 30), "80%");
   });
 
   it("un total vacío es un guion, no 0%", () => {

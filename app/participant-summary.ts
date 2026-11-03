@@ -1,4 +1,4 @@
-import { stageRows, type StageRow } from "./milestone-status.ts";
+import { adherenceStagesOf, stageRows, type StageRow } from "./milestone-status.ts";
 
 type Row = Record<string, unknown>;
 
@@ -20,6 +20,8 @@ export function formatWeightTrail(person: Row): { text: string; delta: string } 
 
 function stageCell(row: StageRow): string {
   if (row.label === "Total") return `Total ${row.value}`;
+  if (row.note === "en espera") return `${row.label} en espera`;
+  if (row.note === "en curso") return `${row.label} ${row.value}`;
   if (row.note === "Aún no") return `${row.label} —`;
   if (row.note === "En curso" && row.value === "—") return `${row.label} En curso`;
   return `${row.label} ${row.value}`;
@@ -31,7 +33,7 @@ export function formatStageLine(person: Row): string {
     day60: finite(person.adherence_day_60),
     day90: finite(person.adherence_day_90),
     total: finite(person.adherence),
-  });
+  }, adherenceStagesOf(person));
   return rows.map(stageCell).join(" · ");
 }
 
