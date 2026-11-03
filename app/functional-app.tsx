@@ -11,7 +11,7 @@ import { ParticipantWeekOverview } from "./participant-week";
 import { GuideEditor } from "./guide-editor";
 import { NutritionDailyReview, NutritionDailyTracker } from "./nutrition-daily";
 import { ProgressMilestones } from "./progress-milestones";
-import { missingWeightNotice, stageRows } from "./milestone-status";
+import { adherenceStagesOf, missingWeightNotice, stageRows } from "./milestone-status";
 import { panelConfigBlocksStaff, reviewerMutationBlocked } from "./staff-guards";
 import { ProfessionalTracking } from "./professional-tracking";
 import { DailyClosure } from "./daily-closure";
@@ -210,7 +210,7 @@ const adherenceStages = stageRows(currentDay, {
   day60: asStageNumber(data.adherence?.adherence_day_60),
   day90: asStageNumber(data.adherence?.adherence_day_90),
   total: asStageNumber(data.adherence?.adherence),
-});
+}, adherenceStagesOf(data.adherence || {}));
 if(screen==="Progreso"){
   return <><Title eyebrow="TU HISTORIA" title="Progreso" copy={`Adherencia e hitos de tus ${panelConfig?.challenge_length_days??PANEL_CONFIG_DEFAULTS.challenge_length_days} días.`}/>
     <div className="section-heading"><h2>Adherencia por etapa</h2></div>
