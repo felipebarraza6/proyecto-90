@@ -205,6 +205,8 @@
 .closure-cell.unlogged{background:#2b2415;color:#f2c961}
 .daily-closure tr.closure-missing td:first-child b{color:#ffd2d2}
 .daily-closure-note{font-size:8px;color:var(--muted);margin:10px 2px 0}
+.daily-closure-status{font-size:9px;color:var(--green);margin:10px 2px 0}
+.daily-closure-error{font-size:9px;color:#ff8585;margin:10px 2px 0}
 @media(min-width:721px){.nutrition-overview{grid-template-columns:repeat(4,1fr)}}
 @media(max-width:720px){.nutrition-overview{grid-template-columns:repeat(2,1fr)}}
 @media(min-width:1000px){.response-modal .participant-file-summary{grid-template-columns:repeat(5,1fr)}}
