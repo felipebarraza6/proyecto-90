@@ -79,6 +79,10 @@ describe("stageRows", () => {
   it("el hito Inicio no presenta 0% de adherencia", () => {
     assert.equal(formatMilestoneAdherence({ adherence_day_0: 0 }, 0, 38), "Sin medición");
     assert.equal(formatMilestoneAdherence({}, 0, 38), "Sin medición");
+    assert.equal(
+      formatMilestoneAdherence({ adherence_stages: [{ day: 0, end: 0, pct: 0, status: "done" }] }, 0, 38),
+      "Sin medición",
+    );
   });
 
   it("un total vacío es un guion, no 0%", () => {
