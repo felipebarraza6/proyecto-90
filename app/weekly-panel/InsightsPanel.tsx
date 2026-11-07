@@ -40,6 +40,81 @@ function shiftMonth(month: string, delta: number): string {
   return date.toISOString().slice(0, 7);
 }
 
+function pctTone(pct: number): string {
+  if (pct >= 90) return "mark-high";
+  if (pct >= 80) return "mark-mid";
+  return "mark-low";
+}
+
+function DailyAdherenceCalendar({
+  month,
+  today,
+  closures,
+}: {
+  month: string;
+  today: string;
+  closures: ClosureDay[];
+}) {
+  const byDate = new Map(closures.map((day) => [day.date, day]));
+  return (
+    <div className="wp-insights-cal" aria-label="Adherencia diaria del mes">
+      {["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"].map((label) => (
+        <span key={label}>{label}</span>
+      ))}
+      {monthGrid(month).map((date, index) => {
+        if (!date) return <span key={`pad-ad-${index}`} />;
+        if (date > today) return <span key={date} className="mark-empty">{date.slice(8)}</span>;
+        const day = byDate.get(date);
+        const pct = day?.closed && day.pct != null && Number.isFinite(day.pct) ? day.pct : null;
+        if (pct == null) return <span key={date} className="mark-empty" title={`${date}: sin cierre`}>{date.slice(8)}</span>;
+        const shown = Math.round(pct);
+        return (
+          <span key={date} className={pctTone(pct)} title={`${date}: ${shown}%`}>
+            {shown}%
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+function MacroChart({
+  days,
+  values,
+  target,
+  macroLabel,
+}: {
+  days: { date: string }[];
+  values: (number | null)[];
+  target: number | null;
+  macroLabel: string;
+}) {
+  const max = Math.max(target || 0, ...values.map((value) => value || 0), 1);
+  const targetBottom = target == null ? null : Math.max(0, Math.round((target / max) * 110));
+  return (
+    <div>
+      <p className="wp-insights-note">
+        La línea es la meta{target == null ? " (sin objetivo en esta semana)" : `: ${target}`}. Las barras son el cierre de cada día. Un día sin valor no se dibuja como 0.
+      </p>
+      <div className="wp-insights-chart">
+        {targetBottom != null ? <i className="wp-insights-target" style={{ bottom: targetBottom }} /> : null}
+        <div className="wp-insights-bars" aria-label={`Barras de ${macroLabel}`}>
+          {days.map((day, index) => {
+            const value = values[index];
+            const height = value == null ? 0 : Math.max(4, Math.round((value / max) * 110));
+            return (
+              <div key={day.date}>
+                {value == null ? <small>—</small> : <i style={{ height }} title={`${day.date}: ${value}`} />}
+                <small>{day.date.slice(8)}</small>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function monthGrid(month: string): (string | null)[] {
   const [year, mon] = month.split("-").map(Number);
   const first = new Date(Date.UTC(year, mon - 1, 1));
@@ -182,9 +257,11 @@ export function StaffInsights({
           ) : (
             <p className="wp-insights-summary">
               <strong>{summary.averagePct == null ? "—" : `${Math.round(summary.averagePct)}%`}</strong>
-              {monthLabel(month)} · {summary.above80} días &gt; 80% de {summary.closedDays} con cierre. Los días sin registro no entran como 0. 80% exacto no suma racha.
+              Adherencia consolidada de {monthLabel(month)} · {summary.above80} días &gt; 80% de {summary.closedDays} con cierre. Los días sin registro no entran como 0. 80% exacto no suma racha.
             </p>
           )}
+          <h4>Adherencia diaria</h4>
+          <DailyAdherenceCalendar month={month} today={today} closures={closures} />
           <div className="wp-insights-filters">
             <button type="button" className="secondary" onClick={() => setMonth((value) => shiftMonth(value, -1))}>
               Mes anterior
@@ -248,28 +325,12 @@ function MacroBars({ week, macro }: { week: StudentWeekResponse | null; macro: M
   if (!row) {
     return <p className="wp-insights-note">Esta semana no trae la serie de {macro}. No se dibujan barras inventadas.</p>;
   }
-  const target = row.target;
-  const max = Math.max(target || 0, ...row.cells.map((cell) => (cell as MacroCell).value || 0), 1);
-  return (
-    <div>
-      <p className="wp-insights-note">
-        Línea de meta: {target == null ? "sin objetivo en esta semana" : target}. Las barras son el cierre diario. Un día sin valor no se dibuja como 0.
-      </p>
-      <div className="wp-insights-bars" aria-label={`Barras de ${macro}`}>
-        {week.table.days.map((day, index) => {
-          const value = (row.cells[index] as MacroCell).value;
-          const height = value == null ? 0 : Math.max(4, Math.round((value / max) * 110));
-          return (
-            <div key={day.date}>
-              {value == null ? <small>—</small> : <i style={{ height }} title={`${day.date}: ${value}`} />}
-              <small>{day.date.slice(8)}</small>
-            </div>
-          );
-        })}
-      </div>
-      {target != null ? <small className="wp-insights-note">Meta {target}</small> : null}
-    </div>
-  );
+  const target = row.target == null || !Number.isFinite(Number(row.target)) ? null : Number(row.target);
+  const values = row.cells.map((cell) => {
+    const value = (cell as MacroCell).value;
+    return value == null || !Number.isFinite(Number(value)) ? null : Number(value);
+  });
+  return <MacroChart days={week.table.days} values={values} target={target} macroLabel={macro} />;
 }
 
 type LogRow = Record<string, unknown>;
@@ -279,11 +340,13 @@ export function StudentInsights({
   nutritionLogs,
   targets,
   today,
+  adherenceDaily = [],
 }: {
   habitLogs: LogRow[];
   nutritionLogs: LogRow[];
   targets: { calories?: number | null; protein?: number | null; carbs?: number | null; fats?: number | null } | null;
   today: string;
+  adherenceDaily?: { date?: string; pct?: number | null }[];
 }) {
   const [month, setMonth] = useState(today.slice(0, 7));
   const [habit, setHabit] = useState<HabitId>("water");
@@ -313,11 +376,25 @@ export function StudentInsights({
   useEffect(() => {
     setWeekStart(weekStarts[0] || "");
   }, [weekStarts]);
+  const closures = useMemo<ClosureDay[]>(
+    () =>
+      adherenceDaily
+        .map((row) => {
+          const date = String(row.date || "").slice(0, 10);
+          const pct = row.pct == null || !Number.isFinite(Number(row.pct)) ? null : Number(row.pct);
+          return { date, pct, closed: pct != null };
+        })
+        .filter((row) => row.date),
+    [adherenceDaily],
+  );
+  const streaks = useMemo(() => adherenceStreaks(closures, today), [closures, today]);
+  const summary = useMemo(() => monthAdherenceSummary(closures, month, today), [closures, month, today]);
+  const hasSeries = adherenceDaily.length > 0;
   const nutrition = useMemo(
     () => new Map(nutritionLogs.map((row) => [String(row.log_date || "").slice(0, 10), row])),
     [nutritionLogs],
   );
-  const target = targets?.[macro] ?? null;
+  const target = targets?.[macro] == null || !Number.isFinite(Number(targets?.[macro])) ? null : Number(targets?.[macro]);
   const bars = Array.from({ length: 7 }, (_, index) => {
     const date = new Date(Date.parse(`${weekStart || today}T12:00:00Z`) + index * 86400000).toISOString().slice(0, 10);
     const row = nutrition.get(date);
@@ -325,7 +402,6 @@ export function StudentInsights({
     const value = row && Number.isFinite(raw) ? raw : null;
     return { date, value };
   });
-  const max = Math.max(Number(target) || 0, ...bars.map((bar) => bar.value || 0), 1);
 
   return (
     <section className="wp-insights">
@@ -333,9 +409,30 @@ export function StudentInsights({
         <span className="eyebrow">INSIGHTS</span>
         <h3>Tu adherencia</h3>
       </div>
-      <p className="wp-insights-note">
-        La racha de cierre &gt; 80% no se muestra: el perfil del alumno no trae el porcentaje de adherencia de cada día. No se inventa con los registros sueltos.
-      </p>
+      <div className="wp-insights-streaks">
+        <article>
+          <small>Racha actual</small>
+          <strong>{hasSeries ? streaks.current : "—"}</strong>
+          <small>días seguidos con cierre &gt; 80%</small>
+        </article>
+        <article>
+          <small>Mejor racha</small>
+          <strong>{hasSeries ? streaks.best : "—"}</strong>
+          <small>en la serie diaria</small>
+        </article>
+      </div>
+      {hasSeries ? (
+        <p className="wp-insights-summary">
+          <strong>{summary.averagePct == null ? "—" : `${Math.round(summary.averagePct)}%`}</strong>
+          Adherencia consolidada de {monthLabel(month)} · {summary.above80} días &gt; 80% de {summary.closedDays} con cierre. 80% exacto no suma racha.
+        </p>
+      ) : (
+        <p className="wp-insights-note">
+          El perfil todavía no trae adherenceDaily. La racha y el consolidado quedan en blanco hasta que la API publique la serie. No se recalcula con los registros sueltos.
+        </p>
+      )}
+      <h4>Adherencia diaria</h4>
+      <DailyAdherenceCalendar month={month} today={today} closures={closures} />
       <div className="wp-insights-filters">
         <button type="button" className="secondary" onClick={() => setMonth((value) => shiftMonth(value, -1))}>Mes anterior</button>
         <b>{monthLabel(month)}</b>
@@ -373,15 +470,7 @@ export function StudentInsights({
           </button>
         ))}
       </div>
-      <p className="wp-insights-note">Meta {target == null ? "no informada" : target}. Barras solo de días con registro nutricional.</p>
-      <div className="wp-insights-bars">
-        {bars.map((bar) => (
-          <div key={bar.date}>
-            {bar.value == null ? <small>—</small> : <i style={{ height: Math.max(4, Math.round((bar.value / max) * 110)) }} />}
-            <small>{bar.date.slice(8)}</small>
-          </div>
-        ))}
-      </div>
+      <MacroChart days={bars} values={bars.map((bar) => bar.value)} target={target} macroLabel={macro} />
     </section>
   );
 }

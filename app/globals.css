@@ -540,9 +540,11 @@
 
 /* Ficha: la semana cabe en el drawer, con etiquetas de día y promedio. */
 .wp-drawer{width:min(1080px,100%)}
-.wp-student-table-scroll{overflow-x:auto}
+.wp-student-table-scroll{overflow-x:hidden}
 .wp-student-table{min-width:0;width:100%;table-layout:fixed}
-.wp-student-table th[scope="row"]{min-width:0;width:22%}
+.wp-student-table th,.wp-student-table td{font-size:10px;padding:4px 2px;overflow-wrap:anywhere}
+.wp-student-table th[scope="row"]{min-width:0;width:16%;font-size:9px;white-space:normal}
+.wp-drawer .wp-macro-cell,.wp-drawer .wp-chip{min-width:0;width:100%;padding:3px 2px;font-size:9px}
 .wp-student-table thead th,.wp-student-table td{padding:6px 3px;overflow-wrap:anywhere}
 .wp-macro-avg,.wp-avg-na{display:grid;justify-items:center;gap:2px}
 .wp-macro-avg b{font-size:11px}
@@ -560,8 +562,13 @@
 .wp-insights-cal .mark-met{background:#163d25}
 .wp-insights-cal .mark-missed{background:#3a1c1c}
 .wp-insights-cal .mark-empty{opacity:.55}
+.wp-insights-chart{position:relative;min-height:128px}
+.wp-insights-target{position:absolute;left:0;right:0;height:0;border-top:2px solid #8fd9a8;z-index:1}
 .wp-insights-bars{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;align-items:end;min-height:120px}
 .wp-insights-bars i{display:block;width:100%;background:var(--green);border-radius:6px 6px 0 0;min-height:2px}
+.wp-insights-cal .mark-high{background:#143d55;color:#9fd4ff}
+.wp-insights-cal .mark-mid{background:#3a3414;color:#f0c35a}
+.wp-insights-cal .mark-low{background:#3a1c1c;color:#ff8d8d}
 .wp-insights-note{margin:0;font-size:11px;color:var(--muted);line-height:1.45}
 .wp-config-pending p{margin:0 0 8px;font-size:10px;color:var(--muted);line-height:1.4}
 .wp-config-pending ul{margin:0;padding-left:16px;display:grid;gap:4px}
