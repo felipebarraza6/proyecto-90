@@ -344,7 +344,25 @@ jobs:
       - name: Verificar despliegue
         run: |
           sleep 5
-          code=$(curl -sS -o /tmp/live.html -w "%{http_code}" https://90dias.habitofirme.app/)
+          # User-Agent de navegador: sin él el host a veces responde la
+          # pantalla anti-bot ("One moment, please") con HTTP 200.
+          UA='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+          code=$(curl -sS -A "$UA" -D /tmp/live.hdr -o /tmp/live.html -w "%{http_code}" https://90dias.habitofirme.app/)
           echo "HTTP $code"
-          grep -oE 'assets/index[^"]+' /tmp/live.html | head -5 || true
+          if grep -qi 'One moment, please' /tmp/live.html; then
+            echo "::error::La verificación recibió la pantalla anti-bot, no el index.html del build."
+            exit 1
+          fi
           test "$code" = "200"
+          built=$(grep -oE 'assets/index-[^"]+\.js' dist/client/index.html | head -1)
+          live=$(grep -oE 'assets/index-[^"]+\.js' /tmp/live.html | head -1)
+          echo "build=$built"
+          echo "live=$live"
+          test -n "$built"
+          test "$built" = "$live"
+          if ! grep -Eqi 'cache-control:.*(no-cache|max-age=0)' /tmp/live.hdr; then
+            echo "::error::index.html se sirvió sin Cache-Control no-cache/max-age=0. El navegador puede seguir el shell del deploy anterior."
+            echo "---- headers ----"
+            cat /tmp/live.hdr
+            exit 1
+          fi
