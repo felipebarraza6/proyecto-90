@@ -71,7 +71,7 @@ export function ProgressMilestones({
         </div>
         {variant === "default" && <span className="milestone-formula">{formula}</span>}
       </header>
-      <div className="milestone-grid">
+      <div className={variant === "weight-only" ? "milestone-grid weight-tiles" : "milestone-grid"}>
         {days.map((day) => {
           const unlocked = day === 0 || dayNow >= day;
           const weight = valueFor(person, checkpoints, day, "weight");

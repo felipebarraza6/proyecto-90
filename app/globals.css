@@ -527,6 +527,42 @@
 .wp-config-section-body{display:grid;gap:10px}
 .wp-config-pending{padding:12px 14px;border:1px dashed #3a433c;border-radius:12px;background:#0d110e}
 .wp-config-pending b{display:block;font-size:11px;color:var(--amber);margin-bottom:4px}
+
+/* Mi peso: cuatro cuadros, también en celular (antes una columna enorme). */
+.milestone-grid.weight-tiles{grid-template-columns:repeat(4,minmax(0,1fr))}
+.milestone-grid.weight-tiles article{padding:12px}
+@media(max-width:620px){
+  .milestone-grid.weight-tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .milestone-grid.weight-tiles article{padding:10px;min-height:0}
+  .milestone-grid.weight-tiles .milestone-values b{font-size:16px}
+  .milestone-grid.weight-tiles .milestone-save{width:100%;min-height:40px}
+}
+
+/* Ficha: la semana cabe en el drawer, con etiquetas de día y promedio. */
+.wp-drawer{width:min(1080px,100%)}
+.wp-student-table-scroll{overflow-x:auto}
+.wp-student-table{min-width:0;width:100%;table-layout:fixed}
+.wp-student-table th[scope="row"]{min-width:0;width:22%}
+.wp-student-table thead th,.wp-student-table td{padding:6px 3px;overflow-wrap:anywhere}
+.wp-macro-avg,.wp-avg-na{display:grid;justify-items:center;gap:2px}
+.wp-macro-avg b{font-size:11px}
+.wp-macro-avg small,.wp-avg-na{color:var(--muted);font-size:8px}
+
+.wp-insights{display:grid;gap:12px;padding:14px;border:1px solid var(--line);border-radius:14px;background:#101512}
+.wp-insights-head{display:flex;flex-wrap:wrap;gap:8px;align-items:end;justify-content:space-between}
+.wp-insights-streaks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.wp-insights-streaks article,.wp-insights-summary{padding:10px;border:1px solid #2e3a32;border-radius:12px;background:#0d120f}
+.wp-insights-streaks strong,.wp-insights-summary strong{display:block;font-size:22px}
+.wp-insights-filters{display:flex;flex-wrap:wrap;gap:8px}
+.wp-insights-filters button[aria-pressed="true"]{border-color:var(--green);color:var(--green)}
+.wp-insights-cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.wp-insights-cal span,.wp-insights-cal button{min-height:36px;border-radius:8px;border:1px solid #2a332e;background:#0c100e;color:var(--text);font-size:10px}
+.wp-insights-cal .mark-met{background:#163d25}
+.wp-insights-cal .mark-missed{background:#3a1c1c}
+.wp-insights-cal .mark-empty{opacity:.55}
+.wp-insights-bars{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;align-items:end;min-height:120px}
+.wp-insights-bars i{display:block;width:100%;background:var(--green);border-radius:6px 6px 0 0;min-height:2px}
+.wp-insights-note{margin:0;font-size:11px;color:var(--muted);line-height:1.45}
 .wp-config-pending p{margin:0 0 8px;font-size:10px;color:var(--muted);line-height:1.4}
 .wp-config-pending ul{margin:0;padding-left:16px;display:grid;gap:4px}
 .wp-config-pending li{font-size:10px;color:#c5d0c9;line-height:1.35}

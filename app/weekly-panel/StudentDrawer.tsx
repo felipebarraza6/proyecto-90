@@ -8,6 +8,8 @@ import { canEditMacroTargets } from "./macroEditAccess";
 import { MacroTargetsEditor } from "./MacroTargetsEditor";
 import { StudentFacts } from "./StudentFacts";
 import { StudentWeekTable } from "./StudentWeekTable";
+import { canOpenInsights, StaffInsights } from "./InsightsPanel";
+import type { ParticipantWeightSource } from "./weightCards";
 import { RetryError, SkeletonTable } from "./ui";
 import { WeekSelector } from "./WeekSelector";
 import type {
@@ -38,6 +40,8 @@ export function StudentDrawer({
   onWeekChange,
   onSelectClient,
   onClose,
+  participantWeight = null,
+  today,
 }: {
   clientId: number;
   weekStart: string;
@@ -59,6 +63,8 @@ export function StudentDrawer({
   onWeekChange: (start: string) => void;
   onSelectClient: (id: number) => void;
   onClose: () => void;
+  participantWeight?: ParticipantWeightSource | null;
+  today: string;
 }) {
   const [data, setData] = useState<StudentWeekResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -211,7 +217,9 @@ export function StudentDrawer({
                 showRoutine={showRoutine}
                 showNutrition={showNutrition}
                 weekClosed={weekClosed}
+                participantWeight={participantWeight}
               />
+              {canOpenInsights(role, specialty) ? <StaffInsights clientId={clientId} today={today} /> : null}
               <StudentWeekTable data={data} />
               {roleCanEditHabits ? (
                 <details className="wp-habit-details">
