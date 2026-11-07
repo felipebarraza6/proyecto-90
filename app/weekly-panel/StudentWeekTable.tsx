@@ -1,6 +1,7 @@
 import { formatGoalPctLabel, formatMlAsLiters, formatPct, habitDisplay, WEEKDAYS_SHORT } from "./format";
 import { usePanelStats } from "./PanelStatsContext";
 import { HabitMark, PercentChip } from "./ui";
+import { averageRecorded } from "./macroWeekAverage";
 import type { HabitCell, MacroCell, MacroRanges, StudentWeekResponse, TableRow } from "./types";
 
 const ROW_LABELS: Record<string, string> = {
@@ -119,6 +120,20 @@ function MacroMark({
   );
 }
 
+function macroAverageCell(row: TableRow) {
+  if (row.key !== "calories" && row.key !== "protein" && row.key !== "carbs" && row.key !== "fats") {
+    return <span className="wp-avg-na">—</span>;
+  }
+  const avg = averageRecorded(row.cells.map((cell) => (cell as MacroCell).value));
+  if (avg == null) return <span className="wp-avg-na">—</span>;
+  return (
+    <span className="wp-macro-avg">
+      <b>{NUM.format(avg)}</b>
+      <small>{MACRO_UNITS[row.key]}</small>
+    </span>
+  );
+}
+
 export function StudentWeekTable({ data }: { data: StudentWeekResponse }) {
   const days = data.table.days;
   const byKey = new Map(data.table.rows.map((row) => [row.key, row]));
@@ -143,6 +158,10 @@ export function StudentWeekTable({ data }: { data: StudentWeekResponse }) {
                   <small>{day.date.slice(8, 10)}</small>
                 </th>
               ))}
+              <th>
+                Promedio
+                <small>con registro</small>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -161,6 +180,7 @@ export function StudentWeekTable({ data }: { data: StudentWeekResponse }) {
                       {renderCell(row, cell, days[idx]?.date || "", days[idx]?.state || "")}
                     </td>
                   ))}
+                  <td>{macroAverageCell(row)}</td>
                 </tr>
               );
             })}

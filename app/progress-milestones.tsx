@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { formatMilestoneAdherence } from "./milestone-status";
+import { formatKgAmount } from "./participant-summary";
 import {
   milestoneWindowsHint,
   PANEL_CONFIG_DEFAULTS,
@@ -23,6 +25,7 @@ export function ProgressMilestones({
   editable = false,
   act,
   panelConfig,
+  variant = "default",
 }: {
   person: Row;
   checkpoints?: Row[];
@@ -30,6 +33,7 @@ export function ProgressMilestones({
   editable?: boolean;
   act?: (payload: Row) => Promise<unknown>;
   panelConfig?: PanelConfig | null;
+  variant?: "default" | "weight-only";
 }) {
   const milestoneDays = panelConfig?.milestone_days?.length
     ? panelConfig.milestone_days
@@ -60,18 +64,18 @@ export function ProgressMilestones({
       <header>
         <div>
           <span className="eyebrow">HITOS DEL PROCESO</span>
-          <h2>Peso y adherencia</h2>
+          <h2>{variant === "weight-only" ? "Mi peso" : "Peso y adherencia"}</h2>
           <p>
             Una fotografía comparable de tu avance al inicio y en los días {daysLabel}.
           </p>
         </div>
-        <span className="milestone-formula">{formula}</span>
+        {variant === "default" && <span className="milestone-formula">{formula}</span>}
       </header>
-      <div className="milestone-grid">
+      <div className={variant === "weight-only" ? "milestone-grid weight-tiles" : "milestone-grid"}>
         {days.map((day) => {
           const unlocked = day === 0 || dayNow >= day;
           const weight = valueFor(person, checkpoints, day, "weight");
-          const adherence = valueFor(person, checkpoints, day, "adherence");
+          const adherenceText = formatMilestoneAdherence(person, day, dayNow);
           return (
             <article key={day} className={unlocked ? "unlocked" : "locked"}>
               <div className="milestone-day">
@@ -100,19 +104,21 @@ export function ProgressMilestones({
                   ) : (
                     <b>
                       {weight
-                        ? `${Number(weight).toFixed(1).replace(".0", "")} kg`
+                        ? `${formatKgAmount(Number(weight))} kg`
                         : unlocked
                           ? "Pendiente"
                           : "—"}
                     </b>
                   )}
                 </span>
-                <span>
-                  <small>Adherencia</small>
-                  <b>
-                    {unlocked && adherence != null ? `${Math.round(Number(adherence))}%` : "—"}
-                  </b>
-                </span>
+                {variant === "default" && (
+                  <span>
+                    <small>Adherencia</small>
+                    <b>
+                      {adherenceText}
+                    </b>
+                  </span>
+                )}
               </div>
               {editable && day > 0 && unlocked && (
                 <button
