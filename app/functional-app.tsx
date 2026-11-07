@@ -11,6 +11,8 @@ import { ParticipantWeekOverview } from "./participant-week";
 import { GuideEditor } from "./guide-editor";
 import { NutritionDailyReview, NutritionDailyTracker } from "./nutrition-daily";
 import { ProgressMilestones } from "./progress-milestones";
+import { StudentInsights } from "./weekly-panel/InsightsPanel";
+import { todayIsoInTimezone } from "./timezone";
 import { adherenceStagesOf, missingWeightNotice, stageRows } from "./milestone-status";
 import { panelConfigBlocksStaff, reviewerMutationBlocked } from "./staff-guards";
 import { ProfessionalTracking } from "./professional-tracking";
@@ -21,7 +23,6 @@ import { participantCanOpenMessages } from "./weekly-panel/messageStream";
 import { uploadFile } from "./chunked-upload";
 import { BodyDataEditor } from "./body-data-editor";
 import { formatHeightCm } from "./height";
-import { todayIsoInTimezone } from "./timezone";
 import { NutritionPlanFields } from "./nutrition-recalc";
 import { MacroTargetsEditor } from "./weekly-panel/MacroTargetsEditor";
 import { saveMacroTarget } from "./weekly-panel/api";
@@ -35,7 +36,7 @@ type Row = Record<string, unknown>;
 type ViewerRole = "admin" | "professional" | "participant" | "reviewer";
 type Viewer = { id: string; role: ViewerRole; name: string; email: string; status: string };
 type Credentials = { email: string; password: string; emailed: boolean } | null;
-type AppData = { viewer: Viewer; professionalSpecialty?:string; preview?:{role:string;label:string;targetId?:string}; participants?: Row[]; professionals?:Row[]; administrators?:Row[]; habitDaily?:Row[]; nutritionDaily?:Row[]; adherenceOutreach?:Row[]; programs?: Row[]; programGuides?:Row[]; exercises?: Row[]; workouts?: Row[]; workoutExercises?: Row[]; content?: Row[]; sessions?: Row[]; meetingRequests?:Row[]; profile?: Row; nutrition?: Row | null; effective_macro_targets?: Row | null; nutritionGuidePdf?: string | null; macrosVisible?:boolean; checkpoints?: Row[]; metrics?: Row[]; adherence?:Row|null; intakeQuestions?:Row[]; intakeResponses?:Row[]; notes?:Row[]; notices?:Row[]; messages?:Row[] };
+type AppData = { viewer: Viewer; professionalSpecialty?:string; preview?:{role:string;label:string;targetId?:string}; participants?: Row[]; professionals?:Row[]; administrators?:Row[]; habitDaily?:Row[]; nutritionDaily?:Row[]; adherenceOutreach?:Row[]; programs?: Row[]; programGuides?:Row[]; exercises?: Row[]; workouts?: Row[]; workoutExercises?: Row[]; content?: Row[]; sessions?: Row[]; meetingRequests?:Row[]; profile?: Row; nutrition?: Row | null; effective_macro_targets?: Row | null; nutritionGuidePdf?: string | null; macrosVisible?:boolean; checkpoints?: Row[]; metrics?: Row[]; adherence?:Row|null; adherenceDaily?:Row[]; intakeQuestions?:Row[]; intakeResponses?:Row[]; notes?:Row[]; notices?:Row[]; messages?:Row[] };
 type Modal = null | "participant" | "professional" | "professional-edit" | "admin" | "admin-edit" | "program" | "workout" | "workout-edit" | "exercise" | "exercise-edit" | "attach" | "attach-edit" | "nutrition" | "content" | "session" | "meeting-review" | "participant-edit" | "participant-body" | "intake-view" | "professional-student";
 
 const TOOLS="Contenido/Herramientas";
@@ -137,7 +138,7 @@ function AdminArea({data,screen,setScreen,open,act,selected,setSelected,panelEna
   const readOnly=reviewerMutationBlocked(data.viewer.role);
   const people=data.participants||[]; const programs=data.programs||[];
   if(screen==="Participantes")return <ParticipantDirectory people={people} programs={programs} selected={selected} setSelected={setSelected} open={open} act={act} canCreate={!readOnly} canAssignProgram={!readOnly} canEditBody={data.viewer.role==="admin"} panelConfig={panelConfig}/>;
-  if(panelEnabled&&screen===PANEL_SCREEN&&panelConfig)return <WeeklyPanel viewerId={data.viewer.id} role={data.viewer.role} specialty={data.professionalSpecialty} config={panelConfig} onConfigChange={onPanelConfigChange}/>;
+  if(panelEnabled&&screen===PANEL_SCREEN&&panelConfig)return <WeeklyPanel viewerId={data.viewer.id} role={data.viewer.role} specialty={data.professionalSpecialty} config={panelConfig} onConfigChange={onPanelConfigChange} participants={data.participants||[]}/>;
   if(screen==="Adherencia")return <><AdherencePanel people={people} records={data.habitDaily||[]} nutritionRecords={data.nutritionDaily||[]} outreach={data.adherenceOutreach||[]} act={act} canEditCells={!readOnly} canMarkContact={!readOnly} panelConfig={panelConfig}/><DailyClosure people={people} records={data.habitDaily||[]} nutritionRecords={data.nutritionDaily||[]} habits={["training","macros"]} act={act} canClose={!readOnly} panelConfig={panelConfig}/></>;
   if(screen==="Seguimiento")return <ProfessionalTracking people={people} nutritionRecords={data.nutritionDaily||[]} habitRecords={data.habitDaily||[]} initialArea="nutrition" allowAreaSwitch notes={data.notes||[]} act={act} canPauseMacros={!readOnly} canDeleteNotes={!readOnly} macrosControls={(person)=><MacrosTrackingControls person={person} act={act}/>} panelConfig={panelConfig}/>;
   if(screen==="Profesionales")return <Professionals rows={data.professionals||[]} administrators={data.administrators||[]} viewerId={data.viewer.id} open={open} act={act} readOnly={readOnly}/>;
@@ -154,7 +155,7 @@ function AdminArea({data,screen,setScreen,open,act,selected,setSelected,panelEna
 function ProfessionalArea({data,screen,setScreen,open,act,selected,setSelected,panelEnabled,panelConfig,onPanelConfigChange}:{data:AppData;screen:string;setScreen:(x:string)=>void;open:(m:Modal,r?:Row)=>void;act:(r:Row)=>Promise<unknown>;selected:string[];setSelected:(x:string[])=>void;panelEnabled:boolean;panelConfig:PanelConfig|null;onPanelConfigChange?:(c:PanelConfig)=>void}){
   const people=data.participants||[]; const programs=data.programs||[]; const nutrition=data.professionalSpecialty==="nutrition";
   const alerts=computeAdherenceAlerts(people,data.habitDaily||[],data.nutritionDaily||[],nutrition?["macros"]:["training"],panelConfig);
-  if(panelEnabled&&screen===PANEL_SCREEN&&panelConfig)return <WeeklyPanel viewerId={data.viewer.id} role={data.viewer.role} specialty={data.professionalSpecialty} config={panelConfig} onConfigChange={onPanelConfigChange}/>;
+  if(panelEnabled&&screen===PANEL_SCREEN&&panelConfig)return <WeeklyPanel viewerId={data.viewer.id} role={data.viewer.role} specialty={data.professionalSpecialty} config={panelConfig} onConfigChange={onPanelConfigChange} participants={data.participants||[]}/>;
   if(screen==="Seguimiento")return <><AdherencePanel people={people} records={data.habitDaily||[]} nutritionRecords={data.nutritionDaily||[]} outreach={data.adherenceOutreach||[]} act={act} mode={nutrition?"macros":"training"} canEditCells={false} canMarkContact panelConfig={panelConfig}/><DailyClosure people={people} records={data.habitDaily||[]} nutritionRecords={data.nutritionDaily||[]} habits={nutrition?["macros"]:["training"]} act={act} panelConfig={panelConfig}/><div className="section-heading"><div><span className="eyebrow">DETALLE POR ALUMNO</span><h2>Cumplimiento individual</h2></div></div><ProfessionalTracking people={people} nutritionRecords={data.nutritionDaily||[]} habitRecords={data.habitDaily||[]} initialArea={nutrition?"nutrition":"training"} notes={data.notes||[]} act={act} canPauseMacros={nutrition} macrosControls={(person)=><MacrosTrackingControls person={person} act={act}/>} panelConfig={panelConfig}/></>;
   if(screen==="Participantes")return <ParticipantDirectory people={people} programs={programs} selected={selected} setSelected={setSelected} open={open} act={act} canCreate={false} canAssignProgram={!nutrition} profileModal="professional-student" panelConfig={panelConfig}/>;
   if(screen==="Programas")return <ProgramManager data={data} open={open} act={act}/>;
@@ -218,6 +219,7 @@ if(screen==="Progreso"){
       {adherenceStages.map((row) => <Metric key={row.label} label={row.label} value={row.value} note={row.note}/>)}
     </section>
     <div className="section-heading" style={{ marginTop: '24px' }}><h2>General</h2></div>
+    <StudentInsights habitLogs={data.habitDaily||[]} nutritionLogs={data.nutritionDaily||[]} targets={macroPlan} today={todayIsoInTimezone(panelConfig?.timezone)} adherenceDaily={data.adherenceDaily||[]}/>
     <section className="stats-grid four"><Metric label="Entrenamientos" value={`${trainingAdherence}%`} note={data.adherence&&"training_current_week_pct" in data.adherence?`Promedio de semanas completas${data.adherence.training_current_week_pct!=null?` · semana actual ${data.adherence.training_current_week_pct}%`:""}`:"✓ sobre días transcurridos"} green/><Metric label="Macros" value={`${macrosAdherence}%`} note="Días dentro de tus objetivos"/><Metric label="Agua" value={`${Number(data.adherence?.water_pct||0)}%`} note="✓ sobre días transcurridos"/><Metric label="Adherencia total" value={`${Number(data.adherence?.adherence||0)}%`} note={formulaNote}/></section><ParticipantHabitMatrix records={data.habitDaily||[]} nutritionRecords={data.nutritionDaily||[]} plan={macroPlan} startDate={data.profile?.challenge_start||program?.assigned_at||data.profile?.created_at} act={act} panelConfig={panelConfig}/></>;
 }
 

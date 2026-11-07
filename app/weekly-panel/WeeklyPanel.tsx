@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { panelConfigCanEdit } from "../panel-week-adherence";
-import { weekStartWeekdayLabel } from "../timezone";
+import { todayIsoInTimezone, weekStartWeekdayLabel } from "../timezone";
+import { participantWeightFromRow } from "./weightCards";
 import { fetchPanelConfig, fetchWeek, fetchWeeks } from "./api";
 import { PanelLegend } from "./Legend";
 import { PanelConfigView } from "./PanelConfigView";
@@ -22,12 +23,14 @@ export function WeeklyPanel({
   specialty,
   config,
   onConfigChange,
+  participants = [],
 }: {
   viewerId: string;
   role: string;
   specialty?: string;
   config: PanelConfig;
   onConfigChange?: (next: PanelConfig) => void;
+  participants?: Record<string, unknown>[];
 }) {
   const { weekStart, filter, selectedClientId, setWeekStart, setFilter, setSelectedClientId } =
     usePanelWeek();
@@ -231,6 +234,11 @@ export function WeeklyPanel({
           onWeekChange={setWeekStart}
           onSelectClient={setSelectedClientId}
           onClose={() => setSelectedClientId(null)}
+          participantWeight={participantWeightFromRow(
+            participants.find((person) => Number(person.id) === selectedClientId) || null,
+            config.milestone_days,
+          )}
+          today={todayIsoInTimezone(config.timezone)}
         />
       ) : null}
         </>
