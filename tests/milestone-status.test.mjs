@@ -76,6 +76,11 @@ describe("stageRows", () => {
     assert.equal(formatMilestoneAdherence({ adherence_day_30: 80 }, 30, 30), "80%");
   });
 
+  it("el hito Inicio no presenta 0% de adherencia", () => {
+    assert.equal(formatMilestoneAdherence({ adherence_day_0: 0 }, 0, 38), "Sin medición");
+    assert.equal(formatMilestoneAdherence({}, 0, 38), "Sin medición");
+  });
+
   it("un total vacío es un guion, no 0%", () => {
     const rows = stageRows(31, { day30: 80, day60: null, day90: null, total: null });
     const total = rows.find((row) => row.label === "Total");

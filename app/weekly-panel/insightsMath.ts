@@ -27,6 +27,12 @@ export function closureCounts(day: ClosureDay | undefined): boolean {
   return day.pct > 80;
 }
 
+/**
+ * Racha. Un día cerrado cuenta solo con % > 80.
+ * Un día ya vencido sin cierre, o con cierre ≤ 80, corta la racha.
+ * Hoy, si todavía no tiene cierre, no alarga ni corta: la racha mira el último día cerrado.
+ * El futuro no entra. Un día sin registro no se guarda como 0.
+ */
 export function adherenceStreaks(
   days: ClosureDay[],
   today: string,
@@ -37,7 +43,9 @@ export function adherenceStreaks(
   let best = 0;
   let run = 0;
   for (const date of eachDate(known[0], today)) {
-    if (closureCounts(byDate.get(date))) {
+    const day = byDate.get(date);
+    if (date === today && !day?.closed) continue;
+    if (closureCounts(day)) {
       run += 1;
       if (run > best) best = run;
     } else {
