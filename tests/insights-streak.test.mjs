@@ -18,6 +18,23 @@ describe("racha de cierre", () => {
     assert.equal(streaks.best, 2);
   });
 
+  it("hoy abierto no corta la racha; un día vencido sin cierre sí", () => {
+    const days = [
+      { date: "2026-11-02", pct: 99, closed: true },
+      { date: "2026-11-03", pct: 99, closed: true },
+      { date: "2026-11-04", pct: 98, closed: true },
+      { date: "2026-11-05", pct: 96, closed: true },
+    ];
+    const openToday = adherenceStreaks(days, "2026-11-07");
+    assert.equal(openToday.current, 0);
+    assert.equal(openToday.best, 4);
+    const stillOpen = adherenceStreaks(
+      [...days, { date: "2026-11-06", pct: null, closed: false }],
+      "2026-11-06",
+    );
+    assert.equal(stillOpen.current, 4);
+  });
+
   it("un día sin cierre rompe y el futuro no entra", () => {
     const days = [
       { date: "2026-11-01", pct: 95, closed: true },
