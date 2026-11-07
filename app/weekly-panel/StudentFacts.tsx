@@ -11,6 +11,7 @@ import { usePanelStats } from "./PanelStatsContext";
 import { trainingProgressDisplay } from "./trainingProgress";
 import { StatusBadges } from "./ui";
 import type { StudentWeekResponse, WeightMilestone, WeightPoint } from "./types";
+import { resolveStudentWeightCards, type ParticipantWeightSource } from "./weightCards";
 
 function sourceLabel(source?: string | null, type?: string | null): string {
   if (type === "checkpoint" || source === "checkpoint") return "hito";
@@ -87,20 +88,32 @@ export function StudentFacts({
   showRoutine,
   showNutrition,
   weekClosed,
+  participantWeight = null,
 }: {
   data: StudentWeekResponse;
   showRoutine: boolean;
   showNutrition: boolean;
   weekClosed?: boolean;
+  /** Fila de Participantes ya cargada. Null: se muestra el bloque del panel tal cual. */
+  participantWeight?: ParticipantWeightSource | null;
 }) {
   const { profile, weekly, training_progress: progress } = data;
   const { percent_decimals, milestone_days, challenge_length_days, thresholds } = usePanelStats();
   const trainingLabel = trainingProgressDisplay(progress, { weekClosed });
   const changed = profile.nutrition_targets.changed_in_week || [];
   const weight = profile.weight || { initial: null, milestones: [], latest: null };
+  const panelMilestones = (weight.milestones || []).map((item) => ({ day: item.day, kg: item.kg }));
+  const resolved = resolveStudentWeightCards({
+    milestoneDays: milestone_days,
+    panelInitialKg: weight.initial?.kg ?? null,
+    panelMilestones,
+    panelLatestKg: weight.latest?.kg ?? null,
+    participant: participantWeight,
+  });
   const milestones = milestone_days.map((day) => {
     const found = (weight.milestones || []).find((item) => item.day === day);
-    return (
+    const kg = resolved.milestones.find((item) => item.day === day)?.kg ?? null;
+    const base =
       found || {
         day,
         kg: null,
@@ -108,9 +121,33 @@ export function StudentFacts({
         expected_date: null,
         source: null,
         label: `Día ${day}`,
-      }
-    );
+      };
+    if (!resolved.correctedFromParticipant) return { ...base, kg };
+    return {
+      ...base,
+      kg,
+      date: kg != null && found?.kg === kg ? found.date : null,
+      source: kg != null && found?.kg === kg ? found.source : kg != null ? "checkpoint" : null,
+    };
   });
+  const initialPoint: WeightPoint = resolved.correctedFromParticipant
+    ? {
+        kg: resolved.initial,
+        date: resolved.initial != null && weight.initial?.kg === resolved.initial ? weight.initial?.date ?? null : null,
+        source: "profile",
+        type: "initial",
+        label: "Peso inicial",
+      }
+    : weight.initial;
+  const latestPoint: WeightPoint = resolved.correctedFromParticipant
+    ? {
+        kg: resolved.latest,
+        date: resolved.latest != null && weight.latest?.kg === resolved.latest ? weight.latest?.date ?? null : null,
+        source: weight.latest?.source ?? "checkpoint",
+        type: weight.latest?.type ?? "control",
+        label: "Último peso",
+      }
+    : weight.latest;
   const rest = profile.habit_plan.rest_weekdays || [];
 
   return (
@@ -131,7 +168,7 @@ export function StudentFacts({
         <div className="wp-weight-card">
           <dt>Peso</dt>
           <dd className="wp-weight-cols">
-            <WeightMini title="Inicial" point={weight.initial} />
+            <WeightMini title="Inicial" point={initialPoint} />
             {milestones.map((item) => (
               <WeightMini
                 key={item.day}
@@ -140,7 +177,7 @@ export function StudentFacts({
                 pendingHint={item.expected_date ? formatDateShort(item.expected_date) : null}
               />
             ))}
-            <WeightMini title="Último" point={weight.latest} emptyLatest={!weight.latest || weight.latest.kg == null} />
+            <WeightMini title="Último" point={latestPoint} emptyLatest={!latestPoint || latestPoint.kg == null} />
           </dd>
         </div>
         <div>
