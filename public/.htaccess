@@ -1,0 +1,8 @@
+# El shell (index.html) no se cachea. Sin esta cabecera el navegador aplica
+# frescura heurística y sigue pidiendo los assets del deploy anterior
+# (esos sí van con max-age de un año).
+<IfModule mod_headers.c>
+  <FilesMatch "^index\.html$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+</IfModule>
