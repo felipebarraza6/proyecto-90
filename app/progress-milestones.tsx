@@ -12,7 +12,7 @@ import type { PanelConfig } from "./weekly-panel/types";
 type Row = Record<string, unknown>;
 
 function valueFor(person: Row, checkpoints: Row[], day: number, key: "weight" | "adherence") {
-  if (day === 0) return key === "weight" ? person.weight : 0;
+  if (day === 0) return key === "weight" ? person.weight : null;
   if (key === "weight")
     return checkpoints.find((row) => Number(row.day) === day)?.weight ?? person[`weight_day_${day}`];
   return person[`adherence_day_${day}`];

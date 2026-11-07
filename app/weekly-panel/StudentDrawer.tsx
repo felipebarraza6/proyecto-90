@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { fetchAnalysis, fetchStudentWeek } from "./api";
 import { AnalysisPanel } from "./AnalysisPanel";
+import { liveMacroAverages } from "./macroWeekAverage";
 import { CommentsThread } from "./CommentsThread";
 import { FeedbackBox } from "./FeedbackBox";
 import { HabitPlanEditor } from "./HabitPlanEditor";
@@ -258,6 +259,7 @@ export function StudentDrawer({
             loading={analysisLoading}
             error={analysisError}
             weekClosed={weekClosed}
+            liveMacroAverages={data ? liveMacroAverages(data.table.rows) : undefined}
             onRetry={() => {
               analysisRefresh.current = true;
               setAnalysisReload((n) => n + 1);
