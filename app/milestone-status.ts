@@ -85,6 +85,9 @@ export function formatMilestoneAdherence(
   day: number,
   currentDay?: number,
 ): string {
+  // El hito Inicio es la foto de peso. No hay ventana de adherencia ese día:
+  // un 0 del payload (adherence_day_0 o un tramo "done") no es una medición.
+  if (day === 0) return "Sin medición";
   const stage = stageForMilestone(adherenceStagesOf(person), day);
   const status = stageStatus(stage?.status);
   const pct = finiteNumber(stage && stage.pct != null && stage.pct !== "" ? stage.pct : person[`adherence_day_${day}`]);
@@ -93,9 +96,6 @@ export function formatMilestoneAdherence(
     return pct == null ? "en curso" : `${Math.round(pct)}% en curso`;
   }
   if (status === "done") return formatPct(pct);
-  // El hito Inicio es la foto de peso. No hay ventana de adherencia ese día:
-  // un 0 del payload no es una medición y no se muestra como 0%.
-  if (day === 0) return "Sin medición";
   const unlocked = currentDay != null && currentDay >= day;
   if (unlocked && pct != null) return `${Math.round(pct)}%`;
   return "—";
