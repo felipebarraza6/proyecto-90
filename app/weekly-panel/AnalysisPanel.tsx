@@ -1,4 +1,10 @@
 import { formatDateShort, formatDateTime } from "./format";
+import {
+  averageDrift,
+  formatRecordedAverage,
+  metricKeyFromAlert,
+  type MacroAverageKey,
+} from "./macroWeekAverage";
 import { RetryError, SkeletonTable } from "./ui";
 import type { AnalysisResponse } from "./types";
 
@@ -19,12 +25,26 @@ function evidenceLine(alert: NonNullable<AnalysisResponse["alerts"]>[number]): s
   return parts.join(" · ");
 }
 
+function driftNote(
+  alert: NonNullable<AnalysisResponse["alerts"]>[number],
+  live: Partial<Record<MacroAverageKey, number>> | undefined,
+): string | null {
+  if (!live) return null;
+  const key = metricKeyFromAlert(alert.evidence?.metric, alert.title, alert.code);
+  if (!key || live[key] == null) return null;
+  const drift = averageDrift(alert.evidence?.avg, live[key]);
+  if (!drift) return null;
+  const unit = alert.evidence?.unit ? ` ${alert.evidence.unit}` : "";
+  return `La tabla muestra el promedio vigente de los días con registro: ${formatRecordedAverage(drift.live)}${unit}. El análisis conserva ${formatRecordedAverage(drift.evidence)}${unit} del momento en que se generó.`;
+}
+
 export function AnalysisPanel({
   data,
   loading,
   error,
   onRetry,
   weekClosed,
+  liveMacroAverages: liveAverages,
 }: {
   data: AnalysisResponse | null;
   loading: boolean;
@@ -32,6 +52,7 @@ export function AnalysisPanel({
   onRetry: () => void;
   /** Semana cerrada según weeks/week.is_closed (PR #80). */
   weekClosed?: boolean;
+  liveMacroAverages?: Partial<Record<MacroAverageKey, number>>;
 }) {
   const coverage = data?.coverage;
   const days = coverage?.days_with_data;
@@ -99,6 +120,9 @@ export function AnalysisPanel({
               <li key={alert.code} className={`wp-alert ${severityClass(alert.severity)}`}>
                 <h3>{alert.title}</h3>
                 <p>{evidenceLine(alert)}</p>
+                {driftNote(alert, liveAverages) ? (
+                  <p className="wp-obs">{driftNote(alert, liveAverages)}</p>
+                ) : null}
                 {alert.affected_days?.length ? (
                   <small>
                     Días: {alert.affected_days.map((d) => formatDateShort(d)).join(", ")}

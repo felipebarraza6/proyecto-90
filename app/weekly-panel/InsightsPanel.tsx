@@ -1,11 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchStudentWeek, fetchWeeks } from "./api";
 import {
+  AdherenceLegend,
+  AdherenceMonthCalendar,
+  HabitLegend,
+  HabitMonthCalendar,
+  MonthNav,
+} from "./adherenceCalendar";
+import {
   adherenceStreaks,
   monthAdherenceSummary,
   type ClosureDay,
 } from "./insightsMath";
 import type { MacroCell, StudentWeekResponse, TableRow, WeekOption } from "./types";
+
+const STREAK_RULE =
+  "La racha suma cierres con más de 80%. Un día ya vencido sin ese cierre la corta. Hoy, si sigue abierto, no la corta ni la alarga. Un día sin registro no entra como 0.";
 
 const HABITS = [
   { id: "water", label: "Agua" },
@@ -31,51 +41,14 @@ export function canOpenInsights(role: string, specialty?: string): boolean {
 function monthLabel(month: string): string {
   const parsed = new Date(`${month}-01T12:00:00Z`);
   if (Number.isNaN(parsed.getTime())) return month;
-  return parsed.toLocaleDateString("es-CL", { month: "long", year: "numeric", timeZone: "UTC" });
+  const label = parsed.toLocaleDateString("es-CL", { month: "long", year: "numeric", timeZone: "UTC" });
+  return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
 function shiftMonth(month: string, delta: number): string {
   const [year, mon] = month.split("-").map(Number);
   const date = new Date(Date.UTC(year, mon - 1 + delta, 1));
   return date.toISOString().slice(0, 7);
-}
-
-function pctTone(pct: number): string {
-  if (pct >= 90) return "mark-high";
-  if (pct >= 80) return "mark-mid";
-  return "mark-low";
-}
-
-function DailyAdherenceCalendar({
-  month,
-  today,
-  closures,
-}: {
-  month: string;
-  today: string;
-  closures: ClosureDay[];
-}) {
-  const byDate = new Map(closures.map((day) => [day.date, day]));
-  return (
-    <div className="wp-insights-cal" aria-label="Adherencia diaria del mes">
-      {["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"].map((label) => (
-        <span key={label}>{label}</span>
-      ))}
-      {monthGrid(month).map((date, index) => {
-        if (!date) return <span key={`pad-ad-${index}`} />;
-        if (date > today) return <span key={date} className="mark-empty">{date.slice(8)}</span>;
-        const day = byDate.get(date);
-        const pct = day?.closed && day.pct != null && Number.isFinite(day.pct) ? day.pct : null;
-        if (pct == null) return <span key={date} className="mark-empty" title={`${date}: sin cierre`}>{date.slice(8)}</span>;
-        const shown = Math.round(pct);
-        return (
-          <span key={date} className={pctTone(pct)} title={`${date}: ${shown}%`}>
-            {shown}%
-          </span>
-        );
-      })}
-    </div>
-  );
 }
 
 function MacroChart({
@@ -113,18 +86,6 @@ function MacroChart({
       </div>
     </div>
   );
-}
-
-function monthGrid(month: string): (string | null)[] {
-  const [year, mon] = month.split("-").map(Number);
-  const first = new Date(Date.UTC(year, mon - 1, 1));
-  const startPad = (first.getUTCDay() + 6) % 7;
-  const days = new Date(Date.UTC(year, mon, 0)).getUTCDate();
-  const cells: (string | null)[] = Array.from({ length: startPad }, () => null);
-  for (let day = 1; day <= days; day += 1) {
-    cells.push(`${month}-${String(day).padStart(2, "0")}`);
-  }
-  return cells;
 }
 
 function weeksOverlapping(weeks: WeekOption[], month: string): WeekOption[] {
@@ -257,19 +218,18 @@ export function StaffInsights({
           ) : (
             <p className="wp-insights-summary">
               <strong>{summary.averagePct == null ? "—" : `${Math.round(summary.averagePct)}%`}</strong>
-              Adherencia consolidada de {monthLabel(month)} · {summary.above80} días &gt; 80% de {summary.closedDays} con cierre. Los días sin registro no entran como 0. 80% exacto no suma racha.
+              Adherencia consolidada de {monthLabel(month)} · {summary.above80} días &gt; 80% de {summary.closedDays} con cierre. {STREAK_RULE}
             </p>
           )}
           <h4>Adherencia diaria</h4>
-          <DailyAdherenceCalendar month={month} today={today} closures={closures} />
-          <div className="wp-insights-filters">
-            <button type="button" className="secondary" onClick={() => setMonth((value) => shiftMonth(value, -1))}>
-              Mes anterior
-            </button>
-            <b>{monthLabel(month)}</b>
-            <button type="button" className="secondary" onClick={() => setMonth((value) => shiftMonth(value, 1))}>
-              Mes siguiente
-            </button>
+          <MonthNav
+            label={monthLabel(month)}
+            onPrev={() => setMonth((value) => shiftMonth(value, -1))}
+            onNext={() => setMonth((value) => shiftMonth(value, 1))}
+          />
+          <AdherenceMonthCalendar month={month} today={today} closures={closures} />
+          <AdherenceLegend />
+          <div className="wp-insights-filters" role="group" aria-label="Hábito del calendario">
             {HABITS.map((item) => (
               <button key={item.id} type="button" className="secondary" aria-pressed={habit === item.id} onClick={() => setHabit(item.id)}>
                 {item.label}
@@ -278,23 +238,13 @@ export function StaffInsights({
           </div>
           {loading ? <p className="wp-insights-note">Cargando semanas del mes…</p> : null}
           {error ? <p className="wp-insights-note">{error}</p> : null}
-          <div className="wp-insights-cal" aria-label={`Calendario de ${habit}`}>
-            {["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"].map((label) => (
-              <span key={label}>{label}</span>
-            ))}
-            {monthGrid(month).map((date, index) => {
-              if (!date) return <span key={`pad-${index}`} />;
-              if (date > today) return <span key={date} className="mark-empty">{date.slice(8)}</span>;
-              const status = habitMarks.get(`${habit}:${date}`);
-              const className = status === "met" ? "mark-met" : status === "missed" ? "mark-missed" : "mark-empty";
-              const label = status === "met" ? "cumplido" : status === "missed" ? "no cumplido" : status === "rest" ? "descanso" : "sin registro";
-              return (
-                <span key={date} className={className} title={`${date}: ${label}`}>
-                  {date.slice(8)}
-                </span>
-              );
-            })}
-          </div>
+          <HabitMonthCalendar
+            month={month}
+            today={today}
+            habitLabel={HABITS.find((item) => item.id === habit)?.label || habit}
+            marks={new Map([...habitMarks.entries()].filter(([key]) => key.startsWith(`${habit}:`)).map(([key, status]) => [key.slice(habit.length + 1), status]))}
+          />
+          <HabitLegend />
           <div className="wp-insights-filters">
             <label>
               Semana del gráfico
@@ -424,7 +374,7 @@ export function StudentInsights({
       {hasSeries ? (
         <p className="wp-insights-summary">
           <strong>{summary.averagePct == null ? "—" : `${Math.round(summary.averagePct)}%`}</strong>
-          Adherencia consolidada de {monthLabel(month)} · {summary.above80} días &gt; 80% de {summary.closedDays} con cierre. 80% exacto no suma racha.
+          Adherencia consolidada de {monthLabel(month)} · {summary.above80} días &gt; 80% de {summary.closedDays} con cierre. {STREAK_RULE}
         </p>
       ) : (
         <p className="wp-insights-note">
@@ -432,29 +382,27 @@ export function StudentInsights({
         </p>
       )}
       <h4>Adherencia diaria</h4>
-      <DailyAdherenceCalendar month={month} today={today} closures={closures} />
-      <div className="wp-insights-filters">
-        <button type="button" className="secondary" onClick={() => setMonth((value) => shiftMonth(value, -1))}>Mes anterior</button>
-        <b>{monthLabel(month)}</b>
-        <button type="button" className="secondary" onClick={() => setMonth((value) => shiftMonth(value, 1))}>Mes siguiente</button>
+      <MonthNav
+        label={monthLabel(month)}
+        onPrev={() => setMonth((value) => shiftMonth(value, -1))}
+        onNext={() => setMonth((value) => shiftMonth(value, 1))}
+      />
+      <AdherenceMonthCalendar month={month} today={today} closures={closures} />
+      <AdherenceLegend />
+      <div className="wp-insights-filters" role="group" aria-label="Hábito del calendario">
         {HABITS.map((item) => (
           <button key={item.id} type="button" className="secondary" aria-pressed={habit === item.id} onClick={() => setHabit(item.id)}>
             {item.label}
           </button>
         ))}
       </div>
-      <div className="wp-insights-cal" aria-label={`Calendario de ${habit}`}>
-        {["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"].map((label) => (
-          <span key={label}>{label}</span>
-        ))}
-        {monthGrid(month).map((date, index) => {
-          if (!date) return <span key={`pad-${index}`} />;
-          if (date > today) return <span key={date} className="mark-empty">{date.slice(8)}</span>;
-          const status = marks.get(`${habit}:${date}`);
-          const className = status === "met" ? "mark-met" : status === "missed" ? "mark-missed" : "mark-empty";
-          return <span key={date} className={className}>{date.slice(8)}</span>;
-        })}
-      </div>
+      <HabitMonthCalendar
+        month={month}
+        today={today}
+        habitLabel={HABITS.find((item) => item.id === habit)?.label || habit}
+        marks={new Map([...marks.entries()].filter(([key]) => key.startsWith(`${habit}:`)).map(([key, status]) => [key.slice(habit.length + 1), status]))}
+      />
+      <HabitLegend />
       <div className="wp-insights-filters">
         <label>
           Semana

@@ -93,7 +93,10 @@ export function formatMilestoneAdherence(
     return pct == null ? "en curso" : `${Math.round(pct)}% en curso`;
   }
   if (status === "done") return formatPct(pct);
-  const unlocked = day === 0 || (currentDay != null && currentDay >= day);
+  // El hito Inicio es la foto de peso. No hay ventana de adherencia ese día:
+  // un 0 del payload no es una medición y no se muestra como 0%.
+  if (day === 0) return "Sin medición";
+  const unlocked = currentDay != null && currentDay >= day;
   if (unlocked && pct != null) return `${Math.round(pct)}%`;
   return "—";
 }
