@@ -14,9 +14,6 @@ import {
 } from "./insightsMath";
 import type { MacroCell, StudentWeekResponse, TableRow, WeekOption } from "./types";
 
-const STREAK_RULE =
-  "La racha suma cierres con más de 80%. Un día ya vencido sin ese cierre la corta. Hoy, si sigue abierto, no la corta ni la alarga. Un día sin registro no entra como 0.";
-
 const HABITS = [
   { id: "water", label: "Agua" },
   { id: "macros", label: "Cumplimiento macros" },
@@ -32,6 +29,33 @@ const MACROS = [
 
 type HabitId = (typeof HABITS)[number]["id"];
 type MacroId = (typeof MACROS)[number]["id"];
+
+const MACRO_Y_MAX: Record<MacroId, number> = {
+  calories: 5000,
+  protein: 300,
+  fats: 150,
+  carbs: 500,
+};
+
+const MACRO_Y_UNIT: Record<MacroId, string> = {
+  calories: "kcal",
+  protein: "g",
+  fats: "g",
+  carbs: "g",
+};
+
+const CHART_H = 140;
+
+function weekdayTick(iso: string): string {
+  const parsed = new Date(`${iso}T12:00:00Z`);
+  if (Number.isNaN(parsed.getTime())) return iso.slice(8);
+  return parsed.toLocaleDateString("es-CL", { weekday: "short", timeZone: "UTC" }).replace(".", "");
+}
+
+function formatAxisValue(value: number, unit: string): string {
+  const rounded = Number.isInteger(value) ? String(value) : String(Math.round(value * 10) / 10);
+  return `${rounded} ${unit}`;
+}
 
 export function canOpenInsights(role: string, specialty?: string): boolean {
   if (role === "admin") return true;
@@ -55,34 +79,50 @@ function MacroChart({
   days,
   values,
   target,
-  macroLabel,
+  macro,
 }: {
   days: { date: string }[];
   values: (number | null)[];
   target: number | null;
-  macroLabel: string;
+  macro: MacroId;
 }) {
-  const max = Math.max(target || 0, ...values.map((value) => value || 0), 1);
-  const targetBottom = target == null ? null : Math.max(0, Math.round((target / max) * 110));
+  const max = MACRO_Y_MAX[macro];
+  const unit = MACRO_Y_UNIT[macro];
+  const yPos = (value: number) => Math.max(0, Math.min(CHART_H, Math.round((value / max) * CHART_H)));
+  const targetClipped = target == null || !Number.isFinite(target) ? null : Math.min(Math.max(target, 0), max);
+  const targetBottom = targetClipped == null ? null : yPos(targetClipped);
   return (
-    <div>
-      <p className="wp-insights-note">
-        La línea es la meta{target == null ? " (sin objetivo en esta semana)" : `: ${target}`}. Las barras son el cierre de cada día. Un día sin valor no se dibuja como 0.
-      </p>
-      <div className="wp-insights-chart">
+    <div className="wp-insights-chart" aria-label={`${MACROS.find((item) => item.id === macro)?.label || macro} · eje Y en ${unit}`}>
+      <div className="wp-insights-yaxis" aria-hidden="true" style={{ height: CHART_H }}>
+        <span className="wp-insights-ytick wp-insights-ymax">{formatAxisValue(max, unit)}</span>
+        {targetBottom != null ? (
+          <span className="wp-insights-ytick wp-insights-ymeta" style={{ bottom: targetBottom }}>
+            {formatAxisValue(target as number, unit)}
+          </span>
+        ) : null}
+        <span className="wp-insights-ytick wp-insights-yzero">{formatAxisValue(0, unit)}</span>
+      </div>
+      <div className="wp-insights-plot" style={{ height: CHART_H }}>
         {targetBottom != null ? <i className="wp-insights-target" style={{ bottom: targetBottom }} /> : null}
-        <div className="wp-insights-bars" aria-label={`Barras de ${macroLabel}`}>
+        <div className="wp-insights-bars" aria-label={`Barras de ${macro}`}>
           {days.map((day, index) => {
             const value = values[index];
-            const height = value == null ? 0 : Math.max(4, Math.round((value / max) * 110));
+            if (value == null) {
+              return <div key={day.date} className="wp-insights-bar-slot" title={`${day.date}: sin valor`} />;
+            }
+            const height = value <= 0 ? 0 : Math.max(3, yPos(Math.min(value, max)));
             return (
-              <div key={day.date}>
-                {value == null ? <small>—</small> : <i style={{ height }} title={`${day.date}: ${value}`} />}
-                <small>{day.date.slice(8)}</small>
+              <div key={day.date} className="wp-insights-bar-slot">
+                {height > 0 ? <i style={{ height }} title={`${day.date}: ${value} ${unit}`} /> : null}
               </div>
             );
           })}
         </div>
+      </div>
+      <div className="wp-insights-xaxis" aria-hidden="true">
+        {days.map((day) => (
+          <small key={day.date}>{weekdayTick(day.date)}</small>
+        ))}
       </div>
     </div>
   );
@@ -218,7 +258,7 @@ export function StaffInsights({
           ) : (
             <p className="wp-insights-summary">
               <strong>{summary.averagePct == null ? "—" : `${Math.round(summary.averagePct)}%`}</strong>
-              Adherencia consolidada de {monthLabel(month)} · {summary.above80} días &gt; 80% de {summary.closedDays} con cierre. {STREAK_RULE}
+              Adherencia consolidada de {monthLabel(month)} · {summary.above80} días &gt; 80% de {summary.closedDays} con cierre. La racha suma cierres con más de 80%. Un día ya vencido sin ese cierre la corta. Hoy, si sigue abierto, no la corta ni la alarga. Un día sin registro no entra como 0.
             </p>
           )}
           <h4>Adherencia diaria</h4>
@@ -280,7 +320,7 @@ function MacroBars({ week, macro }: { week: StudentWeekResponse | null; macro: M
     const value = (cell as MacroCell).value;
     return value == null || !Number.isFinite(Number(value)) ? null : Number(value);
   });
-  return <MacroChart days={week.table.days} values={values} target={target} macroLabel={macro} />;
+  return <MacroChart days={week.table.days} values={values} target={target} macro={macro} />;
 }
 
 type LogRow = Record<string, unknown>;
@@ -374,7 +414,7 @@ export function StudentInsights({
       {hasSeries ? (
         <p className="wp-insights-summary">
           <strong>{summary.averagePct == null ? "—" : `${Math.round(summary.averagePct)}%`}</strong>
-          Adherencia consolidada de {monthLabel(month)} · {summary.above80} días &gt; 80% de {summary.closedDays} con cierre. {STREAK_RULE}
+          Adherencia consolidada de {monthLabel(month)} · {summary.above80} días &gt; 80% de {summary.closedDays} con cierre. La racha suma cierres con más de 80%. Un día ya vencido sin ese cierre la corta. Hoy, si sigue abierto, no la corta ni la alarga. Un día sin registro no entra como 0.
         </p>
       ) : (
         <p className="wp-insights-note">
@@ -418,7 +458,7 @@ export function StudentInsights({
           </button>
         ))}
       </div>
-      <MacroChart days={bars} values={bars.map((bar) => bar.value)} target={target} macroLabel={macro} />
+      <MacroChart days={bars} values={bars.map((bar) => bar.value)} target={target} macro={macro} />
     </section>
   );
 }
