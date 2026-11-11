@@ -12,6 +12,7 @@ import { GuideEditor } from "./guide-editor";
 import { NutritionDailyReview, NutritionDailyTracker } from "./nutrition-daily";
 import { ProgressMilestones } from "./progress-milestones";
 import { StudentInsights } from "./weekly-panel/InsightsPanel";
+import { StudentSelfWeek } from "./weekly-panel/StudentSelfWeek";
 import { todayIsoInTimezone } from "./timezone";
 import { adherenceStagesOf, missingWeightNotice, stageRows } from "./milestone-status";
 import { panelConfigBlocksStaff, reviewerMutationBlocked } from "./staff-guards";
@@ -220,6 +221,7 @@ if(screen==="Progreso"){
     </section>
     <div className="section-heading" style={{ marginTop: '24px' }}><h2>General</h2></div>
     <StudentInsights habitLogs={data.habitDaily||[]} nutritionLogs={data.nutritionDaily||[]} targets={macroPlan} today={todayIsoInTimezone(panelConfig?.timezone)} adherenceDaily={data.adherenceDaily||[]} macrosDaily={"macrosDaily" in data ? (data.macrosDaily||[]) : undefined}/>
+    <StudentSelfWeek config={panelConfig}/>
     <section className="stats-grid four"><Metric label="Entrenamientos" value={`${trainingAdherence}%`} note={data.adherence&&"training_current_week_pct" in data.adherence?`Promedio de semanas completas${data.adherence.training_current_week_pct!=null?` · semana actual ${data.adherence.training_current_week_pct}%`:""}`:"✓ sobre días transcurridos"} green/><Metric label="Macros" value={`${macrosAdherence}%`} note="Días dentro de tus objetivos"/><Metric label="Agua" value={`${Number(data.adherence?.water_pct||0)}%`} note="✓ sobre días transcurridos"/><Metric label="Adherencia total" value={`${Number(data.adherence?.adherence||0)}%`} note={formulaNote}/></section><ParticipantHabitMatrix records={data.habitDaily||[]} nutritionRecords={data.nutritionDaily||[]} plan={macroPlan} startDate={data.profile?.challenge_start||program?.assigned_at||data.profile?.created_at} act={act} panelConfig={panelConfig}/></>;
 }
 

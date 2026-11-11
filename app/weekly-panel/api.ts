@@ -6,6 +6,7 @@ import {
   type StreamTokenResponse,
 } from "./messageStream";
 import { normalizePanelConfig } from "./panelConfig";
+import { myWeekPanelPath, myWeeksPanelPath } from "./studentSelfWeek";
 import type {
   AnalysisResponse,
   CommentItem,
@@ -103,6 +104,19 @@ export async function patchPanelConfig(
 
 export function fetchWeeks(signal?: AbortSignal): Promise<WeeksResponse> {
   return panelFetch<WeeksResponse>("/weeks", { signal });
+}
+
+/** Semanas del alumno autenticado. No lista la sucursal. */
+export function fetchMyWeeks(signal?: AbortSignal): Promise<WeeksResponse> {
+  return panelFetch<WeeksResponse>(myWeeksPanelPath(), { signal });
+}
+
+/** Ficha semanal del alumno de la sesión (sin summary_text ni análisis). */
+export function fetchMyWeek(
+  week: string,
+  signal?: AbortSignal,
+): Promise<StudentWeekResponse> {
+  return panelFetch<StudentWeekResponse>(myWeekPanelPath(week), { signal });
 }
 
 export function fetchWeek(
