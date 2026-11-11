@@ -5,6 +5,7 @@ import {
   AdherenceMonthCalendar,
   HabitLegend,
   HabitMonthCalendar,
+  MacroPctLegend,
   MonthNav,
 } from "./adherenceCalendar";
 import {
@@ -356,12 +357,15 @@ export function StudentInsights({
   targets,
   today,
   adherenceDaily = [],
+  macrosDaily,
 }: {
   habitLogs: LogRow[];
   nutritionLogs: LogRow[];
   targets: { calories?: number | null; protein?: number | null; carbs?: number | null; fats?: number | null } | null;
   today: string;
   adherenceDaily?: { date?: string; pct?: number | null }[];
+  /** undefined = API vieja (sin la clave). null en un día = sin datos, no 0 %. */
+  macrosDaily?: { date?: string; pct?: number | null }[] | null;
 }) {
   const [month, setMonth] = useState(today.slice(0, 7));
   const [habit, setHabit] = useState<HabitId>("water");
@@ -405,6 +409,17 @@ export function StudentInsights({
   const streaks = useMemo(() => adherenceStreaks(closures, today), [closures, today]);
   const summary = useMemo(() => monthAdherenceSummary(closures, month, today), [closures, month, today]);
   const hasSeries = adherenceDaily.length > 0;
+  const macroPcts = useMemo(() => {
+    const map = new Map<string, number | null>();
+    for (const row of macrosDaily || []) {
+      const date = String(row.date || "").slice(0, 10);
+      if (!date) continue;
+      const raw = row.pct;
+      const pct = raw == null || !Number.isFinite(Number(raw)) ? null : Number(raw);
+      map.set(date, pct);
+    }
+    return map;
+  }, [macrosDaily]);
   const nutrition = useMemo(
     () => new Map(nutritionLogs.map((row) => [String(row.log_date || "").slice(0, 10), row])),
     [nutritionLogs],
@@ -458,9 +473,15 @@ export function StudentInsights({
         month={month}
         today={today}
         habitLabel={HABITS.find((item) => item.id === habit)?.label || habit}
-        marks={new Map([...marks.entries()].filter(([key]) => key.startsWith(`${habit}:`)).map(([key, status]) => [key.slice(habit.length + 1), status]))}
+        marks={habit === "macros" ? new Map() : new Map([...marks.entries()].filter(([key]) => key.startsWith(`${habit}:`)).map(([key, status]) => [key.slice(habit.length + 1), status]))}
+        percents={habit === "macros" ? macroPcts : undefined}
       />
-      <HabitLegend />
+      {habit === "macros" && macrosDaily == null ? (
+        <p className="wp-insights-note">
+          El perfil todavía no trae macrosDaily. El calendario de macros queda vacío hasta que la API publique el % diario.
+        </p>
+      ) : null}
+      {habit === "macros" ? <MacroPctLegend /> : <HabitLegend />}
       <div className="wp-insights-filters">
         <label>
           Semana
