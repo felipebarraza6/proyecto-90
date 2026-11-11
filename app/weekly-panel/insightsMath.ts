@@ -21,15 +21,15 @@ function eachDate(from: string, to: string): string[] {
   return out;
 }
 
-/** Un cierre cuenta solo si hay registro y el % es estrictamente mayor a 80. */
+/** Un cierre cuenta si hay registro y el % es ≥ 80. */
 export function closureCounts(day: ClosureDay | undefined): boolean {
   if (!day?.closed || day.pct == null || !Number.isFinite(day.pct)) return false;
-  return day.pct > 80;
+  return day.pct >= 80;
 }
 
 /**
- * Racha. Un día cerrado cuenta solo con % > 80.
- * Un día ya vencido sin cierre, o con cierre ≤ 80, corta la racha.
+ * Racha. Un día cerrado cuenta con % ≥ 80.
+ * Un día ya vencido sin cierre, o con cierre < 80, corta la racha.
  * Hoy, si todavía no tiene cierre, no alarga ni corta: la racha mira el último día cerrado.
  * El futuro no entra. Un día sin registro no se guarda como 0.
  */
@@ -67,7 +67,7 @@ export function monthAdherenceSummary(
   const sum = inMonth.reduce((total, day) => total + Number(day.pct), 0);
   return {
     closedDays: inMonth.length,
-    above80: inMonth.filter((day) => Number(day.pct) > 80).length,
+    above80: inMonth.filter((day) => Number(day.pct) >= 80).length,
     averagePct: sum / inMonth.length,
   };
 }

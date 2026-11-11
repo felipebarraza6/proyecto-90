@@ -128,6 +128,38 @@ function MacroChart({
   );
 }
 
+function AdherenceStatCards({
+  current,
+  best,
+  consolidated,
+  consolidatedNote,
+}: {
+  current: string | number;
+  best: string | number;
+  consolidated: string;
+  consolidatedNote: string;
+}) {
+  return (
+    <div className="wp-insights-streaks">
+      <article>
+        <small>Racha actual</small>
+        <strong>{current}</strong>
+        <small>días seguidos ≥ 80%</small>
+      </article>
+      <article>
+        <small>Mejor racha</small>
+        <strong>{best}</strong>
+        <small>en el historial</small>
+      </article>
+      <article>
+        <small>Adherencia consolidada</small>
+        <strong>{consolidated}</strong>
+        <small>{consolidatedNote}</small>
+      </article>
+    </div>
+  );
+}
+
 function weeksOverlapping(weeks: WeekOption[], month: string): WeekOption[] {
   const start = `${month}-01`;
   const [year, mon] = month.split("-").map(Number);
@@ -239,28 +271,21 @@ export function StaffInsights({
       </div>
       {open ? (
         <>
-          <div className="wp-insights-streaks">
-            <article>
-              <small>Racha actual</small>
-              <strong>{missingDaily ? "—" : streaks.current}</strong>
-              <small>días seguidos con cierre &gt; 80%</small>
-            </article>
-            <article>
-              <small>Mejor racha</small>
-              <strong>{missingDaily ? "—" : streaks.best}</strong>
-              <small>en el historial cargado</small>
-            </article>
-          </div>
+          <AdherenceStatCards
+            current={missingDaily ? "—" : streaks.current}
+            best={missingDaily ? "—" : streaks.best}
+            consolidated={missingDaily || summary.averagePct == null ? "—" : `${Math.round(summary.averagePct)}%`}
+            consolidatedNote={
+              missingDaily
+                ? "sin serie diaria"
+                : `${monthLabel(month)} · ${summary.above80} de ${summary.closedDays} ≥ 80%`
+            }
+          />
           {missingDaily ? (
             <p className="wp-insights-note">
               La ficha semanal no trae la fila de adherencia diaria. La racha y el consolidado no se calculan.
             </p>
-          ) : (
-            <p className="wp-insights-summary">
-              <strong>{summary.averagePct == null ? "—" : `${Math.round(summary.averagePct)}%`}</strong>
-              Adherencia consolidada de {monthLabel(month)} · {summary.above80} días &gt; 80% de {summary.closedDays} con cierre. La racha suma cierres con más de 80%. Un día ya vencido sin ese cierre la corta. Hoy, si sigue abierto, no la corta ni la alarga. Un día sin registro no entra como 0.
-            </p>
-          )}
+          ) : null}
           <h4>Adherencia diaria</h4>
           <MonthNav
             label={monthLabel(month)}
@@ -399,24 +424,17 @@ export function StudentInsights({
         <span className="eyebrow">INSIGHTS</span>
         <h3>Tu adherencia</h3>
       </div>
-      <div className="wp-insights-streaks">
-        <article>
-          <small>Racha actual</small>
-          <strong>{hasSeries ? streaks.current : "—"}</strong>
-          <small>días seguidos con cierre &gt; 80%</small>
-        </article>
-        <article>
-          <small>Mejor racha</small>
-          <strong>{hasSeries ? streaks.best : "—"}</strong>
-          <small>en la serie diaria</small>
-        </article>
-      </div>
-      {hasSeries ? (
-        <p className="wp-insights-summary">
-          <strong>{summary.averagePct == null ? "—" : `${Math.round(summary.averagePct)}%`}</strong>
-          Adherencia consolidada de {monthLabel(month)} · {summary.above80} días &gt; 80% de {summary.closedDays} con cierre. La racha suma cierres con más de 80%. Un día ya vencido sin ese cierre la corta. Hoy, si sigue abierto, no la corta ni la alarga. Un día sin registro no entra como 0.
-        </p>
-      ) : (
+      <AdherenceStatCards
+        current={hasSeries ? streaks.current : "—"}
+        best={hasSeries ? streaks.best : "—"}
+        consolidated={!hasSeries || summary.averagePct == null ? "—" : `${Math.round(summary.averagePct)}%`}
+        consolidatedNote={
+          hasSeries
+            ? `${monthLabel(month)} · ${summary.above80} de ${summary.closedDays} ≥ 80%`
+            : "sin serie diaria"
+        }
+      />
+      {hasSeries ? null : (
         <p className="wp-insights-note">
           El perfil todavía no trae adherenceDaily. La racha y el consolidado quedan en blanco hasta que la API publique la serie. No se recalcula con los registros sueltos.
         </p>
