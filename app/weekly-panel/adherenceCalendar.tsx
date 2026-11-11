@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { ClosureDay } from "./insightsMath";
+import { macroCalendarLabel, macroCalendarTone } from "./macroCalendar";
 
 export function monthGrid(month: string): (string | null)[] {
   const [year, mon] = month.split("-").map(Number);
@@ -51,6 +52,18 @@ export function AdherenceLegend() {
       <li><i className="tone-mid" /> 80% a 89%</li>
       <li><i className="tone-low" /> bajo 80%</li>
       <li><i className="tone-empty" /> sin cierre</li>
+      <li><i className="tone-today" /> hoy</li>
+      <li><i className="tone-future" /> futuro</li>
+    </ul>
+  );
+}
+
+export function MacroPctLegend() {
+  return (
+    <ul className="wp-cal-legend" aria-label="Leyenda de cumplimiento de macros">
+      <li><i className="tone-high" /> 80% o más</li>
+      <li><i className="tone-low" /> bajo 80%</li>
+      <li><i className="tone-empty" /> sin datos</li>
       <li><i className="tone-today" /> hoy</li>
       <li><i className="tone-future" /> futuro</li>
     </ul>
@@ -148,11 +161,14 @@ export function HabitMonthCalendar({
   today,
   habitLabel,
   marks,
+  percents,
 }: {
   month: string;
   today: string;
   habitLabel: string;
   marks: Map<string, string>;
+  /** % diario de la API. Si viene, el día muestra el número (no ✓/✗). null = celda vacía. */
+  percents?: Map<string, number | null>;
 }) {
   return (
     <div className="wp-cal" aria-label={`Calendario de ${habitLabel}`}>
@@ -167,6 +183,24 @@ export function HabitMonthCalendar({
             return (
               <DayShell key={date} date={date} today={today} className="is-future" title={`${date}: día futuro`}>
                 <b>{dayNum}</b>
+              </DayShell>
+            );
+          }
+          if (percents) {
+            const pct = percents.has(date) ? percents.get(date) : null;
+            const tone = macroCalendarTone(pct);
+            if (tone == null || pct == null) {
+              return (
+                <DayShell key={date} date={date} today={today} className="is-empty" title={`${date}: sin datos`}>
+                  <b>{dayNum}</b>
+                </DayShell>
+              );
+            }
+            const shown = macroCalendarLabel(pct);
+            return (
+              <DayShell key={date} date={date} today={today} className={tone} title={`${date}: ${shown}`}>
+                <b>{dayNum}</b>
+                <small>{shown}</small>
               </DayShell>
             );
           }
