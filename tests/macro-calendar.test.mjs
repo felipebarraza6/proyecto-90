@@ -20,7 +20,8 @@ describe("calendario de cumplimiento macros", () => {
   });
 
   it("el rótulo redondea el % de la API", () => {
-    assert.equal(macroCalendarLabel(79.6), "80%");
+    assert.equal(macroCalendarLabel(79.6), "79%"); // no cruza el umbral: sigue rojo
     assert.equal(macroCalendarLabel(80), "80%");
   });
 });
+

@@ -12,6 +12,9 @@ export function macroCalendarTone(pct: number | null | undefined): MacroCalendar
   return pct >= MACRO_CALENDAR_GREEN_MIN ? "tone-high" : "tone-low";
 }
 
+/** Redondea sin cruzar el umbral: 79,6 se muestra 79 % (rojo), no 80 %. */
 export function macroCalendarLabel(pct: number): string {
-  return `${Math.round(pct)}%`;
+  const rounded = Math.round(pct);
+  const shown = pct < MACRO_CALENDAR_GREEN_MIN && rounded >= MACRO_CALENDAR_GREEN_MIN ? Math.floor(pct) : rounded;
+  return `${shown}%`;
 }
