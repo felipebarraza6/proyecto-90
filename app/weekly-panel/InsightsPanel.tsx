@@ -5,6 +5,7 @@ import {
   AdherenceMonthCalendar,
   HabitLegend,
   HabitMonthCalendar,
+  MacroPctLegend,
   MonthNav,
 } from "./adherenceCalendar";
 import {
@@ -13,9 +14,6 @@ import {
   type ClosureDay,
 } from "./insightsMath";
 import type { MacroCell, StudentWeekResponse, TableRow, WeekOption } from "./types";
-
-const STREAK_RULE =
-  "La racha suma cierres con más de 80%. Un día ya vencido sin ese cierre la corta. Hoy, si sigue abierto, no la corta ni la alarga. Un día sin registro no entra como 0.";
 
 const HABITS = [
   { id: "water", label: "Agua" },
@@ -32,6 +30,33 @@ const MACROS = [
 
 type HabitId = (typeof HABITS)[number]["id"];
 type MacroId = (typeof MACROS)[number]["id"];
+
+const MACRO_Y_MAX: Record<MacroId, number> = {
+  calories: 5000,
+  protein: 300,
+  fats: 150,
+  carbs: 500,
+};
+
+const MACRO_Y_UNIT: Record<MacroId, string> = {
+  calories: "kcal",
+  protein: "g",
+  fats: "g",
+  carbs: "g",
+};
+
+const CHART_H = 140;
+
+function weekdayTick(iso: string): string {
+  const parsed = new Date(`${iso}T12:00:00Z`);
+  if (Number.isNaN(parsed.getTime())) return iso.slice(8);
+  return parsed.toLocaleDateString("es-CL", { weekday: "short", timeZone: "UTC" }).replace(".", "");
+}
+
+function formatAxisValue(value: number, unit: string): string {
+  const rounded = Number.isInteger(value) ? String(value) : String(Math.round(value * 10) / 10);
+  return `${rounded} ${unit}`;
+}
 
 export function canOpenInsights(role: string, specialty?: string): boolean {
   if (role === "admin") return true;
@@ -55,35 +80,83 @@ function MacroChart({
   days,
   values,
   target,
-  macroLabel,
+  macro,
 }: {
   days: { date: string }[];
   values: (number | null)[];
   target: number | null;
-  macroLabel: string;
+  macro: MacroId;
 }) {
-  const max = Math.max(target || 0, ...values.map((value) => value || 0), 1);
-  const targetBottom = target == null ? null : Math.max(0, Math.round((target / max) * 110));
+  const max = MACRO_Y_MAX[macro];
+  const unit = MACRO_Y_UNIT[macro];
+  const yPos = (value: number) => Math.max(0, Math.min(CHART_H, Math.round((value / max) * CHART_H)));
+  const targetClipped = target == null || !Number.isFinite(target) ? null : Math.min(Math.max(target, 0), max);
+  const targetBottom = targetClipped == null ? null : yPos(targetClipped);
   return (
-    <div>
-      <p className="wp-insights-note">
-        La línea es la meta{target == null ? " (sin objetivo en esta semana)" : `: ${target}`}. Las barras son el cierre de cada día. Un día sin valor no se dibuja como 0.
-      </p>
-      <div className="wp-insights-chart">
+    <div className="wp-insights-chart" aria-label={`${MACROS.find((item) => item.id === macro)?.label || macro} · eje Y en ${unit}`}>
+      <div className="wp-insights-yaxis" aria-hidden="true" style={{ height: CHART_H }}>
+        <span className="wp-insights-ytick wp-insights-ymax">{formatAxisValue(max, unit)}</span>
+        {targetBottom != null ? (
+          <span className="wp-insights-ytick wp-insights-ymeta" style={{ bottom: targetBottom }}>
+            {formatAxisValue(target as number, unit)}
+          </span>
+        ) : null}
+        <span className="wp-insights-ytick wp-insights-yzero">{formatAxisValue(0, unit)}</span>
+      </div>
+      <div className="wp-insights-plot" style={{ height: CHART_H }}>
         {targetBottom != null ? <i className="wp-insights-target" style={{ bottom: targetBottom }} /> : null}
-        <div className="wp-insights-bars" aria-label={`Barras de ${macroLabel}`}>
+        <div className="wp-insights-bars" aria-label={`Barras de ${macro}`}>
           {days.map((day, index) => {
             const value = values[index];
-            const height = value == null ? 0 : Math.max(4, Math.round((value / max) * 110));
+            if (value == null) {
+              return <div key={day.date} className="wp-insights-bar-slot" title={`${day.date}: sin valor`} />;
+            }
+            const height = value <= 0 ? 0 : Math.max(3, yPos(Math.min(value, max)));
             return (
-              <div key={day.date}>
-                {value == null ? <small>—</small> : <i style={{ height }} title={`${day.date}: ${value}`} />}
-                <small>{day.date.slice(8)}</small>
+              <div key={day.date} className="wp-insights-bar-slot">
+                {height > 0 ? <i style={{ height }} title={`${day.date}: ${value} ${unit}`} /> : null}
               </div>
             );
           })}
         </div>
       </div>
+      <div className="wp-insights-xaxis" aria-hidden="true">
+        {days.map((day) => (
+          <small key={day.date}>{weekdayTick(day.date)}</small>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AdherenceStatCards({
+  current,
+  best,
+  consolidated,
+  consolidatedNote,
+}: {
+  current: string | number;
+  best: string | number;
+  consolidated: string;
+  consolidatedNote: string;
+}) {
+  return (
+    <div className="wp-insights-streaks">
+      <article>
+        <small>Racha actual</small>
+        <strong>{current}</strong>
+        <small>días seguidos ≥ 80%</small>
+      </article>
+      <article>
+        <small>Mejor racha</small>
+        <strong>{best}</strong>
+        <small>en el historial</small>
+      </article>
+      <article>
+        <small>Adherencia consolidada</small>
+        <strong>{consolidated}</strong>
+        <small>{consolidatedNote}</small>
+      </article>
     </div>
   );
 }
@@ -199,28 +272,21 @@ export function StaffInsights({
       </div>
       {open ? (
         <>
-          <div className="wp-insights-streaks">
-            <article>
-              <small>Racha actual</small>
-              <strong>{missingDaily ? "—" : streaks.current}</strong>
-              <small>días seguidos con cierre &gt; 80%</small>
-            </article>
-            <article>
-              <small>Mejor racha</small>
-              <strong>{missingDaily ? "—" : streaks.best}</strong>
-              <small>en el historial cargado</small>
-            </article>
-          </div>
+          <AdherenceStatCards
+            current={missingDaily ? "—" : streaks.current}
+            best={missingDaily ? "—" : streaks.best}
+            consolidated={missingDaily || summary.averagePct == null ? "—" : `${Math.round(summary.averagePct)}%`}
+            consolidatedNote={
+              missingDaily
+                ? "sin serie diaria"
+                : `${monthLabel(month)} · ${summary.above80} de ${summary.closedDays} ≥ 80%`
+            }
+          />
           {missingDaily ? (
             <p className="wp-insights-note">
               La ficha semanal no trae la fila de adherencia diaria. La racha y el consolidado no se calculan.
             </p>
-          ) : (
-            <p className="wp-insights-summary">
-              <strong>{summary.averagePct == null ? "—" : `${Math.round(summary.averagePct)}%`}</strong>
-              Adherencia consolidada de {monthLabel(month)} · {summary.above80} días &gt; 80% de {summary.closedDays} con cierre. {STREAK_RULE}
-            </p>
-          )}
+          ) : null}
           <h4>Adherencia diaria</h4>
           <MonthNav
             label={monthLabel(month)}
@@ -280,7 +346,7 @@ function MacroBars({ week, macro }: { week: StudentWeekResponse | null; macro: M
     const value = (cell as MacroCell).value;
     return value == null || !Number.isFinite(Number(value)) ? null : Number(value);
   });
-  return <MacroChart days={week.table.days} values={values} target={target} macroLabel={macro} />;
+  return <MacroChart days={week.table.days} values={values} target={target} macro={macro} />;
 }
 
 type LogRow = Record<string, unknown>;
@@ -291,12 +357,15 @@ export function StudentInsights({
   targets,
   today,
   adherenceDaily = [],
+  macrosDaily,
 }: {
   habitLogs: LogRow[];
   nutritionLogs: LogRow[];
   targets: { calories?: number | null; protein?: number | null; carbs?: number | null; fats?: number | null } | null;
   today: string;
   adherenceDaily?: { date?: string; pct?: number | null }[];
+  /** undefined = API vieja (sin la clave). null en un día = sin datos, no 0 %. */
+  macrosDaily?: { date?: string; pct?: number | null }[] | null;
 }) {
   const [month, setMonth] = useState(today.slice(0, 7));
   const [habit, setHabit] = useState<HabitId>("water");
@@ -340,6 +409,17 @@ export function StudentInsights({
   const streaks = useMemo(() => adherenceStreaks(closures, today), [closures, today]);
   const summary = useMemo(() => monthAdherenceSummary(closures, month, today), [closures, month, today]);
   const hasSeries = adherenceDaily.length > 0;
+  const macroPcts = useMemo(() => {
+    const map = new Map<string, number | null>();
+    for (const row of macrosDaily || []) {
+      const date = String(row.date || "").slice(0, 10);
+      if (!date) continue;
+      const raw = row.pct;
+      const pct = raw == null || !Number.isFinite(Number(raw)) ? null : Number(raw);
+      map.set(date, pct);
+    }
+    return map;
+  }, [macrosDaily]);
   const nutrition = useMemo(
     () => new Map(nutritionLogs.map((row) => [String(row.log_date || "").slice(0, 10), row])),
     [nutritionLogs],
@@ -359,24 +439,17 @@ export function StudentInsights({
         <span className="eyebrow">INSIGHTS</span>
         <h3>Tu adherencia</h3>
       </div>
-      <div className="wp-insights-streaks">
-        <article>
-          <small>Racha actual</small>
-          <strong>{hasSeries ? streaks.current : "—"}</strong>
-          <small>días seguidos con cierre &gt; 80%</small>
-        </article>
-        <article>
-          <small>Mejor racha</small>
-          <strong>{hasSeries ? streaks.best : "—"}</strong>
-          <small>en la serie diaria</small>
-        </article>
-      </div>
-      {hasSeries ? (
-        <p className="wp-insights-summary">
-          <strong>{summary.averagePct == null ? "—" : `${Math.round(summary.averagePct)}%`}</strong>
-          Adherencia consolidada de {monthLabel(month)} · {summary.above80} días &gt; 80% de {summary.closedDays} con cierre. {STREAK_RULE}
-        </p>
-      ) : (
+      <AdherenceStatCards
+        current={hasSeries ? streaks.current : "—"}
+        best={hasSeries ? streaks.best : "—"}
+        consolidated={!hasSeries || summary.averagePct == null ? "—" : `${Math.round(summary.averagePct)}%`}
+        consolidatedNote={
+          hasSeries
+            ? `${monthLabel(month)} · ${summary.above80} de ${summary.closedDays} ≥ 80%`
+            : "sin serie diaria"
+        }
+      />
+      {hasSeries ? null : (
         <p className="wp-insights-note">
           El perfil todavía no trae adherenceDaily. La racha y el consolidado quedan en blanco hasta que la API publique la serie. No se recalcula con los registros sueltos.
         </p>
@@ -400,9 +473,15 @@ export function StudentInsights({
         month={month}
         today={today}
         habitLabel={HABITS.find((item) => item.id === habit)?.label || habit}
-        marks={new Map([...marks.entries()].filter(([key]) => key.startsWith(`${habit}:`)).map(([key, status]) => [key.slice(habit.length + 1), status]))}
+        marks={habit === "macros" ? new Map() : new Map([...marks.entries()].filter(([key]) => key.startsWith(`${habit}:`)).map(([key, status]) => [key.slice(habit.length + 1), status]))}
+        percents={habit === "macros" ? macroPcts : undefined}
       />
-      <HabitLegend />
+      {habit === "macros" && macrosDaily == null ? (
+        <p className="wp-insights-note">
+          El perfil todavía no trae macrosDaily. El calendario de macros queda vacío hasta que la API publique el % diario.
+        </p>
+      ) : null}
+      {habit === "macros" ? <MacroPctLegend /> : <HabitLegend />}
       <div className="wp-insights-filters">
         <label>
           Semana
@@ -418,7 +497,7 @@ export function StudentInsights({
           </button>
         ))}
       </div>
-      <MacroChart days={bars} values={bars.map((bar) => bar.value)} target={target} macroLabel={macro} />
+      <MacroChart days={bars} values={bars.map((bar) => bar.value)} target={target} macro={macro} />
     </section>
   );
 }
