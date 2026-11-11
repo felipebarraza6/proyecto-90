@@ -92,8 +92,11 @@ export function ParticipantNotesList({ notes }: { notes: Row[] }) {
 }
 
 export function NoticesPanel({ notices, act, compact = false }: { notices: Row[]; act?: (payload: Row) => Promise<unknown>; compact?: boolean }) {
+  const [expanded, setExpanded] = useState(false);
   const rows = [...notices].sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")));
   if (rows.length === 0) return null;
+  const canToggle = rows.length > 2;
+  const visible = expanded || !canToggle ? rows : rows.slice(0, 2);
   return (
     <section className={`notices-panel ${compact ? "compact" : ""}`}>
       <header>
@@ -104,7 +107,7 @@ export function NoticesPanel({ notices, act, compact = false }: { notices: Row[]
         <span>{rows.filter(row => !row.read).length} sin leer</span>
       </header>
       <ul>
-        {rows.map(row => (
+        {visible.map(row => (
           <li key={String(row.id)} className={row.read ? "read" : "unread"}>
             <div>
               <b>{String(row.title || "Aviso")}</b>
@@ -117,6 +120,11 @@ export function NoticesPanel({ notices, act, compact = false }: { notices: Row[]
           </li>
         ))}
       </ul>
+      {canToggle ? (
+        <button type="button" className="secondary notices-toggle" onClick={() => setExpanded((value) => !value)}>
+          {expanded ? "Mostrar menos" : "Mostrar todos"}
+        </button>
+      ) : null}
     </section>
   );
 }
