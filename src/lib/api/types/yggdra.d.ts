@@ -19477,6 +19477,46 @@ export interface paths {
         patch: operations["p90_panel_config_partial_update"];
         trace?: never;
     };
+    "/api/p90/panel/me/week": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Ficha semanal del alumno autenticado
+         * @description Ficha semanal del alumno autenticado (compute_student_week, sin IA).
+         */
+        get: operations["p90_panel_me_week_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/p90/panel/me/weeks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Semanas del alumno autenticado
+         * @description Listado de semanas del alumno autenticado (sin listado de sucursal).
+         */
+        get: operations["p90_panel_me_weeks_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/p90/panel/messages/broadcast": {
         parameters: {
             query?: never;
@@ -121028,6 +121068,48 @@ export interface operations {
                     "application/json": components["schemas"]["PanelConfig"];
                     "*/*": components["schemas"]["PanelConfig"];
                 };
+            };
+        };
+    };
+    p90_panel_me_week_retrieve: {
+        parameters: {
+            query?: {
+                format?: "binary" | "json";
+                week?: string;
+                week_start?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    p90_panel_me_weeks_retrieve: {
+        parameters: {
+            query?: {
+                format?: "binary" | "json";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

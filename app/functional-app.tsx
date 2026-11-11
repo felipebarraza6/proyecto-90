@@ -12,6 +12,7 @@ import { GuideEditor } from "./guide-editor";
 import { NutritionDailyReview, NutritionDailyTracker } from "./nutrition-daily";
 import { ProgressMilestones } from "./progress-milestones";
 import { StudentInsights } from "./weekly-panel/InsightsPanel";
+import { StudentSelfWeek } from "./weekly-panel/StudentSelfWeek";
 import { todayIsoInTimezone } from "./timezone";
 import { adherenceStagesOf, missingWeightNotice, stageRows } from "./milestone-status";
 import { panelConfigBlocksStaff, reviewerMutationBlocked } from "./staff-guards";
@@ -36,7 +37,7 @@ type Row = Record<string, unknown>;
 type ViewerRole = "admin" | "professional" | "participant" | "reviewer";
 type Viewer = { id: string; role: ViewerRole; name: string; email: string; status: string };
 type Credentials = { email: string; password: string; emailed: boolean } | null;
-type AppData = { viewer: Viewer; professionalSpecialty?:string; preview?:{role:string;label:string;targetId?:string}; participants?: Row[]; professionals?:Row[]; administrators?:Row[]; habitDaily?:Row[]; nutritionDaily?:Row[]; adherenceOutreach?:Row[]; programs?: Row[]; programGuides?:Row[]; exercises?: Row[]; workouts?: Row[]; workoutExercises?: Row[]; content?: Row[]; sessions?: Row[]; meetingRequests?:Row[]; profile?: Row; nutrition?: Row | null; effective_macro_targets?: Row | null; nutritionGuidePdf?: string | null; macrosVisible?:boolean; checkpoints?: Row[]; metrics?: Row[]; adherence?:Row|null; adherenceDaily?:Row[]; intakeQuestions?:Row[]; intakeResponses?:Row[]; notes?:Row[]; notices?:Row[]; messages?:Row[] };
+type AppData = { viewer: Viewer; professionalSpecialty?:string; preview?:{role:string;label:string;targetId?:string}; participants?: Row[]; professionals?:Row[]; administrators?:Row[]; habitDaily?:Row[]; nutritionDaily?:Row[]; adherenceOutreach?:Row[]; programs?: Row[]; programGuides?:Row[]; exercises?: Row[]; workouts?: Row[]; workoutExercises?: Row[]; content?: Row[]; sessions?: Row[]; meetingRequests?:Row[]; profile?: Row; nutrition?: Row | null; effective_macro_targets?: Row | null; nutritionGuidePdf?: string | null; macrosVisible?:boolean; checkpoints?: Row[]; metrics?: Row[]; adherence?:Row|null; adherenceDaily?:Row[]; macrosDaily?:Row[]; intakeQuestions?:Row[]; intakeResponses?:Row[]; notes?:Row[]; notices?:Row[]; messages?:Row[] };
 type Modal = null | "participant" | "professional" | "professional-edit" | "admin" | "admin-edit" | "program" | "workout" | "workout-edit" | "exercise" | "exercise-edit" | "attach" | "attach-edit" | "nutrition" | "content" | "session" | "meeting-review" | "participant-edit" | "participant-body" | "intake-view" | "professional-student";
 
 const TOOLS="Contenido/Herramientas";
@@ -219,7 +220,8 @@ if(screen==="Progreso"){
       {adherenceStages.map((row) => <Metric key={row.label} label={row.label} value={row.value} note={row.note}/>)}
     </section>
     <div className="section-heading" style={{ marginTop: '24px' }}><h2>General</h2></div>
-    <StudentInsights habitLogs={data.habitDaily||[]} nutritionLogs={data.nutritionDaily||[]} targets={macroPlan} today={todayIsoInTimezone(panelConfig?.timezone)} adherenceDaily={data.adherenceDaily||[]}/>
+    <StudentInsights habitLogs={data.habitDaily||[]} nutritionLogs={data.nutritionDaily||[]} targets={macroPlan} today={todayIsoInTimezone(panelConfig?.timezone)} adherenceDaily={data.adherenceDaily||[]} macrosDaily={"macrosDaily" in data ? (data.macrosDaily||[]) : undefined}/>
+    <StudentSelfWeek config={panelConfig}/>
     <section className="stats-grid four"><Metric label="Entrenamientos" value={`${trainingAdherence}%`} note={data.adherence&&"training_current_week_pct" in data.adherence?`Promedio de semanas completas${data.adherence.training_current_week_pct!=null?` · semana actual ${data.adherence.training_current_week_pct}%`:""}`:"✓ sobre días transcurridos"} green/><Metric label="Macros" value={`${macrosAdherence}%`} note="Días dentro de tus objetivos"/><Metric label="Agua" value={`${Number(data.adherence?.water_pct||0)}%`} note="✓ sobre días transcurridos"/><Metric label="Adherencia total" value={`${Number(data.adherence?.adherence||0)}%`} note={formulaNote}/></section><ParticipantHabitMatrix records={data.habitDaily||[]} nutritionRecords={data.nutritionDaily||[]} plan={macroPlan} startDate={data.profile?.challenge_start||program?.assigned_at||data.profile?.created_at} act={act} panelConfig={panelConfig}/></>;
 }
 
