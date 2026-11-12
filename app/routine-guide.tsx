@@ -1,23 +1,20 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
+import { parseGuideContent, type GuideNode } from "./guide-content";
 
 type Row = Record<string, unknown>;
-type GuideNode = { type:string; level?:number; text?:string; name?:string; prescription?:string; headers?:string[]; rows?:Array<{cells:string[];exerciseName?:string}>; __i?:number };
 // Edición en línea de textos e indicaciones (solo staff). ``index`` es la
 // posición original del nodo en la rutina (antes de reordenar descansos).
 type TextEdit = { save:(index:number,text:string,expected:string)=>Promise<void>; remove:(index:number,expected:string)=>Promise<void>; add:(position:number,text:string)=>Promise<void>; total:number };
-type Guide = { programId:string; title:string; overview:GuideNode[]; days:Array<{title:string;nodes:GuideNode[]}>; reference:GuideNode[] };
 type GuideTab = { key:string; label:string; title?:string; nodes:GuideNode[] };
-
-function parseGuide(row:Row):Guide|null { try{return JSON.parse(String(row.content_json||"")) as Guide}catch{return null} }
 function normalize(value:string){return value.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim()}
 function dayTitle(value:string,index:number){const detail=value.includes("—")?value.split("—").slice(1).join("—").trim():value;return `DÍA ${index+1}${detail?` — ${detail}`:""}`}
 function neutralSchedule(value:string){return value.replace(/lunes\s+a\s+jueves/gi,"4 días por semana").replace(/lunes\s+a\s+viernes/gi,"5 días por semana")}
 function restFirst(nodes:GuideNode[]){if(!nodes.some(node=>node.type==="heading"&&/calentamiento/i.test(node.text||"")))return nodes;const arranged:GuideNode[]=[];for(let index=0;index<nodes.length;){const heading=nodes[index];if(heading.type!=="heading"){arranged.push(heading);index++;continue}let end=index+1;while(end<nodes.length&&nodes[end].type!=="heading")end++;const body=nodes.slice(index+1,end);if(/calentamiento/i.test(heading.text||""))arranged.push(heading,...body);else{const rests=body.filter(item=>item.type==="paragraph"&&/^descanso/i.test(item.text||""));arranged.push(heading,...rests,...body.filter(item=>!rests.includes(item)))}index=end}return arranged}
 
 export function RoutineGuide({guideRow,exercises,admin=false,openExercise,act}:{guideRow:Row;exercises:Row[];admin?:boolean;openExercise?:(row:Row)=>void;act?:(payload:Row)=>Promise<unknown>}){
-  const guide=useMemo(()=>parseGuide(guideRow),[guideRow]);
+  const guide=useMemo(()=>parseGuideContent(guideRow),[guideRow]);
   const tabs:GuideTab[]=guide?[{key:"overview",label:"Guía general",nodes:guide.overview},...guide.days.map((day,index)=>({key:`day-${index}`,label:`Día ${index+1}`,title:dayTitle(day.title,index),nodes:day.nodes})),...(guide.reference.length?[{key:"reference",label:"Progresión",title:"Progresión, intensidad y referencias",nodes:guide.reference}]:[])]:[];
   const [active,setActive]=useState(tabs.find(item=>item.key.startsWith("day-"))?.key||tabs[0]?.key||""); const tab=tabs.find(item=>item.key===active)||tabs.find(item=>item.key.startsWith("day-"))||tabs[0];
   const exerciseMap=useMemo(()=>new Map(exercises.map(item=>[normalize(String(item.name)),item])),[exercises]);
