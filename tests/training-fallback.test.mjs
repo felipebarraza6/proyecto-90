@@ -3,9 +3,12 @@ import { describe, it } from "node:test";
 import { isRenderableGuide, parseGuideContent } from "../app/guide-content.ts";
 import {
   buildWorkoutDays,
+  clampDayIndex,
   exercisePrescription,
   filterWorkoutsForProgram,
+  parseTrainingDayHash,
   resolveTrainingView,
+  trainingDayHash,
 } from "../app/training-view.ts";
 
 const guideRow = (content) => ({ content_json: content });
@@ -115,9 +118,18 @@ describe("resolveTrainingView", () => {
     days: [{ title: "D1", nodes: [{ type: "exercise", name: "S" }] }],
     reference: [],
   }));
+  const emergencyGuide = guideRow(JSON.stringify({
+    title: "Rutina general en casa — Nivel básico",
+    overview: [],
+    days: [{ title: "Casa", nodes: [{ type: "exercise", name: "Plancha" }] }],
+    reference: [],
+  }));
   const invalidGuide = guideRow("{rota");
-  const workouts = [{ id: 1, program_id: 10, name: "Día 1" }];
-  const links = [{ id: "a", workout_id: 1, exercise_name: "Sentadilla" }];
+  const workouts = [{ id: 1, program_id: 10, name: "Día 1" }, { id: 2, program_id: 10, name: "Día 2 · Empuje" }];
+  const links = [
+    { id: "a", workout_id: 1, exercise_name: "Sentadilla" },
+    { id: "b", workout_id: 2, exercise_name: "Press banca" },
+  ];
 
   it("guía válida -> guide con la guía principal", () => {
     const view = resolveTrainingView({ guideRow: validGuide, workouts, workoutExercises: links, programId: 10 });
@@ -126,8 +138,63 @@ describe("resolveTrainingView", () => {
     assert.equal(view.emergencyGuideRow, undefined);
   });
 
-  it("guía principal inválida pero emergencia válida -> guide de emergencia", () => {
-    const view = resolveTrainingView({ guideRow: invalidGuide, emergencyGuideRow: validGuide, workouts, workoutExercises: links, programId: 10 });
+  it("principal con guía -> guía principal aunque exista emergencia", () => {
+    const view = resolveTrainingView({
+      guideRow: validGuide,
+      emergencyGuideRow: emergencyGuide,
+      workouts,
+      workoutExercises: links,
+      programId: 10,
+    });
+    assert.equal(view.kind, "guide");
+    assert.equal(view.primaryGuideRow, validGuide);
+  });
+
+  it("principal sin guía con workouts + emergencia con guía -> workouts del principal", () => {
+    const view = resolveTrainingView({
+      guideRow: invalidGuide,
+      emergencyGuideRow: emergencyGuide,
+      workouts,
+      workoutExercises: links,
+      programId: 10,
+    });
+    assert.equal(view.kind, "workouts");
+    assert.equal(view.days.length, 2);
+    assert.equal(view.days[0].name, "Día 1");
+    assert.equal(view.days[1].name, "Día 2 · Empuje");
+  });
+
+  it("modo emergencia explícito -> guía de emergencia aunque el principal tenga workouts", () => {
+    const view = resolveTrainingView({
+      emergencyGuideRow: emergencyGuide,
+      workouts,
+      workoutExercises: links,
+      programId: 10,
+      emergencyMode: true,
+    });
+    assert.equal(view.kind, "guide");
+    assert.equal(view.emergencyGuideRow, emergencyGuide);
+    assert.equal(view.primaryGuideRow, undefined);
+  });
+
+  it("sin contenido principal -> guía de emergencia", () => {
+    const view = resolveTrainingView({
+      emergencyGuideRow: emergencyGuide,
+      workouts: [],
+      workoutExercises: [],
+    });
+    assert.equal(view.kind, "guide");
+    assert.equal(view.emergencyGuideRow, emergencyGuide);
+    assert.equal(view.primaryGuideRow, undefined);
+  });
+
+  it("guía principal inválida, sin workouts, emergencia válida -> guide de emergencia", () => {
+    const view = resolveTrainingView({
+      guideRow: invalidGuide,
+      emergencyGuideRow: validGuide,
+      workouts: [],
+      workoutExercises: [],
+    });
     assert.equal(view.kind, "guide");
     assert.equal(view.primaryGuideRow, undefined);
     assert.equal(view.emergencyGuideRow, validGuide);
@@ -136,14 +203,14 @@ describe("resolveTrainingView", () => {
   it("guía inválida + workouts -> workouts", () => {
     const view = resolveTrainingView({ guideRow: invalidGuide, workouts, workoutExercises: links, programId: 10 });
     assert.equal(view.kind, "workouts");
-    assert.equal(view.days.length, 1);
+    assert.equal(view.days.length, 2);
     assert.equal(view.days[0].name, "Día 1");
   });
 
   it("sin guía + workouts -> workouts", () => {
     const view = resolveTrainingView({ workouts, workoutExercises: links, programId: 10 });
     assert.equal(view.kind, "workouts");
-    assert.equal(view.days.length, 1);
+    assert.equal(view.days.length, 2);
     assert.equal(view.days[0].exercises[0].exercise_name, "Sentadilla");
   });
 
@@ -158,5 +225,26 @@ describe("resolveTrainingView", () => {
     assert.equal(view.kind, "workouts");
     assert.equal(view.days.length, 1);
     assert.equal(view.days[0].name, "Mío");
+  });
+});
+
+describe("selección de día", () => {
+  it("Día 2 abre el índice 1 y sobrevive en el hash", () => {
+    assert.equal(parseTrainingDayHash("#dia=2"), 1);
+    assert.equal(trainingDayHash(1), "#dia=2");
+    assert.equal(clampDayIndex(1, 4), 1);
+  });
+
+  it("clampa índices fuera de rango al primer o último día", () => {
+    assert.equal(clampDayIndex(undefined, 4), 0);
+    assert.equal(clampDayIndex(-1, 4), 0);
+    assert.equal(clampDayIndex(9, 4), 3);
+    assert.equal(clampDayIndex(0, 0), 0);
+  });
+
+  it("parsea hash vacío o inválido como sin selección", () => {
+    assert.equal(parseTrainingDayHash(""), undefined);
+    assert.equal(parseTrainingDayHash("#otra=cosa"), undefined);
+    assert.equal(parseTrainingDayHash("#dia=abc"), undefined);
   });
 });
