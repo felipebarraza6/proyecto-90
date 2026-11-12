@@ -43,7 +43,7 @@ export function exercisePrescription(exercise: Row): string {
 
 export type TrainingView =
   | { kind: "guide"; primaryGuideRow?: Row; emergencyGuideRow?: Row }
-  | { kind: "workouts"; days: WorkoutDay[] }
+  | { kind: "workouts"; days: WorkoutDay[]; emergencyGuideRow?: Row }
   | { kind: "empty" };
 
 export function resolveTrainingView(args: {
@@ -52,19 +52,51 @@ export function resolveTrainingView(args: {
   workouts: Row[];
   workoutExercises: Row[];
   programId?: unknown;
+  emergencyMode?: boolean;
 }): TrainingView {
   const primary = isRenderableGuide(args.guideRow);
   const emergency = isRenderableGuide(args.emergencyGuideRow);
-  if (primary || emergency) {
+  const emergencyRow = emergency ? args.emergencyGuideRow : undefined;
+  if (args.emergencyMode && emergency) {
     return {
       kind: "guide",
       primaryGuideRow: primary ? args.guideRow : undefined,
-      emergencyGuideRow: emergency ? args.emergencyGuideRow : undefined,
+      emergencyGuideRow: emergencyRow,
+    };
+  }
+  if (primary) {
+    return {
+      kind: "guide",
+      primaryGuideRow: args.guideRow,
+      emergencyGuideRow: emergencyRow,
     };
   }
   const days = buildWorkoutDays(
     filterWorkoutsForProgram(args.workouts, args.programId),
     args.workoutExercises,
   );
-  return days.length ? { kind: "workouts", days } : { kind: "empty" };
+  if (days.length) return { kind: "workouts", days, emergencyGuideRow: emergencyRow };
+  if (emergency) {
+    return { kind: "guide", emergencyGuideRow: emergencyRow };
+  }
+  return { kind: "empty" };
+}
+
+/** Hash 1-based: `#dia=2` → índice 1. */
+export function parseTrainingDayHash(hash: string): number | undefined {
+  const match = String(hash || "").match(/(?:^|#|&)dia=(\d+)/i);
+  if (!match) return undefined;
+  const oneBased = Number(match[1]);
+  if (!Number.isFinite(oneBased) || oneBased < 1) return undefined;
+  return oneBased - 1;
+}
+
+export function trainingDayHash(dayIndex: number): string {
+  return `#dia=${dayIndex + 1}`;
+}
+
+export function clampDayIndex(index: number | undefined, count: number): number {
+  if (!count || count < 1) return 0;
+  if (index == null || !Number.isFinite(index) || index < 0) return 0;
+  return Math.min(Math.floor(index), count - 1);
 }

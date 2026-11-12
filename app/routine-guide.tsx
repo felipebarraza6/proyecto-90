@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { parseGuideContent, type GuideNode } from "./guide-content";
 
 type Row = Record<string, unknown>;
@@ -13,10 +13,13 @@ function dayTitle(value:string,index:number){const detail=value.includes("—")?
 function neutralSchedule(value:string){return value.replace(/lunes\s+a\s+jueves/gi,"4 días por semana").replace(/lunes\s+a\s+viernes/gi,"5 días por semana")}
 function restFirst(nodes:GuideNode[]){if(!nodes.some(node=>node.type==="heading"&&/calentamiento/i.test(node.text||"")))return nodes;const arranged:GuideNode[]=[];for(let index=0;index<nodes.length;){const heading=nodes[index];if(heading.type!=="heading"){arranged.push(heading);index++;continue}let end=index+1;while(end<nodes.length&&nodes[end].type!=="heading")end++;const body=nodes.slice(index+1,end);if(/calentamiento/i.test(heading.text||""))arranged.push(heading,...body);else{const rests=body.filter(item=>item.type==="paragraph"&&/^descanso/i.test(item.text||""));arranged.push(heading,...rests,...body.filter(item=>!rests.includes(item)))}index=end}return arranged}
 
-export function RoutineGuide({guideRow,exercises,admin=false,openExercise,act}:{guideRow:Row;exercises:Row[];admin?:boolean;openExercise?:(row:Row)=>void;act?:(payload:Row)=>Promise<unknown>}){
+export function RoutineGuide({guideRow,exercises,admin=false,openExercise,act,initialDayIndex,onDayIndexChange}:{guideRow:Row;exercises:Row[];admin?:boolean;openExercise?:(row:Row)=>void;act?:(payload:Row)=>Promise<unknown>;initialDayIndex?:number;onDayIndexChange?:(index:number)=>void}){
   const guide=useMemo(()=>parseGuideContent(guideRow),[guideRow]);
   const tabs:GuideTab[]=guide?[{key:"overview",label:"Guía general",nodes:guide.overview},...guide.days.map((day,index)=>({key:`day-${index}`,label:`Día ${index+1}`,title:dayTitle(day.title,index),nodes:day.nodes})),...(guide.reference.length?[{key:"reference",label:"Progresión",title:"Progresión, intensidad y referencias",nodes:guide.reference}]:[])]:[];
-  const [active,setActive]=useState(tabs.find(item=>item.key.startsWith("day-"))?.key||tabs[0]?.key||""); const tab=tabs.find(item=>item.key===active)||tabs.find(item=>item.key.startsWith("day-"))||tabs[0];
+  const preferred=initialDayIndex!=null&&Number.isFinite(initialDayIndex)?`day-${initialDayIndex}`:undefined;
+  const [active,setActive]=useState(tabs.find(item=>item.key===preferred)?.key||tabs.find(item=>item.key.startsWith("day-"))?.key||tabs[0]?.key||"");
+  useEffect(()=>{if(preferred)setActive(preferred)},[preferred]);
+  const tab=tabs.find(item=>item.key===active)||tabs.find(item=>item.key===preferred)||tabs.find(item=>item.key.startsWith("day-"))||tabs[0];
   const exerciseMap=useMemo(()=>new Map(exercises.map(item=>[normalize(String(item.name)),item])),[exercises]);
   if(!guide||!tab)return null;
   const target:Row=tab.key.startsWith("day-")?{section:"days",dayIndex:Number(tab.key.slice(4))}:{section:tab.key};
@@ -27,7 +30,7 @@ export function RoutineGuide({guideRow,exercises,admin=false,openExercise,act}:{
     add:async(position,text)=>{await act({action:"program.guide.text.add",programId:guideRow.program_id,...target,kind:"paragraph",text,position})},
   }:undefined;
   const videoAction=(name:string)=>{const exercise=exerciseMap.get(normalize(name));if(admin)return <button className="technique admin" onClick={()=>openExercise?.(exercise||{name})}>{exercise?.youtube_url?"Editar video":"＋ Agregar técnica"}</button>;return exercise?.youtube_url?<a className="technique ready" href={String(exercise.youtube_url)} target="_blank" rel="noreferrer">Ver técnica ▶</a>:<span className="technique pending">Técnica próximamente</span>};
-  return <section className="routine-guide"><header className="routine-guide-head"><div><span className="eyebrow">RUTINA DEFINITIVA · PROYECTO 90</span><h1>{guide.title}</h1><p>Selecciona el día y revisa la sesión completa antes de comenzar.</p></div><div className="guide-count"><strong>{guide.days.length}</strong><span>días por semana</span></div></header><nav className="routine-day-tabs" aria-label="Días de entrenamiento">{tabs.map(item=><button key={item.key} className={item.key===tab.key?"active":""} onClick={()=>setActive(item.key)}>{item.label}</button>)}</nav><article className="routine-document"><div className="routine-document-title"><span>{tab.key==="overview"?"ANTES DE COMENZAR":tab.key==="reference"?"PARA PROGRESAR":"SESIÓN DEL DÍA"}</span><h2>{tab.title||guide.title}</h2></div><GuideNodes key={tab.key} nodes={tab.nodes.map((node,index)=>({...node,__i:index}))} videoAction={videoAction} edit={edit}/></article></section>
+  return <section className="routine-guide"><header className="routine-guide-head"><div><span className="eyebrow">RUTINA DEFINITIVA · PROYECTO 90</span><h1>{guide.title}</h1><p>Selecciona el día y revisa la sesión completa antes de comenzar.</p></div><div className="guide-count"><strong>{guide.days.length}</strong><span>días por semana</span></div></header><nav className="routine-day-tabs" aria-label="Días de entrenamiento">{tabs.map(item=><button key={item.key} className={item.key===tab.key?"active":""} onClick={()=>{setActive(item.key);if(item.key.startsWith("day-"))onDayIndexChange?.(Number(item.key.slice(4)))}}>{item.label}</button>)}</nav><article className="routine-document"><div className="routine-document-title"><span>{tab.key==="overview"?"ANTES DE COMENZAR":tab.key==="reference"?"PARA PROGRESAR":"SESIÓN DEL DÍA"}</span><h2>{tab.title||guide.title}</h2></div><GuideNodes key={tab.key} nodes={tab.nodes.map((node,index)=>({...node,__i:index}))} videoAction={videoAction} edit={edit}/></article></section>
 }
 
 function GuideNodes({nodes:sourceNodes,videoAction,edit}:{nodes:GuideNode[];videoAction:(name:string)=>React.ReactNode;edit?:TextEdit}){
