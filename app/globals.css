@@ -705,3 +705,5 @@
   .content-category-grid{grid-template-columns:repeat(2,1fr)}
   .pay-installment-summary{grid-template-columns:1fr}
 }
+
+.exercise-notes{font-size:10px;color:var(--muted);font-style:italic;margin:4px 0 0}
