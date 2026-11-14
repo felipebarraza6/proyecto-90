@@ -14734,6 +14734,26 @@ export interface paths {
         patch: operations["forja_students_status_partial_update"];
         trace?: never;
     };
+    "/api/forja/students/me/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Ficha del alumno autenticado
+         * @description GET /api/forja/students/me/ — la ficha del rol alumno.
+         */
+        get: operations["forja_students_me_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/forja/subscriptions/": {
         parameters: {
             query?: never;
@@ -19899,11 +19919,15 @@ export interface paths {
          *
          *     GET /api/plan-checkout/groups/
          *     Superuser/staff: todos los grupos (cualquier estado). Resto: grupos
-         *     que su organización vende (PlanGroup.organization propia).
+         *     de las organizaciones que posee o donde es admin de sucursal.
          */
         get: operations["plan_checkout_groups_list"];
         put?: never;
-        post?: never;
+        /**
+         * Crear grupo de planes de la organización
+         * @description Dueño o admin de sucursal crea el grupo. Staff puede indicar organization.
+         */
+        post: operations["plan_checkout_groups_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -23290,7 +23314,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description Marcar división como pagada. */
+        /**
+         * Cobrar división de cuenta
+         * @description Cobra el monto de la división con las mismas reglas que POST /sales/orders/{id}/pay/: caja abierta, saldo pendiente, referencia obligatoria según el método y permisos sobre la orden.
+         */
         post: operations["sales_order_splits_pay_create"];
         delete?: never;
         options?: never;
@@ -52020,6 +52047,24 @@ export interface components {
             /** Notas */
             notes?: string;
         };
+        /** @description Request body de POST /api/sales/order-splits/{id}/pay/. El monto es el de la división. */
+        OrderSplitPayRequest: {
+            /**
+             * Format: uuid
+             * @description ID del método de pago activo de la sucursal.
+             */
+            payment_method?: string | null;
+            /**
+             * Format: uuid
+             * @description Alias de payment_method, igual que en el pago de la orden.
+             */
+            payment_method_id?: string | null;
+            cash_register_id?: number | null;
+            /** @default  */
+            reference: string | null;
+            /** @default  */
+            notes: string | null;
+        };
         /** @description Serializer completo para OrderSplit. */
         OrderSplitRequest: {
             /**
@@ -63037,12 +63082,6 @@ export interface components {
              */
             landing_features?: unknown;
             /**
-             * URL del frontend
-             * Format: uri
-             * @description Base de magic-links y sitio de la marca. Vacío = FRONTEND_URL global.
-             */
-            frontend_url?: string;
-            /**
              * UF de integración
              * Format: double
              * @description UF cobrada una vez, sumada al precio del plan.
@@ -68176,6 +68215,34 @@ export interface components {
         PlanCheckoutStatusResponse: {
             status: string;
             payment_url: string | null;
+        };
+        /** @description Alta de un grupo. El slug lo elige quien lo crea. La organización la pone la vista. */
+        PlanGroupCreateRequest: {
+            /**
+             * Slug del grupo
+             * @description Identificador único del grupo (ej: 'frig'). Define la URL pública.
+             */
+            name: string;
+            /**
+             * Nombre visible
+             * @description Marca mostrada en correos y pantallas de pago
+             */
+            display_name?: string;
+            description?: string;
+            /**
+             * Email de contacto
+             * Format: email
+             * @description Contacto demo / mailto fallback del modal de la landing.
+             */
+            contact_email?: string;
+            /**
+             * URL del frontend
+             * Format: uri
+             * @description Base de magic-links y sitio de la marca. Vacío = FRONTEND_URL global.
+             */
+            frontend_url?: string;
+            is_active?: boolean;
+            organization?: number | null;
         };
         /** @description Detalle completo de un grupo con todos sus planes (activos e inactivos). */
         PlanGroupDetail: {
@@ -109711,6 +109778,28 @@ export interface operations {
             };
         };
     };
+    forja_students_me_retrieve: {
+        parameters: {
+            query?: {
+                format?: "binary" | "json";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ForjaStudent"];
+                    "*/*": components["schemas"]["ForjaStudent"];
+                };
+            };
+        };
+    };
     forja_subscriptions_list: {
         parameters: {
             query?: {
@@ -121712,6 +121801,48 @@ export interface operations {
             };
         };
     };
+    plan_checkout_groups_create: {
+        parameters: {
+            query?: {
+                format?: "binary" | "json";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlanGroupCreateRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PlanGroupCreateRequest"];
+                "multipart/form-data": components["schemas"]["PlanGroupCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanGroupDetail"];
+                    "*/*": components["schemas"]["PlanGroupDetail"];
+                };
+            };
+            /** @description No response body */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No response body */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     plan_checkout_groups_retrieve: {
         parameters: {
             query?: {
@@ -129040,11 +129171,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody: {
+        requestBody?: {
             content: {
-                "application/json": components["schemas"]["OrderSplitRequest"];
-                "application/x-www-form-urlencoded": components["schemas"]["OrderSplitRequest"];
-                "multipart/form-data": components["schemas"]["OrderSplitRequest"];
+                "application/json": components["schemas"]["OrderSplitPayRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["OrderSplitPayRequest"];
+                "multipart/form-data": components["schemas"]["OrderSplitPayRequest"];
             };
         };
         responses: {
