@@ -697,6 +697,22 @@
 .content-category-toolbar h3{margin:0;font-size:18px}
 .content-category-empty{color:var(--muted);font-size:12px;padding:18px 4px}
 .pay-installment-card{max-width:640px;margin:0 auto}
+
+.guide-nodes>p,.guide-copy{white-space:pre-line}
+.guide-list{margin:8px 0 12px;padding-left:1.25em;color:#aab4ae;font-size:10px;line-height:1.65;white-space:pre-line}
+ul.guide-list{list-style:disc}
+ol.guide-list{list-style:decimal}
+.guide-list li{margin:2px 0}
+.program-delete-row{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:8px 0 4px;padding:12px 14px;border:1px solid #5a3030;border-radius:12px;background:#1a1010}
+.program-delete-row p{margin:0;font-size:10px;max-width:520px}
+.guide-section-editor,.guide-indication-card,.guide-block-card,.guide-note-row,.guide-block-add{display:grid;gap:8px;margin:12px 0;padding:12px;border:1px solid var(--line);border-radius:12px;background:#0e1410}
+.guide-section-editor textarea,.guide-indication-card textarea,.guide-note-row textarea,.guide-block-head input,.guide-block-add input{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #344139;border-radius:8px;background:#0b100d;color:var(--text);font:inherit;font-size:13px;font-weight:400;line-height:1.45;white-space:pre-wrap}
+.guide-section-editor textarea{min-height:220px}
+.guide-section-editor p,.guide-indication-card p{margin:0;font-size:10px}
+.guide-card-actions,.guide-row-actions,.guide-move-row,.guide-block-head,.guide-block-add{display:flex;flex-wrap:wrap;gap:8px;align-items:end}
+.guide-block-head label,.guide-move-row label,.guide-block-add label{flex:1;min-width:180px}
+.guide-editor .guide-edit-list article{grid-template-columns:32px minmax(140px,1fr) minmax(140px,.8fr) auto}
+.guide-day-editor{display:grid;gap:8px}
 .pay-installment-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:28px auto 8px;max-width:520px;text-align:left}
 .pay-installment-summary div{border:1px solid #26352d;border-radius:12px;background:#0c110e;padding:14px 16px}
 .pay-installment-summary dt{font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:#8f9993;margin:0}
