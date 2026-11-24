@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import { afterEach, describe, it, mock } from "node:test";
 import { computeAdherenceAlerts } from "../app/adherence-alerts.ts";
-import { countPendingNutrition, weekHasClosedDays } from "../app/centro-control.ts";
+import {
+  countPendingNutrition,
+  isNutritionPending,
+  weekHasClosedDays,
+} from "../app/centro-control.ts";
 
 afterEach(() => {
   mock.timers.reset();
@@ -23,6 +27,31 @@ describe("centro de control: nutrición pendiente", () => {
     assert.equal(countPendingNutrition(people), 3);
     assert.equal(countPendingNutrition([people[3]]), 0);
     assert.equal(countPendingNutrition([people[0]]), 1);
+  });
+
+  it("isNutritionPending coincide con countPendingNutrition sobre el mismo set", () => {
+    const people = [
+      { id: 1 },
+      { id: 2, nutrition_id: "n2", nutrition_status: "pending_review" },
+      { id: 3, nutrition_id: "n3", nutrition_status: "rejected" },
+      { id: 4, nutrition_id: "n4", nutrition_status: "approved" },
+    ];
+
+    const pending = people.filter(isNutritionPending);
+    const total = countPendingNutrition(people);
+
+    assert.equal(total, 3);
+    assert.equal(pending.length, total);
+    assert.deepEqual(
+      pending.map((person) => person.id),
+      [1, 2, 3],
+    );
+    assert.equal(isNutritionPending(people[3]), false);
+  });
+
+  it("con lista vacía el contador y el filtro quedan en cero", () => {
+    assert.equal(countPendingNutrition([]), 0);
+    assert.deepEqual([].filter(isNutritionPending), []);
   });
 });
 
