@@ -723,3 +723,7 @@ ol.guide-list{list-style:decimal}
 }
 
 .exercise-notes{font-size:10px;color:var(--muted);font-style:italic;margin:4px 0 0}
+
+button.metric{color:inherit;font:inherit;text-align:left;width:100%;cursor:pointer}
+button.metric:hover{border-color:#2f5d3d}
+button.metric:focus-visible{outline:2px solid var(--green);outline-offset:2px}
