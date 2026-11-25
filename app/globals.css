@@ -592,6 +592,10 @@
   .wp-insights-ytick{font-size:8px}
   .wp-insights-bars,.wp-insights-xaxis{gap:3px;padding:0 2px}
 }
+/* Mes completo: muchas columnas, etiquetas cada 5 días. */
+.wp-insights-bars.is-dense,.wp-insights-xaxis.is-dense{gap:2px;padding:0}
+.wp-insights-bars.is-dense i{border-radius:3px 3px 0 0}
+.wp-insights-xaxis.is-dense small{font-size:8px}
 .wp-insights-cal .mark-high{background:#143d55;color:#9fd4ff}
 .wp-insights-cal .mark-mid{background:#3a3414;color:#f0c35a}
 .wp-insights-cal .mark-low{background:#3a1c1c;color:#ff8d8d}
