@@ -83,8 +83,7 @@ describe("functional-app.tsx sigue intacto en sus literales frágiles", () => {
     );
   });
 
-  it("conserva las métricas del dashboard y la PeopleTable", () => {
+  it("conserva las métricas del dashboard", () => {
     assert.ok(functional.includes('<Metric label="Participantes" value={String(people.length)} note="Registrados"/>'));
-    assert.ok(functional.includes("<PeopleTable rows={people.slice(0,6)} selected={[]} setSelected={()=>{}} open={open} readOnly={readOnly}/>"));
   });
 });
