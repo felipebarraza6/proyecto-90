@@ -738,6 +738,13 @@ ol.guide-list{list-style:decimal}
 
 .exercise-notes{font-size:10px;color:var(--muted);font-style:italic;margin:4px 0 0}
 
+/* Tramos de adherencia visibles en la tabla de Participantes. */
+.stage-chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.stage-chip{border:1px solid var(--line);border-radius:7px;padding:3px 5px;display:grid;gap:1px;min-width:44px}
+.stage-chip small{font-size:7px;color:var(--muted);letter-spacing:.02em}
+.stage-chip b{font-size:10px;color:var(--green)}
+.stage-chip.in-progress b{color:var(--amber)}
+
 /* Íconos de categoría y fecha de publicación en Contenido. */
 .content-category-icon{flex:none;color:var(--green)}
 .content-category-card svg,.learn-card svg,.content-row svg{width:22px;height:22px;flex:none;color:var(--green)}
