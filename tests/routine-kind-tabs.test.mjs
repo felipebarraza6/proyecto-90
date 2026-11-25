@@ -35,9 +35,9 @@ describe("Selector de rutinas: botones separados en web", () => {
     const start = app.indexOf("function ParticipantTrainingRoute");
     const end = app.indexOf("\nfunction ", start + 1);
     assert.ok(start >= 0, "debe existir ParticipantTrainingRoute");
-    assert.ok(end > start, "debe existir la función siguiente");
 
-    const participant = app.slice(start, end);
+    // Si la función es la última del archivo, `end` es -1 y tomamos el resto.
+    const participant = app.slice(start, end === -1 ? app.length : end);
     const nav = participant.match(/<nav className="routine-kind-tabs"[^>]*>([\s\S]*?)<\/nav>/);
     assert.ok(nav, "el alumno debe renderizar el nav de rutinas");
 
