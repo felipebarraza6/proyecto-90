@@ -13,7 +13,12 @@ import {
   monthAdherenceSummary,
   type ClosureDay,
 } from "./insightsMath";
-import type { MacroCell, StudentWeekResponse, TableRow, WeekOption } from "./types";
+import {
+  hasSeriesData,
+  seriesFromNutritionLogs,
+  seriesFromWeeks,
+} from "./macroChartSeries";
+import type { StudentWeekResponse, WeekOption } from "./types";
 
 const HABITS = [
   { id: "water", label: "Agua" },
@@ -87,6 +92,10 @@ function MacroChart({
   target: number | null;
   macro: MacroId;
 }) {
+  // Con más de 10 días (p. ej. un mes completo) el gráfico pasa a modo denso:
+  // una columna por día y etiquetas cada 5 días en el eje X.
+  const dense = days.length > 10;
+  const denseStyle = dense ? { gridTemplateColumns: `repeat(${days.length},minmax(0,1fr))` } : undefined;
   const max = MACRO_Y_MAX[macro];
   const unit = MACRO_Y_UNIT[macro];
   const yPos = (value: number) => Math.max(0, Math.min(CHART_H, Math.round((value / max) * CHART_H)));
@@ -105,7 +114,11 @@ function MacroChart({
       </div>
       <div className="wp-insights-plot" style={{ height: CHART_H }}>
         {targetBottom != null ? <i className="wp-insights-target" style={{ bottom: targetBottom }} /> : null}
-        <div className="wp-insights-bars" aria-label={`Barras de ${macro}`}>
+        <div
+          className={`wp-insights-bars${dense ? " is-dense" : ""}`}
+          style={denseStyle}
+          aria-label={`Barras de ${macro}`}
+        >
           {days.map((day, index) => {
             const value = values[index];
             if (value == null) {
@@ -120,10 +133,18 @@ function MacroChart({
           })}
         </div>
       </div>
-      <div className="wp-insights-xaxis" aria-hidden="true">
-        {days.map((day) => (
-          <small key={day.date}>{weekdayTick(day.date)}</small>
-        ))}
+      <div
+        className={`wp-insights-xaxis${dense ? " is-dense" : ""}`}
+        style={denseStyle}
+        aria-hidden="true"
+      >
+        {days.map((day, index) =>
+          !dense || index % 5 === 0 ? (
+            <small key={day.date}>{dense ? day.date.slice(8) : weekdayTick(day.date)}</small>
+          ) : (
+            <small key={day.date}>{"\u00a0"}</small>
+          ),
+        )}
       </div>
     </div>
   );
@@ -202,14 +223,12 @@ export function StaffInsights({
   const [month, setMonth] = useState(today.slice(0, 7));
   const [habit, setHabit] = useState<HabitId>("water");
   const [macro, setMacro] = useState<MacroId>("calories");
-  const [weekStart, setWeekStart] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [missingDaily, setMissingDaily] = useState(false);
   const [closures, setClosures] = useState<ClosureDay[]>([]);
   const [habitMarks, setHabitMarks] = useState<Map<string, string>>(new Map());
   const [weeksByStart, setWeeksByStart] = useState<Map<string, StudentWeekResponse>>(new Map());
-  const [weekChoices, setWeekChoices] = useState<WeekOption[]>([]);
 
   useEffect(() => {
     if (!open) return;
@@ -220,12 +239,10 @@ export function StaffInsights({
     fetchWeeks(ac.signal)
       .then(async (list) => {
         const overlapping = weeksOverlapping(list.weeks || [], month);
-        setWeekChoices(overlapping);
         if (!overlapping.length) {
           setClosures([]);
           setHabitMarks(new Map());
           setWeeksByStart(new Map());
-          setWeekStart("");
           return;
         }
         const payloads = await Promise.all(
@@ -243,7 +260,6 @@ export function StaffInsights({
         setClosures([...closureMap.values()]);
         setHabitMarks(marks);
         setWeeksByStart(byStart);
-        setWeekStart((current) => (byStart.has(current) ? current : overlapping[overlapping.length - 1].start));
       })
       .catch((err: unknown) => {
         if ((err as Error).name === "AbortError") return;
@@ -257,7 +273,11 @@ export function StaffInsights({
 
   const streaks = useMemo(() => adherenceStreaks(closures, today), [closures, today]);
   const summary = useMemo(() => monthAdherenceSummary(closures, month, today), [closures, month, today]);
-  const chartWeek = weeksByStart.get(weekStart) || null;
+  const { series, target } = useMemo(
+    () => seriesFromWeeks(month, macro, weeksByStart),
+    [month, macro, weeksByStart],
+  );
+  const macroLabel = MACROS.find((item) => item.id === macro)?.label || macro;
 
   return (
     <section className="wp-insights">
@@ -312,41 +332,24 @@ export function StaffInsights({
           />
           <HabitLegend />
           <div className="wp-insights-filters">
-            <label>
-              Semana del gráfico
-              <select value={weekStart} onChange={(event) => setWeekStart(event.target.value)}>
-                {weekChoices.map((week) => (
-                  <option key={week.start} value={week.start}>
-                    {week.label || week.start}
-                  </option>
-                ))}
-              </select>
-            </label>
             {MACROS.map((item) => (
               <button key={item.id} type="button" className="secondary" aria-pressed={macro === item.id} onClick={() => setMacro(item.id)}>
                 {item.label}
               </button>
             ))}
           </div>
-          <MacroBars week={chartWeek} macro={macro} />
+          <h4>Macro por día · {monthLabel(month)}</h4>
+          {hasSeriesData(series) ? (
+            <MacroChart days={series.days} values={series.values} target={target} macro={macro} />
+          ) : (
+            <p className="wp-insights-note">
+              Sin datos de {macroLabel} en {monthLabel(month)}. Cambia el período para ver otro mes.
+            </p>
+          )}
         </>
       ) : null}
     </section>
   );
-}
-
-function MacroBars({ week, macro }: { week: StudentWeekResponse | null; macro: MacroId }) {
-  if (!week) return <p className="wp-insights-note">Elige una semana cargada para ver el gráfico.</p>;
-  const row = week.table.rows.find((item): item is Extract<TableRow, { key: MacroId }> => item.key === macro);
-  if (!row) {
-    return <p className="wp-insights-note">Esta semana no trae la serie de {macro}. No se dibujan barras inventadas.</p>;
-  }
-  const target = row.target == null || !Number.isFinite(Number(row.target)) ? null : Number(row.target);
-  const values = row.cells.map((cell) => {
-    const value = (cell as MacroCell).value;
-    return value == null || !Number.isFinite(Number(value)) ? null : Number(value);
-  });
-  return <MacroChart days={week.table.days} values={values} target={target} macro={macro} />;
 }
 
 type LogRow = Record<string, unknown>;
@@ -381,20 +384,6 @@ export function StudentInsights({
     }
     return map;
   }, [habitLogs]);
-  const weekStarts = useMemo(() => {
-    const [year, mon] = month.split("-").map(Number);
-    const last = new Date(Date.UTC(year, mon, 0)).getUTCDate();
-    const starts: string[] = [];
-    for (let day = 1; day <= last; day += 1) {
-      const date = new Date(Date.UTC(year, mon - 1, day));
-      if (date.getUTCDay() === 1) starts.push(date.toISOString().slice(0, 10));
-    }
-    return starts;
-  }, [month]);
-  const [weekStart, setWeekStart] = useState(weekStarts[0] || "");
-  useEffect(() => {
-    setWeekStart(weekStarts[0] || "");
-  }, [weekStarts]);
   const closures = useMemo<ClosureDay[]>(
     () =>
       adherenceDaily
@@ -420,18 +409,12 @@ export function StudentInsights({
     }
     return map;
   }, [macrosDaily]);
-  const nutrition = useMemo(
-    () => new Map(nutritionLogs.map((row) => [String(row.log_date || "").slice(0, 10), row])),
-    [nutritionLogs],
-  );
   const target = targets?.[macro] == null || !Number.isFinite(Number(targets?.[macro])) ? null : Number(targets?.[macro]);
-  const bars = Array.from({ length: 7 }, (_, index) => {
-    const date = new Date(Date.parse(`${weekStart || today}T12:00:00Z`) + index * 86400000).toISOString().slice(0, 10);
-    const row = nutrition.get(date);
-    const raw = row ? Number(row[macro]) : null;
-    const value = row && Number.isFinite(raw) ? raw : null;
-    return { date, value };
-  });
+  const series = useMemo(
+    () => seriesFromNutritionLogs(month, macro, nutritionLogs),
+    [month, macro, nutritionLogs],
+  );
+  const macroLabel = MACROS.find((item) => item.id === macro)?.label || macro;
 
   return (
     <section className="wp-insights">
@@ -483,21 +466,20 @@ export function StudentInsights({
       ) : null}
       {habit === "macros" ? <MacroPctLegend /> : <HabitLegend />}
       <div className="wp-insights-filters">
-        <label>
-          Semana
-          <select value={weekStart} onChange={(event) => setWeekStart(event.target.value)}>
-            {weekStarts.map((start) => (
-              <option key={start} value={start}>{start}</option>
-            ))}
-          </select>
-        </label>
         {MACROS.map((item) => (
           <button key={item.id} type="button" className="secondary" aria-pressed={macro === item.id} onClick={() => setMacro(item.id)}>
             {item.label}
           </button>
         ))}
       </div>
-      <MacroChart days={bars} values={bars.map((bar) => bar.value)} target={target} macro={macro} />
+      <h4>Macro por día · {monthLabel(month)}</h4>
+      {hasSeriesData(series) ? (
+        <MacroChart days={series.days} values={series.values} target={target} macro={macro} />
+      ) : (
+        <p className="wp-insights-note">
+          Sin datos de {macroLabel} en {monthLabel(month)}. Cambia el período para ver otro mes.
+        </p>
+      )}
     </section>
   );
 }
