@@ -1,0 +1,12 @@
+# Shell (index.html): sin caché. Si el navegador guarda una copia vieja, sigue
+# pidiendo los assets del deploy anterior. Por eso /* va con no-cache; también
+# cubre las rutas profundas (/reset, /checkout/...) que _redirects reescribe.
+# Assets: llevan hash en el nombre, así que son inmutables. Pages junta los
+# valores de las reglas que coinciden, por eso se hace detach (! Cache-Control)
+# antes de fijar el valor propio de /assets/*.
+/*
+  Cache-Control: no-cache
+
+/assets/*
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable

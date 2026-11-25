@@ -2,7 +2,8 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
 // Pages de staging pasa VITE_BASE_PATH=/proyecto-90/.
-// El FTPS de producción no lo define: el sitio vive en la raíz del dominio.
+// El deploy de producción a Cloudflare Pages no lo define: el sitio vive en la
+// raíz del dominio.
 const base = process.env.VITE_BASE_PATH || "/";
 
 export default defineConfig({
