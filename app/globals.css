@@ -723,3 +723,10 @@ ol.guide-list{list-style:decimal}
 }
 
 .exercise-notes{font-size:10px;color:var(--muted);font-style:italic;margin:4px 0 0}
+
+/* Copiar rutina (#68) */
+.copy-routine-dialog{max-width:460px}
+.copy-routine-dialog form{display:grid;gap:14px}
+.copy-routine-dialog label{display:grid;gap:6px;font-size:11px;color:var(--muted)}
+.copy-routine-dialog input{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #344139;border-radius:8px;background:#0b100d;color:var(--text);font:inherit;font-size:14px}
+.copy-routine-dialog .editor-actions{margin-top:4px}
