@@ -1,9 +1,11 @@
 import { useState } from "react";
 import {
+  formatPublishDate,
   groupContentByCategory,
   type ContentCategory,
   type ContentLike,
 } from "./content-library";
+import { ContentCategoryIcon, contentCategoryIconLabel } from "./content-icons";
 
 type Row = Record<string, unknown>;
 
@@ -24,6 +26,9 @@ function CategoryCards({
           className="content-category-card"
           onClick={() => onSelect(group.category)}
         >
+          <span role="img" aria-label={contentCategoryIconLabel(group.category)}>
+            <ContentCategoryIcon category={group.category} />
+          </span>
           <span className="eyebrow">{group.category.toUpperCase()}</span>
           <strong>{group.count}</strong>
           <small>{group.count === 1 ? "ítem" : "ítems"}</small>
@@ -66,9 +71,17 @@ function ParticipantItems({
         <article className="learn-card" key={String(x.id)}>
           <span className="learn-cover">{String(x.file_kind || "") === "pdf" ? "PDF" : "▶"}</span>
           <div>
-            <span className="tag">{String(x.category)}</span>
+            <span className="content-item-category">
+              <span role="img" aria-label={contentCategoryIconLabel(x.category)}>
+                <ContentCategoryIcon category={x.category} size={20} />
+              </span>
+              <span className="tag">{String(x.category)}</span>
+            </span>
             <h3>{String(x.title)}</h3>
             <p>{String(x.description || "")}</p>
+            {formatPublishDate(x.publish_at) && (
+              <small className="content-publish">Publicado el {formatPublishDate(x.publish_at)}</small>
+            )}
             {Boolean(x.video_url) && (
               <a href={String(x.video_url)} target="_blank" rel="noreferrer">Ver contenido →</a>
             )}
@@ -105,7 +118,9 @@ function AdminItems({
     <section className="content-table panel">
       {items.map((x) => (
         <div className="content-row" key={String(x.id)}>
-          <span className="icon-tile">{String(x.file_kind || "") === "pdf" ? "PDF" : "▶"}</span>
+          <span role="img" aria-label={contentCategoryIconLabel(x.category)}>
+            <ContentCategoryIcon category={x.category} />
+          </span>
           <div>
             <h3>{String(x.title)}</h3>
             <p>{String(x.category)} · {String(x.description || "")}</p>
@@ -114,6 +129,9 @@ function AdminItems({
                 {String(x.file_kind || "archivo")}
                 {x.file_key ? " · archivo cargado" : ""}
               </p>
+            )}
+            {formatPublishDate(x.publish_at) && (
+              <small className="content-publish">Publicado el {formatPublishDate(x.publish_at)}</small>
             )}
           </div>
           {Boolean(x.video_url) && (

@@ -2,7 +2,7 @@ import { adherenceStagesOf, stageRows, type StageRow } from "./milestone-status.
 
 type Row = Record<string, unknown>;
 
-function finite(value: unknown): number | null {
+export function finite(value: unknown): number | null {
   if (value == null || value === "") return null;
   const num = Number(value);
   return Number.isFinite(num) ? num : null;
