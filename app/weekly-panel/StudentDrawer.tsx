@@ -241,9 +241,10 @@ export function StudentDrawer({
               ) : null}
               {showNutrition && roleCanEditMacros ? (
                 <details className="wp-habit-details">
-                  <summary>Editar metas de macros por tramo (1–30 / 31–60 / 61–90)</summary>
+                  <summary>Editar metas de macros por fecha (tramos opcionales)</summary>
                   <MacroTargetsEditor
                     clientId={clientId}
+                    challengeStart={data.profile.challenge_start}
                     onSaved={() => {
                       analysisRefresh.current = true;
                       setReload((n) => n + 1);

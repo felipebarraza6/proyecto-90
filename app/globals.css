@@ -298,6 +298,16 @@
 .macro-period-head b{font-size:13px;color:var(--green)}
 .macro-period-head label{font-size:9px;color:var(--muted);display:grid;gap:4px}
 .macro-period-row em{display:block;margin-top:4px;font-size:8px;color:var(--amber);font-style:normal}
+.macro-target-form{display:grid;gap:10px;padding:12px;border:1px solid var(--line);border-radius:10px;background:#0d130f}
+.macro-target-form label{font-size:9px;color:var(--muted);display:grid;gap:4px}
+.macro-target-form input,.macro-target-form select{padding:8px 10px;border:1px solid #344139;border-radius:8px;background:#0b100d;color:var(--text)}
+.macro-target-history{margin:0;padding:12px 14px;border:1px solid #2c3d33;border-radius:10px;background:#0d130f;display:grid;gap:8px}
+.macro-target-history>header h4{margin:4px 0 0;font-size:13px}
+.macro-target-history-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.macro-target-history-list li{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#101511}
+.macro-target-history-list b{font-size:12px;color:var(--green)}
+.macro-target-history-list small{display:block;margin-top:2px;font-size:9px;color:var(--muted)}
+.macro-target-history-list span{font-size:10px;color:#c8d4cc}
 .messaging-panel{margin:0 0 18px;padding:18px 20px;border:1px solid #2f4a39;border-radius:16px;background:linear-gradient(145deg,#111914,#0c110e);display:grid;gap:14px}
 .messaging-panel-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap}
 .messaging-panel-head h2{margin:4px 0 0;font-size:18px}
