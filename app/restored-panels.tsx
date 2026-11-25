@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { participantAdherenceDisplay } from "./adherence-label";
+import { sortSessionsDesc } from "./session-order";
 import { formatStageLine, formatWeightTrail, participantSummaryCsv, stageCells } from "./participant-summary";
 import { formatHeightCm } from "./height";
 import { filterPeopleByStatus, statusLabel, type StatusFilter } from "./participant-status";
@@ -149,15 +150,20 @@ export function NutritionAssessmentPanel({person,override,proposal=false}:{perso
 }
 
 export function SessionWorkspace({sessions,meetings,open,act,showMeetings=true,viewerId,viewerRole,viewerName,readOnly=false}:{sessions:Row[];meetings:Row[];open:Open;act:Act;showMeetings?:boolean;viewerId?:string;viewerRole?:string;viewerName?:string;readOnly?:boolean}) {
-  const visible=viewerRole==="admin"||!viewerId?sessions:sessions.filter(row=>{
-    const byUser=String(row.professional_user_id||"");
-    if(byUser)return byUser===String(viewerId);
-    const label=String(row.professional||"").trim().toLowerCase();
-    const mine=String(viewerName||"").trim().toLowerCase();
-    return Boolean(label&&mine&&label===mine);
-  });
+  const visible=useMemo(()=>{
+    const scoped=viewerRole==="admin"||!viewerId?sessions:sessions.filter(row=>{
+      const byUser=String(row.professional_user_id||"");
+      if(byUser)return byUser===String(viewerId);
+      const label=String(row.professional||"").trim().toLowerCase();
+      const mine=String(viewerName||"").trim().toLowerCase();
+      return Boolean(label&&mine&&label===mine);
+    });
+    return sortSessionsDesc(scoped);
+  },[sessions,viewerId,viewerRole,viewerName]);
+  // Solicitudes de reunión: la más reciente primero (misma copia ordenada, sin tocar estado ni botones).
+  const orderedMeetings=useMemo(()=>sortSessionsDesc(meetings,"requested_at"),[meetings]);
   return <><div className="admin-title"><div><span className="eyebrow">AGENDA Y ACOMPAÑAMIENTO</span><h1>Sesiones</h1><p>{showMeetings?"Gestiona sesiones grupales y solicitudes individuales en un mismo lugar.":"Consulta y gestiona las sesiones que debes realizar durante el programa."}</p></div>{!readOnly&&<button className="primary" onClick={()=>open("session")}>＋ Nueva sesión</button>}</div>
-    {showMeetings&&<section className="meeting-section"><div className="section-heading"><div><span className="eyebrow">REUNIONES 1 A 1</span><h2>Solicitudes de alumnos</h2></div><span>{meetings.filter(x=>x.status==="pending").length} pendientes</span></div>{meetings.length===0?<article className="empty-state compact"><h3>Sin solicitudes</h3><p>Las solicitudes aparecerán aquí.</p></article>:<div className="meeting-grid">{meetings.map(x=><article className="meeting-card" key={String(x.id)}><div><span className={`status ${String(x.status)}`}>{String(x.status)==="pending"?"Pendiente":String(x.status)==="confirmed"?"Confirmada":String(x.status)==="rescheduled"?"Reprogramada":"Rechazada"}</span><h3>{nameOf(x)}</h3><p>{String(x.email)}</p><small>Solicita: {new Date(String(x.requested_at)).toLocaleString("es-CL")}</small></div>{Boolean(x.meeting_link)&&<a className="secondary" href={String(x.meeting_link)} target="_blank" rel="noreferrer">Abrir reunión ↗</a>}{!readOnly&&<button className="primary" onClick={()=>open("meeting-review",x)}>Gestionar</button>}</article>)}</div>}</section>}
+    {showMeetings&&<section className="meeting-section"><div className="section-heading"><div><span className="eyebrow">REUNIONES 1 A 1</span><h2>Solicitudes de alumnos</h2></div><span>{meetings.filter(x=>x.status==="pending").length} pendientes</span></div>{meetings.length===0?<article className="empty-state compact"><h3>Sin solicitudes</h3><p>Las solicitudes aparecerán aquí.</p></article>:<div className="meeting-grid">{orderedMeetings.map(x=><article className="meeting-card" key={String(x.id)}><div><span className={`status ${String(x.status)}`}>{String(x.status)==="pending"?"Pendiente":String(x.status)==="confirmed"?"Confirmada":String(x.status)==="rescheduled"?"Reprogramada":"Rechazada"}</span><h3>{nameOf(x)}</h3><p>{String(x.email)}</p><small>Solicita: {new Date(String(x.requested_at)).toLocaleString("es-CL")}</small></div>{Boolean(x.meeting_link)&&<a className="secondary" href={String(x.meeting_link)} target="_blank" rel="noreferrer">Abrir reunión ↗</a>}{!readOnly&&<button className="primary" onClick={()=>open("meeting-review",x)}>Gestionar</button>}</article>)}</div>}</section>}
     <section><div className="section-heading"><div><span className="eyebrow">CALENDARIO GENERAL</span><h2>Sesiones del programa</h2></div></div>{visible.length===0?<article className="empty-state compact"><h3>No hay sesiones</h3><p>{viewerRole==="professional"?"Aún no tienes sesiones asignadas.":"Crea la primera sesión de la generación."}</p></article>:<div className="session-list">{visible.map(x=><article className="next-session" key={String(x.id)}><div className="calendar-box"><b>{new Date(String(x.starts_at)).getDate()}</b><span>{new Date(String(x.starts_at)).toLocaleDateString("es-CL",{month:"short"}).toUpperCase()}</span></div><div><h3>{String(x.title)}</h3><p>{String(x.professional||"")} · {new Date(String(x.starts_at)).toLocaleString("es-CL")}</p></div>{Boolean(x.link)&&<a className="secondary" href={String(x.link)} target="_blank" rel="noreferrer">Abrir enlace ↗</a>}{!readOnly&&<><button className="row-action" onClick={()=>open("session",x)}>Editar</button><button className="danger-link" onClick={()=>act({action:"session.delete",id:x.id})}>Eliminar</button></>}</article>)}</div>}</section>
   </>;
 }
