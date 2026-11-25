@@ -15,7 +15,7 @@ import { macroPctMap } from "./weekly-panel/macroDayPct";
 import type { PanelConfig } from "./weekly-panel/types";
 
 type Act = (payload: Row) => Promise<unknown>;
-type AlertFilter = "all" | "risk" | "missing";
+export type AlertFilter = "all" | "risk" | "missing";
 type Mode = "full" | "training" | "macros";
 
 const habits = {
@@ -57,6 +57,8 @@ export function AdherencePanel({
   canEditCells = true,
   canMarkContact = true,
   panelConfig,
+  initialFilter,
+  initialWeekOffset,
 }: {
   people: Row[];
   records: Row[];
@@ -67,12 +69,14 @@ export function AdherencePanel({
   canEditCells?: boolean;
   canMarkContact?: boolean;
   panelConfig?: PanelConfig | null;
+  initialFilter?: AlertFilter;
+  initialWeekOffset?: number;
 }) {
   const config = modeMeta[mode];
   const defaultHabit = config.habits[0];
   const [habit, setHabit] = useState<keyof typeof habits>(defaultHabit);
-  const [weekOffset, setWeekOffset] = useState(0);
-  const [alertFilter, setAlertFilter] = useState<AlertFilter>("all");
+  const [weekOffset, setWeekOffset] = useState(initialWeekOffset ?? 0);
+  const [alertFilter, setAlertFilter] = useState<AlertFilter>(initialFilter ?? "all");
   const tz = panelConfig?.timezone || PANEL_CONFIG_DEFAULTS.timezone;
   const weekStartWd =
     panelConfig?.week_start_weekday ?? PANEL_CONFIG_DEFAULTS.week_start_weekday;
