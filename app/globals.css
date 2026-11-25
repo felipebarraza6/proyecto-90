@@ -727,3 +727,7 @@ ol.guide-list{list-style:decimal}
 button.metric{color:inherit;font:inherit;text-align:left;width:100%;cursor:pointer}
 button.metric:hover{border-color:#2f5d3d}
 button.metric:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.confirm-dialog{width:min(480px,100%)}
+.confirm-message{margin:0 0 18px;font-size:12px;line-height:1.6;color:#c7d2cb}
+.confirm-dialog .confirm-action{font-size:10px;font-weight:800;padding:11px 16px;border:1px solid #8b3c3c;border-radius:9px;background:#3a1717;color:#ffd7d7}
+.confirm-dialog .confirm-action:disabled,.confirm-dialog .secondary:disabled,.confirm-dialog .danger-link:disabled{opacity:.6;cursor:not-allowed}
