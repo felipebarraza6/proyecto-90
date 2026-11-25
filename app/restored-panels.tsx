@@ -13,6 +13,11 @@ import { fetchWeek, fetchWeeks } from "./weekly-panel/api";
 import { formatPct } from "./weekly-panel/format";
 import { habitWeightsFormulaText, PANEL_CONFIG_DEFAULTS } from "./weekly-panel/panelConfig";
 import type { PanelConfig } from "./weekly-panel/types";
+import {
+  clearNutritionFilterIntent,
+  isNutritionPending,
+  readNutritionFilterIntent,
+} from "./centro-control";
 import { ConfirmDialog } from "./confirm-dialog";
 import { participantDeleteMessage } from "./confirm-dialog-logic";
 
@@ -69,14 +74,16 @@ export function ParticipantDirectory({people,programs,selected,setSelected,open,
   </>;
 }
 
-export function NutritionWorkspace({people,open,profileModal="nutrition"}:{people:Row[];open:Open;profileModal?:"nutrition"|"professional-student"}) {
-  const [state,setState]=useState("all"); const [risk,setRisk]=useState("all"); const [student,setStudent]=useState("all");
-  const counts=useMemo(()=>({all:people.length,uncalculated:people.filter(p=>nutritionState(p)==="uncalculated").length,review:people.filter(p=>["review","rejected"].includes(nutritionState(p))).length,approved:people.filter(p=>nutritionState(p)==="approved").length}),[people]);
-  const inState=people.filter(p=>state==="all"||nutritionState(p)===state||(state==="review"&&nutritionState(p)==="rejected"));
+export type NutritionFilter = "all" | "pending" | "uncalculated" | "review" | "approved";
+export function NutritionWorkspace({people,open,profileModal="nutrition",initialFilter}:{people:Row[];open:Open;profileModal?:"nutrition"|"professional-student";initialFilter?:NutritionFilter}) {
+  const [state,setState]=useState<NutritionFilter>(()=>initialFilter??readNutritionFilterIntent()??"all"); const [risk,setRisk]=useState("all"); const [student,setStudent]=useState("all");
+  useEffect(()=>{clearNutritionFilterIntent()},[]);
+  const counts=useMemo(()=>({all:people.length,pending:people.filter(isNutritionPending).length,uncalculated:people.filter(p=>nutritionState(p)==="uncalculated").length,review:people.filter(p=>["review","rejected"].includes(nutritionState(p))).length,approved:people.filter(p=>nutritionState(p)==="approved").length}),[people]);
+  const inState=people.filter(p=>state==="all"||(state==="pending"&&isNutritionPending(p))||(state==="review"&&["review","rejected"].includes(nutritionState(p)))||(state==="uncalculated"&&nutritionState(p)==="uncalculated")||(state==="approved"&&nutritionState(p)==="approved"));
   const inRisk=inState.filter(p=>risk==="all"||(risk==="red"&&Number(p.red_flag_count)>0)||(risk==="habits"&&Number(p.deficient_habit_count)>0)||(risk==="mandatory"&&p.automation_status==="mandatory_review"));
   const rows=inRisk.filter(p=>student==="all"||String(p.id)===student);
   return <><div className="admin-title"><div><span className="eyebrow">FLUJO PROFESIONAL</span><h1>Nutrición</h1><p>La propuesta se calcula al enviar el formulario. Revísala, ajústala si hace falta y aprueba.</p></div></div>
-    <div className="nutrition-filter-bar">{[["all","Todos"],["uncalculated","Sin calcular"],["review","Por revisar"],["approved","Aprobados"]].map(([key,label])=><button key={key} className={state===key?"active":""} onClick={()=>{setState(key);setStudent("all")}}><span>{label}</span><b>{counts[key as keyof typeof counts]}</b></button>)}</div>
+    <div className="nutrition-filter-bar">{[["all","Todos"],["pending","Pendientes"],["uncalculated","Sin calcular"],["review","Por revisar"],["approved","Aprobados"]].map(([key,label])=><button key={key} className={state===key?"active":""} onClick={()=>{setState(key as NutritionFilter);setStudent("all")}}><span>{label}</span><b>{counts[key as keyof typeof counts]}</b></button>)}</div>
     <div className="nutrition-risk-filter">{[["all","Todos los criterios"],["red","Alertas rojas"],["habits","Hábitos deficientes"],["mandatory","Revisión obligatoria"]].map(([key,label])=><button key={key} className={risk===key?"active":""} onClick={()=>{setRisk(key);setStudent("all")}}>{label}<b>{key==="all"?people.length:key==="red"?people.filter(p=>Number(p.red_flag_count)>0).length:key==="habits"?people.filter(p=>Number(p.deficient_habit_count)>0).length:people.filter(p=>p.automation_status==="mandatory_review").length}</b></button>)}</div>
     <div className="nutrition-toolbar"><label>Alumno<select value={student} onChange={e=>setStudent(e.target.value)}><option value="all">Todos los alumnos</option>{inRisk.map(p=><option value={String(p.id)} key={String(p.id)}>{nameOf(p)}</option>)}</select></label><span>Mostrando {rows.length} de {people.length}</span></div>
     <section className="nutrition-cards">{rows.map(p=><NutritionCard key={String(p.id)} person={p} open={open} profileModal={profileModal}/>)}{rows.length===0&&<article className="empty-state compact"><h3>No hay alumnos en este estado</h3><p>Cambia los filtros para revisar otro grupo.</p></article>}</section>
