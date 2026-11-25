@@ -10,28 +10,29 @@ import {
 const people = [
   { id: "activo", status: "active" },
   { id: "finalizado", status: "finished" },
+  { id: "pausado", status: "paused" },
   { id: "invitado", status: "invited" },
   { id: "ingreso", status: "onboarding" },
   { id: "revision", status: "review" },
   { id: "configuracion", status: "configuration" },
-  { id: "desconocido", status: "paused" },
+  { id: "desconocido", status: "ARCHIVED" },
   { id: "sin-estado" },
 ];
 
 const ids = (rows) => rows.map((row) => row.id);
 
 describe("statusLabel", () => {
-  it("traduce los seis estados del programa a es-CL", () => {
+  it("traduce los siete estados del programa a es-CL, incluido pausado", () => {
     assert.equal(statusLabel("invited"), "Invitado");
     assert.equal(statusLabel("onboarding"), "Primer ingreso");
     assert.equal(statusLabel("review"), "En revisión");
     assert.equal(statusLabel("configuration"), "En configuración");
     assert.equal(statusLabel("active"), "Activo");
     assert.equal(statusLabel("finished"), "Finalizado");
+    assert.equal(statusLabel("paused"), "Pausado");
   });
 
   it("mantiene el valor crudo cuando el estado es desconocido", () => {
-    assert.equal(statusLabel("paused"), "paused");
     assert.equal(statusLabel("ARCHIVED"), "ARCHIVED");
   });
 
@@ -42,6 +43,7 @@ describe("statusLabel", () => {
       "finished",
       "invited",
       "onboarding",
+      "paused",
       "review",
     ]);
   });
@@ -60,12 +62,17 @@ describe("filterPeopleByStatus", () => {
     assert.deepEqual(ids(filterPeopleByStatus(people, "active")), ["activo"]);
   });
 
+  it("paused solo deja pausados", () => {
+    assert.deepEqual(ids(filterPeopleByStatus(people, "paused")), ["pausado"]);
+  });
+
   it("finished solo deja finalizados", () => {
     assert.deepEqual(ids(filterPeopleByStatus(people, "finished")), ["finalizado"]);
   });
 
-  it("other agrupa invitados, onboarding, revisión, configuración, desconocidos y sin estado", () => {
+  it("other agrupa pausados, invitados, onboarding, revisión, configuración, desconocidos y sin estado", () => {
     assert.deepEqual(ids(filterPeopleByStatus(people, "other")), [
+      "pausado",
       "invitado",
       "ingreso",
       "revision",
