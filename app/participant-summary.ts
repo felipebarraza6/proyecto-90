@@ -2,7 +2,7 @@ import { adherenceStagesOf, stageRows, type StageRow } from "./milestone-status.
 
 type Row = Record<string, unknown>;
 
-function finite(value: unknown): number | null {
+export function finite(value: unknown): number | null {
   if (value == null || value === "") return null;
   const num = Number(value);
   return Number.isFinite(num) ? num : null;
@@ -35,26 +35,49 @@ export function formatWeightTrail(person: Row): { text: string; delta: string } 
   return { text, delta };
 }
 
-function stageCell(row: StageRow): string {
-  if (row.label === "Total") return `Total ${row.value}`;
-  if (row.note === "en espera") return `${row.label} en espera`;
+export type StageCell = {
+  label: string;
+  value: string;
+  note: string;
+  inProgress?: boolean;
+};
+
+function toStageCell(row: StageRow): StageCell {
+  if (row.label === "Total") return { label: row.label, value: row.value, note: row.note };
+  if (row.note === "en espera") return { label: row.label, value: "en espera", note: row.note };
   if (row.note === "en curso") {
-    const value = row.value === "—" || row.value === "en curso" ? "en curso" : `${row.value} en curso`;
-    return `${row.label} ${value}`;
+    const value = row.value === "—" || row.value === "en curso" ? "en curso" : row.value;
+    return { label: row.label, value, note: row.note, inProgress: true };
   }
-  if (row.note === "Aún no") return `${row.label} —`;
-  if (row.note === "En curso" && row.value === "—") return `${row.label} En curso`;
-  return `${row.label} ${row.value}`;
+  if (row.note === "Aún no") return { label: row.label, value: row.value, note: row.note };
+  if (row.note === "En curso") {
+    return { label: row.label, value: row.value, note: row.note, inProgress: true };
+  }
+  return { label: row.label, value: row.value, note: row.note };
 }
 
-export function formatStageLine(person: Row): string {
+function stageCellText(cell: StageCell): string {
+  if (cell.note === "en curso") {
+    return cell.value === "en curso" ? `${cell.label} en curso` : `${cell.label} ${cell.value} en curso`;
+  }
+  if (cell.note === "En curso" && cell.value === "—") return `${cell.label} En curso`;
+  if (cell.note === "Aún no") return `${cell.label} —`;
+  return `${cell.label} ${cell.value}`;
+}
+
+/** Celdas legibles por tramo y total, reutilizadas por la tabla y la línea de texto. */
+export function stageCells(person: Row): StageCell[] {
   const rows = stageRows(finite(person.adherence_elapsed_days) ?? 0, {
     day30: finite(person.adherence_day_30),
     day60: finite(person.adherence_day_60),
     day90: finite(person.adherence_day_90),
     total: finite(person.adherence),
   }, adherenceStagesOf(person));
-  return rows.map(stageCell).join(" · ");
+  return rows.map(toStageCell);
+}
+
+export function formatStageLine(person: Row): string {
+  return stageCells(person).map(stageCellText).join(" · ");
 }
 
 function csvEscape(value: string): string {

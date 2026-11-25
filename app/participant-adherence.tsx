@@ -9,6 +9,8 @@ import {
 } from "./weekly-panel/panelConfig";
 import { formatMacroDayPct, macroDayPct } from "./weekly-panel/macroScore";
 import { DEFAULT_MACRO_WEIGHTS } from "./weekly-panel/panelConfig";
+import { HabitMonthCalendar, MacroPctLegend, MonthNav } from "./weekly-panel/adherenceCalendar";
+import { macroPctForDay } from "./weekly-panel/macroDayPct";
 import { todayIsoInTimezone } from "./timezone";
 import { useIsMobile } from "./weekly-panel/useIsMobile";
 import type { PanelConfig } from "./weekly-panel/types";
@@ -22,6 +24,10 @@ const habits = {
 const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 const addDays = (date: Date, days: number) => new Date(date.getTime() + days * 86400000);
 const iso = (date: Date) => date.toISOString().slice(0, 10);
+const shiftMonth = (month: string, delta: number) => {
+  const [year, mon] = month.split("-").map(Number);
+  return new Date(Date.UTC(year, mon - 1 + delta, 1)).toISOString().slice(0, 7);
+};
 const chileToday = (timezone?: string | null) => todayIsoInTimezone(timezone);
 const dateAt = (value: unknown) =>
   new Date(`${String(value || new Date().toISOString()).slice(0, 10)}T12:00:00Z`);
@@ -70,6 +76,40 @@ export function ParticipantHabitMatrix({
   );
   const allowRest = Boolean(panelConfig?.allow_student_rest);
   const mobile = useIsMobile();
+  const calendarTimezone = panelConfig?.timezone || PANEL_CONFIG_DEFAULTS.timezone;
+  const macroCalendarToday = todayIsoInTimezone(calendarTimezone);
+  const [macroMonth, setMacroMonth] = useState(() => macroCalendarToday.slice(0, 7));
+  const macroMonthLabel = useMemo(
+    () =>
+      new Date(`${macroMonth}-01T12:00:00Z`).toLocaleDateString("es-CL", {
+        month: "long",
+        year: "numeric",
+        timeZone: "UTC",
+      }),
+    [macroMonth],
+  );
+  /** % diario de macros del propio alumno; sin entrada = día sin registro. */
+  const macroCalendarPct = useMemo(() => {
+    const byDate = new Map<string, number | null>();
+    for (const row of nutritionRecords) {
+      const date = String(row.log_date ?? "").slice(0, 10);
+      if (!date) continue;
+      byDate.set(
+        date,
+        macroPctForDay(
+          { calories: row.calories, protein: row.protein, carbs: row.carbs, fats: row.fats },
+          {
+            calories: Number(plan?.calories || 0),
+            protein: Number(plan?.protein || 0),
+            carbs: Number(plan?.carbs || 0),
+            fats: Number(plan?.fats || 0),
+          },
+          panelConfig,
+        ),
+      );
+    }
+    return byDate;
+  }, [nutritionRecords, plan, panelConfig]);
   const macroConfig = panelConfig || {
     macro_met_requires: PANEL_CONFIG_DEFAULTS.macro_met_requires,
     macro_ranges: PANEL_CONFIG_DEFAULTS.macro_ranges,
@@ -289,6 +329,28 @@ export function ParticipantHabitMatrix({
           </tbody>
         </table>
       </div>
+      <section className="participant-habit-panel participant-macro-calendar">
+        <header>
+          <div>
+            <span className="eyebrow">CALENDARIO DE MACROS</span>
+            <h3>Tu cumplimiento de macros día por día</h3>
+            <p>Verde desde 80 % y rojo bajo 80 %. Los días sin registro quedan sin número.</p>
+          </div>
+          <MonthNav
+            label={macroMonthLabel}
+            onPrev={() => setMacroMonth(shiftMonth(macroMonth, -1))}
+            onNext={() => setMacroMonth(shiftMonth(macroMonth, 1))}
+          />
+        </header>
+        <HabitMonthCalendar
+          month={macroMonth}
+          today={macroCalendarToday}
+          habitLabel="macros"
+          marks={new Map()}
+          percents={macroCalendarPct}
+        />
+        <MacroPctLegend />
+      </section>
     </section>
   );
 }
