@@ -738,6 +738,13 @@ ol.guide-list{list-style:decimal}
 
 .exercise-notes{font-size:10px;color:var(--muted);font-style:italic;margin:4px 0 0}
 
+/* Estadísticas del grupo en el Resumen admin. */
+.group-stats{margin-top:26px}
+.group-stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.group-stats-grid .metric{height:100%}
+@media(max-width:1100px){.group-stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.group-stats-grid{grid-template-columns:1fr}}
+
 button.metric{color:inherit;font:inherit;text-align:left;width:100%;cursor:pointer}
 button.metric:hover{border-color:#2f5d3d}
 button.metric:focus-visible{outline:2px solid var(--green);outline-offset:2px}

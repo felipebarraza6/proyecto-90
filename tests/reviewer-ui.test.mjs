@@ -22,11 +22,10 @@ describe("UI de revisor: solo lectura explícita", () => {
     assert.ok(functional.includes("{!readOnly&&<button className=\"primary\" onClick={()=>open(\"participant\")}>＋ Crear participante</button>}"));
   });
 
-  it("PeopleTable no ofrece selección ni edición al revisor", () => {
-    assert.ok(functional.includes("<PeopleTable rows={people.slice(0,6)} selected={[]} setSelected={()=>{}} open={open} readOnly={readOnly}/>"));
-    assert.ok(functional.includes("{!readOnly&&<th><input type=\"checkbox\" aria-label=\"Seleccionar todos\""));
-    assert.ok(functional.includes("{!readOnly&&<td><input type=\"checkbox\" checked={selected.includes(String(p.id))}"));
-    assert.ok(functional.includes("{!readOnly&&<button className=\"row-action\" onClick={()=>open(\"participant-edit\",p)}>Editar ›</button>}"));
+  it("Resumen sin listado duplicado y acciones mutantes ocultas al revisor", () => {
+    assert.ok(!functional.includes("<PeopleTable"));
+    assert.ok(!functional.includes("people.slice(0,6)"));
+    assert.ok(!functional.includes("Editar ›"));
     assert.ok(functional.includes("canEditCells={!readOnly}"));
     assert.ok(functional.includes("canMarkContact={!readOnly}"));
   });
