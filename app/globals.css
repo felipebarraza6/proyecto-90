@@ -273,6 +273,10 @@
 .body-data-result ul,.body-data-result p{margin:6px 0 0;padding-left:16px;color:#c5d0c9;font-size:9px}
 .body-data-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:10px}
 .body-modal-actions{padding:0 24px 8px}
+.editor-subsection{margin:0 0 20px;padding:14px 16px;border:1px solid #31513e;border-radius:11px;background:#0d1510}
+.editor-subsection>h3{margin:0 0 6px;font-size:12px;color:var(--green)}
+.editor-subsection>.modal-context{margin:0 0 12px}
+.editor-subsection .body-data-editor{margin:0;padding:0;border:0;background:transparent}
 .nutrition-recalc{margin:0 0 12px;padding:14px 16px;border:1px solid #2f4a39;border-radius:11px;background:#0f1612}
 .nutrition-recalc>header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
 .nutrition-recalc h4{margin:6px 0 0;font-size:14px}
