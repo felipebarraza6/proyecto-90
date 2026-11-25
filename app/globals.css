@@ -759,6 +759,21 @@ button.metric:focus-visible{outline:2px solid var(--green);outline-offset:2px}
 .paused-screen b{color:var(--amber)}
 @media(max-width:760px){.paused-screen{margin:24px auto;padding:22px 18px}.paused-screen h1{font-size:24px}}
 
+/* Participantes: tipo de programa, filtro y conversión (issue #75). */
+.program-type-badge{display:inline-flex;align-items:center;padding:4px 9px;border:1px solid #3b526d;border-radius:999px;background:#141d27;color:#91bbe8;font-size:8px;font-weight:800;white-space:nowrap;max-width:100%}
+.program-type-filter{margin-top:-4px}
+.program-type-filter button b{min-width:18px;height:18px;display:inline-grid;place-items:center;border-radius:50%;background:#202a23;font-size:8px}
+.program-type-section{margin:6px 0 16px;padding:14px;border:1px solid var(--line);border-radius:11px;background:#101511}
+.program-type-section h3{font-size:12px;margin:5px 0 4px}
+.program-type-section p{font-size:9px;margin:0;color:var(--muted)}
+.program-type-section .form-grid{margin-top:12px}
+.program-type-dialog{width:min(540px,100%)}
+.program-type-dialog .modal-head p{font-size:9px;margin:5px 0 0;color:var(--muted)}
+.program-type-fields{display:grid;gap:2px}
+.program-type-dialog .modal-context{margin-top:12px}
+.program-type-dialog .upload-error{margin:12px 0 0}
+@media(max-width:620px){.program-type-section{padding:12px}.program-type-dialog .program-type-fields{grid-template-columns:1fr}}
+
 .confirm-dialog{width:min(480px,100%)}
 .confirm-message{margin:0 0 18px;font-size:12px;line-height:1.6;color:#c7d2cb}
 .confirm-dialog .confirm-action{font-size:10px;font-weight:800;padding:11px 16px;border:1px solid #8b3c3c;border-radius:9px;background:#3a1717;color:#ffd7d7}
