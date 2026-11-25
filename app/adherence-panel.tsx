@@ -57,7 +57,7 @@ export function AdherencePanel({
   canEditCells = true,
   canMarkContact = true,
   panelConfig,
-  initialFilter,
+  initialFilter = "all",
   initialWeekOffset,
 }: {
   people: Row[];
@@ -69,6 +69,7 @@ export function AdherencePanel({
   canEditCells?: boolean;
   canMarkContact?: boolean;
   panelConfig?: PanelConfig | null;
+  /** Filtro con el que abre la lista (p. ej. «risk» desde el dashboard). */
   initialFilter?: AlertFilter;
   initialWeekOffset?: number;
 }) {
@@ -76,7 +77,7 @@ export function AdherencePanel({
   const defaultHabit = config.habits[0];
   const [habit, setHabit] = useState<keyof typeof habits>(defaultHabit);
   const [weekOffset, setWeekOffset] = useState(initialWeekOffset ?? 0);
-  const [alertFilter, setAlertFilter] = useState<AlertFilter>(initialFilter ?? "all");
+  const [alertFilter, setAlertFilter] = useState<AlertFilter>(initialFilter);
   const tz = panelConfig?.timezone || PANEL_CONFIG_DEFAULTS.timezone;
   const weekStartWd =
     panelConfig?.week_start_weekday ?? PANEL_CONFIG_DEFAULTS.week_start_weekday;

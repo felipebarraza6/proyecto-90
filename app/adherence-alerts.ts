@@ -110,6 +110,15 @@ function missingCutoffDays(panelConfig?: PanelConfig | null): number {
   return Math.max(1, missingMin);
 }
 
+/**
+ * La semana actual ya tiene días cerrados (desde el inicio de semana hasta
+ * ayer) para calcular riesgo. Con la semana recién abierta no hay datos
+ * suficientes y el 0 no debe leerse como “nadie en riesgo”.
+ */
+export function weekHasClosedDays(alerts: { today: string; currentMonday: Date }): boolean {
+  return alerts.currentMonday.toISOString().slice(0, 10) < alerts.today;
+}
+
 export function computeAdherenceAlerts(
   people: Row[],
   records: Row[],
