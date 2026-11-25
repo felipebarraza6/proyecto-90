@@ -3,7 +3,8 @@
  *
  * Replica el mapa que ya usa `Status` en `app/functional-app.tsx`
  * (invited → «Invitado», onboarding → «Primer ingreso», review → «En revisión»,
- * configuration → «En configuración», active → «Activo», finished → «Finalizado»).
+ * configuration → «En configuración», active → «Activo», finished → «Finalizado»)
+ * y agrega `paused` → «Pausado» (cuota vencida, contrato yggdra_arq#507).
  * Se mantiene en un módulo puro para usarlo desde la tabla de Participantes y los tests.
  */
 export const STATUS_LABELS: Record<string, string> = {
@@ -13,9 +14,14 @@ export const STATUS_LABELS: Record<string, string> = {
   configuration: "En configuración",
   active: "Activo",
   finished: "Finalizado",
+  paused: "Pausado",
 };
 
-export type StatusFilter = "all" | "active" | "finished" | "other";
+/**
+ * Filtros de la tabla. `paused` es explícito; `other` sigue agrupando todo lo
+ * que no sea active/finished, por lo que también incluye a los pausados.
+ */
+export type StatusFilter = "all" | "active" | "paused" | "finished" | "other";
 
 /** Etiqueta visible; un estado desconocido conserva su valor crudo. */
 export function statusLabel(value: unknown): string {
@@ -32,6 +38,7 @@ export function filterPeopleByStatus<T extends Record<string, unknown>>(
   return rows.filter((row) => {
     const status = String(row.status ?? "").trim().toLowerCase();
     if (filter === "active") return status === "active";
+    if (filter === "paused") return status === "paused";
     if (filter === "finished") return status === "finished";
     return status !== "active" && status !== "finished";
   });

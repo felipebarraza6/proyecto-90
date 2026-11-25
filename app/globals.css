@@ -738,3 +738,15 @@ ol.guide-list{list-style:decimal}
 .status-badge.finished::before{background:#8e9993}
 .status-badge.invited::before,.status-badge.review::before{background:var(--amber)}
 .status-badge.onboarding::before,.status-badge.configuration::before{background:#7cc4ff}
+
+/* Pausado (#76): badge ámbar en la tabla, aviso en fichas y pantalla del alumno. */
+.status-badge.paused{color:var(--amber);border-color:#5c4721;background:#281f10}
+.status-badge.paused::before{background:var(--amber)}
+.paused-notice{display:grid;gap:4px;margin:0 0 16px;padding:14px 16px;border:1px solid #5c4721;border-left:4px solid var(--amber);border-radius:12px;background:#1a160e}
+.paused-notice b{color:var(--amber);font-size:12px}
+.paused-notice p{margin:0;font-size:10px;line-height:1.5}
+.paused-screen{max-width:560px;margin:8vh auto;padding:32px;border:1px solid #5c4721;border-radius:16px;background:var(--panel);text-align:center;display:grid;gap:10px}
+.paused-screen h1{margin:0;font-size:30px}
+.paused-screen p{margin:0;font-size:12px;line-height:1.6}
+.paused-screen b{color:var(--amber)}
+@media(max-width:760px){.paused-screen{margin:24px auto;padding:22px 18px}.paused-screen h1{font-size:24px}}
