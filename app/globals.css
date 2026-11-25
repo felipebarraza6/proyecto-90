@@ -274,6 +274,10 @@
 .body-data-result ul,.body-data-result p{margin:6px 0 0;padding-left:16px;color:#c5d0c9;font-size:9px}
 .body-data-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:10px}
 .body-modal-actions{padding:0 24px 8px}
+.editor-subsection{margin:0 0 20px;padding:14px 16px;border:1px solid #31513e;border-radius:11px;background:#0d1510}
+.editor-subsection>h3{margin:0 0 6px;font-size:12px;color:var(--green)}
+.editor-subsection>.modal-context{margin:0 0 12px}
+.editor-subsection .body-data-editor{margin:0;padding:0;border:0;background:transparent}
 .nutrition-recalc{margin:0 0 12px;padding:14px 16px;border:1px solid #2f4a39;border-radius:11px;background:#0f1612}
 .nutrition-recalc>header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
 .nutrition-recalc h4{margin:6px 0 0;font-size:14px}
@@ -724,3 +728,54 @@ ol.guide-list{list-style:decimal}
 }
 
 .exercise-notes{font-size:10px;color:var(--muted);font-style:italic;margin:4px 0 0}
+
+button.metric{color:inherit;font:inherit;text-align:left;width:100%;cursor:pointer}
+button.metric:hover{border-color:#2f5d3d}
+button.metric:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+
+/* Participantes: filtro por estado y chip de estado. */
+.status-filter{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}
+.status-filter button{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--muted);padding:6px 11px;font:inherit;font-size:10px;font-weight:700;cursor:pointer}
+.status-filter button:hover{border-color:#2c6940;color:var(--text)}
+.status-filter button.active{border-color:#275b38;background:#13271a;color:var(--green)}
+.status-filter button b{font-size:10px;color:inherit}
+.status-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border:1px solid var(--line);border-radius:999px;background:#1b241e;color:#a9b5ae;font-size:8px;font-weight:750;white-space:nowrap}
+.status-badge::before{content:"";width:6px;height:6px;border-radius:50%;background:#8e9993}
+.status-badge.active{color:var(--green);border-color:#275b38;background:#13271a}
+.status-badge.active::before{background:var(--green)}
+.status-badge.finished{color:#a9b5ae;border-color:#344139;background:#161b18}
+.status-badge.finished::before{background:#8e9993}
+.status-badge.invited::before,.status-badge.review::before{background:var(--amber)}
+.status-badge.onboarding::before,.status-badge.configuration::before{background:#7cc4ff}
+
+/* Pausado (#76): badge ámbar en la tabla, aviso en fichas y pantalla del alumno. */
+.status-badge.paused{color:var(--amber);border-color:#5c4721;background:#281f10}
+.status-badge.paused::before{background:var(--amber)}
+.paused-notice{display:grid;gap:4px;margin:0 0 16px;padding:14px 16px;border:1px solid #5c4721;border-left:4px solid var(--amber);border-radius:12px;background:#1a160e}
+.paused-notice b{color:var(--amber);font-size:12px}
+.paused-notice p{margin:0;font-size:10px;line-height:1.5}
+.paused-screen{max-width:560px;margin:8vh auto;padding:32px;border:1px solid #5c4721;border-radius:16px;background:var(--panel);text-align:center;display:grid;gap:10px}
+.paused-screen h1{margin:0;font-size:30px}
+.paused-screen p{margin:0;font-size:12px;line-height:1.6}
+.paused-screen b{color:var(--amber)}
+@media(max-width:760px){.paused-screen{margin:24px auto;padding:22px 18px}.paused-screen h1{font-size:24px}}
+
+/* Participantes: tipo de programa, filtro y conversión (issue #75). */
+.program-type-badge{display:inline-flex;align-items:center;padding:4px 9px;border:1px solid #3b526d;border-radius:999px;background:#141d27;color:#91bbe8;font-size:8px;font-weight:800;white-space:nowrap;max-width:100%}
+.program-type-filter{margin-top:-4px}
+.program-type-filter button b{min-width:18px;height:18px;display:inline-grid;place-items:center;border-radius:50%;background:#202a23;font-size:8px}
+.program-type-section{margin:6px 0 16px;padding:14px;border:1px solid var(--line);border-radius:11px;background:#101511}
+.program-type-section h3{font-size:12px;margin:5px 0 4px}
+.program-type-section p{font-size:9px;margin:0;color:var(--muted)}
+.program-type-section .form-grid{margin-top:12px}
+.program-type-dialog{width:min(540px,100%)}
+.program-type-dialog .modal-head p{font-size:9px;margin:5px 0 0;color:var(--muted)}
+.program-type-fields{display:grid;gap:2px}
+.program-type-dialog .modal-context{margin-top:12px}
+.program-type-dialog .upload-error{margin:12px 0 0}
+@media(max-width:620px){.program-type-section{padding:12px}.program-type-dialog .program-type-fields{grid-template-columns:1fr}}
+
+.confirm-dialog{width:min(480px,100%)}
+.confirm-message{margin:0 0 18px;font-size:12px;line-height:1.6;color:#c7d2cb}
+.confirm-dialog .confirm-action{font-size:10px;font-weight:800;padding:11px 16px;border:1px solid #8b3c3c;border-radius:9px;background:#3a1717;color:#ffd7d7}
+.confirm-dialog .confirm-action:disabled,.confirm-dialog .secondary:disabled,.confirm-dialog .danger-link:disabled{opacity:.6;cursor:not-allowed}
