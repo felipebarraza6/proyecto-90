@@ -738,6 +738,12 @@ ol.guide-list{list-style:decimal}
 
 .exercise-notes{font-size:10px;color:var(--muted);font-style:italic;margin:4px 0 0}
 
+/* Íconos de categoría y fecha de publicación en Contenido. */
+.content-category-icon{flex:none;color:var(--green)}
+.content-category-card svg,.learn-card svg,.content-row svg{width:22px;height:22px;flex:none;color:var(--green)}
+.content-item-category{display:inline-flex;align-items:center;gap:6px}
+.content-publish{display:block;margin-top:4px;color:var(--muted);font-size:8px}
+
 /* Estadísticas del grupo en el Resumen admin. */
 .group-stats{margin-top:26px}
 .group-stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
