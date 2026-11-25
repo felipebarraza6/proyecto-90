@@ -278,7 +278,11 @@ export type MacroTargetsResponse = {
 };
 
 export type MacroTargetSaveBody = {
-  period: MacroPeriodKey;
+  /**
+   * Tramo opcional. Si se omite (o va null), la meta rige solo por
+   * `effective_from`; el resolver del backend toma la más reciente ≤ fecha.
+   */
+  period?: MacroPeriodKey | null;
   effective_from?: string | null;
   calories: number;
   protein: number;
