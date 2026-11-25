@@ -745,3 +745,9 @@ button.metric:focus-visible{outline:2px solid var(--green);outline-offset:2px}
 .confirm-message{margin:0 0 18px;font-size:12px;line-height:1.6;color:#c7d2cb}
 .confirm-dialog .confirm-action{font-size:10px;font-weight:800;padding:11px 16px;border:1px solid #8b3c3c;border-radius:9px;background:#3a1717;color:#ffd7d7}
 .confirm-dialog .confirm-action:disabled,.confirm-dialog .secondary:disabled,.confirm-dialog .danger-link:disabled{opacity:.6;cursor:not-allowed}
+/* Estadísticas del grupo en el Resumen admin. */
+.group-stats{margin-top:26px}
+.group-stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.group-stats-grid .metric{height:100%}
+@media(max-width:1100px){.group-stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.group-stats-grid{grid-template-columns:1fr}}
