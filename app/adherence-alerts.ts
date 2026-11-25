@@ -2,7 +2,7 @@ import {
   macrosDayStatus,
   PANEL_CONFIG_DEFAULTS,
   type MacroKey,
-} from "./weekly-panel/panelConfig";
+} from "./weekly-panel/panelConfig.ts";
 import type { PanelConfig } from "./weekly-panel/types";
 
 export type Row = Record<string, unknown>;
