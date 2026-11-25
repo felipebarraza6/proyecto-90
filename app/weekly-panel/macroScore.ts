@@ -177,7 +177,7 @@ export type MacroTargetDraftInput = {
 };
 
 export type MacroTargetSaveBodyLike = {
-  period: MacroPeriodKey;
+  period?: MacroPeriodKey | null;
   calories: number;
   protein: number;
   carbs?: number | null;
@@ -185,6 +185,38 @@ export type MacroTargetSaveBodyLike = {
   effective_from?: string | null;
   note?: string | null;
 };
+
+/**
+ * Body único para una meta por fecha. El tramo es un atajo opcional:
+ * si no se elige, el campo `period` se omite (no se envía null) para ser
+ * compatible con el backend anterior y con el que ya acepta `period` nulo.
+ * Sin fecha, calorías o proteína no hay body (evita “éxito” sin request).
+ */
+export function buildMacroTargetSaveBody(input: {
+  effective_from?: string | null;
+  calories?: number | null;
+  protein?: number | null;
+  carbs?: number | null;
+  fats?: number | null;
+  period?: MacroPeriodKey | string | null;
+  note?: string | null;
+}): MacroTargetSaveBodyLike | null {
+  const effectiveFrom = String(input.effective_from || "").trim().slice(0, 10);
+  const calories = numOrNull(input.calories);
+  const protein = numOrNull(input.protein);
+  if (!effectiveFrom || calories == null || protein == null) return null;
+  const body: MacroTargetSaveBodyLike = {
+    calories,
+    protein,
+    carbs: numOrNull(input.carbs),
+    fats: numOrNull(input.fats),
+    effective_from: effectiveFrom,
+    note: input.note?.trim() || null,
+  };
+  const period = String(input.period || "").trim();
+  if (period) body.period = period as MacroPeriodKey;
+  return body;
+}
 
 /**
  * Qué tramos POST-ear a …/macro-targets. Vacío arrastra el anterior;

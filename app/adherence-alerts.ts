@@ -2,7 +2,7 @@ import {
   macrosDayStatus,
   PANEL_CONFIG_DEFAULTS,
   type MacroKey,
-} from "./weekly-panel/panelConfig";
+} from "./weekly-panel/panelConfig.ts";
 import type { PanelConfig } from "./weekly-panel/types";
 
 export type Row = Record<string, unknown>;
@@ -108,6 +108,15 @@ function missingCutoffDays(panelConfig?: PanelConfig | null): number {
   const graceH = panelConfig?.report_grace_hours ?? PANEL_CONFIG_DEFAULTS.report_grace_hours;
   if (graceH > 0) return Math.max(missingMin, Math.ceil(graceH / 24));
   return Math.max(1, missingMin);
+}
+
+/**
+ * La semana actual ya tiene días cerrados (desde el inicio de semana hasta
+ * ayer) para calcular riesgo. Con la semana recién abierta no hay datos
+ * suficientes y el 0 no debe leerse como “nadie en riesgo”.
+ */
+export function weekHasClosedDays(alerts: { today: string; currentMonday: Date }): boolean {
+  return alerts.currentMonday.toISOString().slice(0, 10) < alerts.today;
 }
 
 export function computeAdherenceAlerts(
