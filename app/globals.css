@@ -305,6 +305,7 @@
 .messaging-thread li.from-student{border-color:#3a433c}
 .messaging-thread li.from-staff{border-color:#275b38;background:#101812}
 .participant-habit-cell.with-pct{font-size:11px;font-weight:700;min-width:48px}
+.habit-cell.with-pct{font-size:10px;font-weight:800}
 .wp-macro-day-pct{display:inline-flex;align-items:center;justify-content:center;min-width:52px;padding:6px 8px;border:1px solid #275b38;border-radius:8px;background:#13271a}
 .wp-macro-day-pct b{font-size:12px;color:var(--green)}
 @media(max-width:720px){.macro-period-head,.messaging-panel-head{flex-direction:column;align-items:stretch}.messaging-panel-head select{width:100%}}

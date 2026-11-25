@@ -9,6 +9,9 @@ import {
   type Row,
 } from "./adherence-alerts";
 import { challengeWeeks, PANEL_CONFIG_DEFAULTS } from "./weekly-panel/panelConfig";
+import { MacroPctLegend } from "./weekly-panel/adherenceCalendar";
+import { macroCalendarLabel, macroCalendarTone } from "./weekly-panel/macroCalendar";
+import { macroPctMap } from "./weekly-panel/macroDayPct";
 import type { PanelConfig } from "./weekly-panel/types";
 
 type Act = (payload: Row) => Promise<unknown>;
@@ -110,6 +113,24 @@ export function AdherencePanel({
   const lookup = useMemo(
     () => new Map(effectiveRecords.map((row) => [`${row.user_id}:${row.habit}:${row.habit_date}`, String(row.status)])),
     [effectiveRecords],
+  );
+  /** % diario de macros por alumno y fecha; sin entrada = sin registro. */
+  const macroPctByDay = useMemo(
+    () =>
+      macroPctMap(
+        nutritionRecords,
+        (userId) => {
+          const person = people.find((item) => String(item.id) === userId);
+          return {
+            calories: Number(person?.calories || 0),
+            protein: Number(person?.protein || 0),
+            carbs: Number(person?.carbs || 0),
+            fats: Number(person?.fats || 0),
+          };
+        },
+        panelConfig,
+      ),
+    [nutritionRecords, people, panelConfig],
   );
   const outreachLookup = useMemo(
     () => new Map(outreach.map((row) => [`${row.user_id}:${row.week_start}:${row.alert_type}`, Boolean(row.contacted)])),
@@ -279,21 +300,44 @@ export function AdherencePanel({
                   {days.map((day) => {
                     const date = iso(day);
                     const status = lookup.get(`${id}:${habit}:${date}`) || "empty";
+                    const macroPct =
+                      habit === "macros" ? macroPctByDay.get(`${id}:${date}`) : undefined;
+                    const macroTone = habit === "macros" ? macroCalendarTone(macroPct) : null;
+                    const cellStatus =
+                      habit === "macros"
+                        ? macroTone === "tone-high"
+                          ? "met"
+                          : macroTone === "tone-low"
+                            ? "missed"
+                            : "empty"
+                        : status;
+                    const cellText =
+                      habit === "macros"
+                        ? macroPct != null
+                          ? macroCalendarLabel(macroPct)
+                          : "·"
+                        : status === "met"
+                          ? "✓"
+                          : status === "missed"
+                            ? "×"
+                            : "·";
                     return (
                       <td key={date}>
                         <button
                           disabled={!canEditCells || habit === "macros"}
                           title={
                             habit === "macros"
-                              ? "Calculado desde calorías y proteínas"
+                              ? macroPct != null
+                                ? `Macros ${macroCalendarLabel(macroPct)}`
+                                : "Sin registro"
                               : canEditCells
                                 ? "Clic: cumplido → no cumplido → sin registro"
                                 : "Solo lectura"
                           }
-                          className={`habit-cell ${status}`}
+                          className={`habit-cell ${cellStatus}${habit === "macros" && macroPct != null ? " with-pct" : ""}`}
                           onClick={() => cycle(id, date)}
                         >
-                          {status === "met" ? "✓" : status === "missed" ? "×" : "·"}
+                          {cellText}
                         </button>
                       </td>
                     );
@@ -344,6 +388,7 @@ export function AdherencePanel({
           </tbody>
         </table>
       </div>
+      {habit === "macros" && <MacroPctLegend />}
       <p className="adherence-footnote">
         “En riesgo” considera {streakNeeded} día(s) cerrado(s) consecutivos en rojo. “Falta
         reportar” detecta registros vacíos con ≥ {missingCutoffDays} día(s) (según Reglas). Agua
