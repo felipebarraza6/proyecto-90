@@ -51,7 +51,7 @@ En el build de GitHub Actions el workflow fija `VITE_API_BASE` en la API públic
 
 ## Deploy
 
-`.github/workflows/deploy-front.yml` publica la SPA en **Cloudflare Pages** con subida directa (API token + `wrangler`). El sitio `https://90dias.habitofirme.app` está detrás de Cloudflare; el FTPS anterior a `ftp.habitofirme.app` quedó fuera de DNS y ya no se usa.
+`.github/workflows/deploy-front.yml` publica la SPA en **Cloudflare Pages** con subida directa (API token + `wrangler`). El sitio `https://90dias.habitofirme.app` vive detrás de Cloudflare.
 
 | Disparo | Qué hace |
 |---------|----------|
@@ -74,13 +74,13 @@ Nombres de secretos y de la variable opcional, sin valores:
 
 Antes de publicar conviene correr `mode=diagnose` desde Actions: resuelve el proyecto, muestra los últimos 3 deployments y el estado del dominio.
 
-`docs/CONSUMERS.yaml` registra el dominio `90dias.habitofirme.app` y que el deploy sale de `production`. Hay un fork nombrado en ese inventario: `marcelomoyavallejos-dotcom/proyecto-90`.
+El inventario de consumidores es del backend: [`docs/CONSUMERS.yaml` de `yggdra_arq`](https://github.com/felipebarraza6/yggdra_arq/blob/dev/docs/CONSUMERS.yaml). Su ficha de `proyecto-90` registra el dominio `90dias.habitofirme.app` y el fork `marcelomoyavallejos-dotcom/proyecto-90`; su campo `deploy` todavía dice `main`/`ftp` (desactualizado). La fuente de verdad del deploy es este repo: Cloudflare Pages desde `production`.
 
 El `Dockerfile` puede servir la SPA con nginx. No es el camino del sitio público.
 
 ## Relación con la API Ginnung
 
-Fetch manual a `/api/p90/*`, `/api/app`, `/api/files`, `/api/accounts/*` y `/api/public/*`, y a coaching cuando el flujo lo usa. No hay tipos generados ni `contract.yml`.
+Fetch manual a `/api/p90/*`, `/api/app`, `/api/files`, `/api/accounts/*` y `/api/public/*`, y a coaching cuando el flujo lo usa. El consumo es manual, pero el repo mantiene tipos generados en `src/lib/api/types/yggdra.d.ts` (se regeneran con `npm run sync-contract`) y un workflow `contract.yml` que compara el contrato.
 
 Modelo que ya usa el cliente:
 
@@ -95,7 +95,7 @@ Id de consumidor y etiqueta de issues de backend: `front:proyecto-90`.
 
 El chequeo reutilizable está en [docs/CONTRACT_CHECK.md](https://github.com/felipebarraza6/yggdra_infra/blob/main/docs/CONTRACT_CHECK.md) y en `.github/workflows/contract-check.yml` de `yggdra_infra`. Corre en el runner del VPS, compara el `schema_sha256` de `https://api.yggdra.cl/api/schema/contract/` con el sha commiteado en el front, regenera tipos desde el freeze de `api/schema/openapi.yaml` y exige `tsc --noEmit`.
 
-En la rama por defecto de este repo **no hay** un workflow `contract.yml` que llame ese chequeo. El inventario `docs/CONSUMERS.yaml` del backend describe el estilo de consumo de cada app.
+En este repo, `.github/workflows/contract.yml` corre en cada push (todas las ramas) y por `workflow_dispatch`. Hace checkout y ejecuta `.github/scripts/check-contract-sha.sh`, que compara el `schema_sha256` vivo de `https://api.yggdra.cl/api/schema/contract/` con el `YGGDRA_SCHEMA_SHA` de `src/lib/api/contract-sha.ts`; no regenera tipos ni corre `tsc`. El chequeo completo (`npm ci`, `sync-contract`, `tsc --noEmit`) corre en `yggdra_arq` (antes `yggdra_infra`), en `.github/workflows/contract-fronts.yml`, porque el runner del VPS está registrado solo en ese repo.
 
 ## Enlaces
 

@@ -1,8 +1,8 @@
 # Deploy automático del front a https://90dias.habitofirme.app
 #
 # Hosting: Cloudflare Pages, con subida directa desde Actions (API + wrangler).
-# El sitio ya vive detrás de Cloudflare; el FTPS anterior a ftp.habitofirme.app
-# quedó fuera de DNS, así que ese camino se eliminó.
+# El sitio ya vive detrás de Cloudflare. Mecanismo anterior (obsoleto): FTPS a
+# ftp.habitofirme.app, que quedó fuera de DNS y se eliminó de este workflow.
 #
 # Disparadores:
 #   - pull_request → verify (lint, check:panel, test, build; sin subir)
@@ -27,8 +27,8 @@
 #                            .github/scripts/resolve-pages-project.sh lo detecta
 #                            por dominio (90dias.habitofirme.app) o por nombre.
 #
-# Los secretos FTP_* (FTP_SERVER, FTP_USERNAME, FTP_PASSWORD, FTP_REMOTE_DIR)
-# quedaron obsoletos: este workflow ya no los usa. Borrarlos es tarea manual.
+# Los secretos FTP_SERVER, FTP_USERNAME y FTP_PASSWORD son anteriores
+# (obsoletos): este workflow ya no los usa. Borrarlos es tarea manual.
 #
 # Build env (fija, no secreto): VITE_API_BASE=https://api.yggdra.cl
 
