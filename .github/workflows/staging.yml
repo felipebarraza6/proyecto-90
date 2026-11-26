@@ -1,8 +1,8 @@
 # Staging de Proyecto 90 en GitHub Pages.
 #
 # Push a `staging` publica https://<owner>.github.io/<repo>/
-# El FTPS de https://90dias.habitofirme.app corre solo en `production`
-# (deploy-front.yml). `main` no despliega.
+# El deploy a Cloudflare Pages de https://90dias.habitofirme.app corre solo en
+# `production` (ver deploy-front.yml). `main` no despliega.
 #
 # Primera vez: Settings → Pages → Source = GitHub Actions.
 

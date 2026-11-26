@@ -2,7 +2,8 @@
 
 Este directorio es el que se publica. Un push a `production` dispara Deploy Front
 (`.github/workflows/deploy-front.yml`) y sube la SPA a
-https://90dias.habitofirme.app. `dev` queda en el mismo commit que `main` y no publica.
+https://90dias.habitofirme.app. `dev` queda con el mismo contenido que `main` (mismo
+árbol; el historial puede diferir por un merge) y no publica.
 
 No trabajes en `C:\Users\SH\projects\proyecto-90` ni en
 `C:\Users\SH\projects\p90-0710`. El deploy publica a **Cloudflare Pages** con los
