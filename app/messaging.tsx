@@ -16,6 +16,7 @@ import {
   messageDeleteKind,
   showMessageDelete,
 } from "./weekly-panel/messageDelete";
+import { reviewerMutationBlocked } from "./staff-guards";
 import {
   mergeMessageThread,
   removeMessagesFromThread,
@@ -299,6 +300,7 @@ export function StaffParticipantThread({
   compact?: boolean;
 }) {
   const specialty = String(viewerRole || "").toLowerCase();
+  const readOnly = reviewerMutationBlocked(specialty);
   const isCoach = specialty === "coach" || specialty.includes("coach");
   const isNutrition = specialty === "nutrition" || specialty.includes("nutri");
   const isAdmin = specialty === "admin" || specialty.includes("admin") || specialty.includes("owner");
@@ -416,10 +418,10 @@ export function StaffParticipantThread({
           isNutrition={isNutrition}
           viewerUserId={viewerUserId}
           deletingId={deletingId}
-          onDelete={onDelete}
+          onDelete={readOnly ? undefined : onDelete}
         />
       )}
-      <form className="staff-note-form messaging-compose" onSubmit={submit}>
+      {readOnly ? <p className="wp-habit-hint">Modo Revisor: solo lectura.</p> : <form className="staff-note-form messaging-compose" onSubmit={submit}>
         <label>
           Respuesta a {name}
           <textarea
@@ -448,7 +450,7 @@ export function StaffParticipantThread({
         <button className="primary" disabled={saving || !text.trim()}>
           {saving ? "Enviando…" : "Responder"}
         </button>
-      </form>
+      </form>}
     </section>
   );
 }
@@ -472,6 +474,7 @@ export function StaffMessagingInbox({
   messagingCoachEnabled?: boolean;
 }) {
   const specialty = String(viewerRole || "").toLowerCase();
+  const readOnly = reviewerMutationBlocked(specialty);
   const isCoach = specialty === "coach" || specialty.includes("coach");
   const isNutrition = specialty === "nutrition" || specialty.includes("nutri");
   const isAdmin = specialty === "admin" || specialty.includes("admin") || specialty.includes("owner");
@@ -689,10 +692,10 @@ export function StaffMessagingInbox({
           isNutrition={isNutrition}
           viewerUserId={viewerUserId}
           deletingId={deletingId}
-          onDelete={onDelete}
+          onDelete={readOnly ? undefined : onDelete}
         />
       )}
-      <form className="staff-note-form messaging-compose" onSubmit={submit}>
+      {readOnly ? <p className="wp-habit-hint">Modo Revisor: solo lectura.</p> : <form className="staff-note-form messaging-compose" onSubmit={submit}>
         <label>
           Respuesta a{" "}
           {`${selected?.first_name || ""} ${selected?.last_name || ""}`.trim() || "alumno"}
@@ -722,7 +725,7 @@ export function StaffMessagingInbox({
         <button className="primary" disabled={saving || !text.trim()}>
           {saving ? "Enviando…" : "Responder"}
         </button>
-      </form>
+      </form>}
     </section>
   );
 }

@@ -143,7 +143,13 @@ export type PanelConfigPatch = Partial<
   Omit<PanelConfig, "can_comment" | "config_version" | "panel_enabled" | "can_edit">
 >;
 
-export type WeekOption = { start: string; end: string; label: string };
+export type WeekOption = {
+  start: string;
+  end: string;
+  label: string;
+  is_closed?: boolean;
+  is_current?: boolean;
+};
 
 export type WeeksResponse = {
   current: string;
@@ -272,7 +278,11 @@ export type MacroTargetsResponse = {
 };
 
 export type MacroTargetSaveBody = {
-  period: MacroPeriodKey;
+  /**
+   * Tramo opcional. Si se omite (o va null), la meta rige solo por
+   * `effective_from`; el resolver del backend toma la más reciente ≤ fecha.
+   */
+  period?: MacroPeriodKey | null;
   effective_from?: string | null;
   calories: number;
   protein: number;

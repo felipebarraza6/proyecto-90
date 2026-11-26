@@ -1,6 +1,7 @@
 import { formatGoalPctLabel, formatMlAsLiters, formatPct, habitDisplay, WEEKDAYS_SHORT } from "./format";
 import { usePanelStats } from "./PanelStatsContext";
 import { HabitMark, PercentChip } from "./ui";
+import { averageRecorded, formatRecordedAverage } from "./macroWeekAverage";
 import type { HabitCell, MacroCell, MacroRanges, StudentWeekResponse, TableRow } from "./types";
 
 const ROW_LABELS: Record<string, string> = {
@@ -119,6 +120,34 @@ function MacroMark({
   );
 }
 
+function macroAverageCell(row: TableRow) {
+  if (row.key === "daily_total") {
+    const avg = averageRecorded(
+      row.cells.map((cell) => {
+        const pct = (cell as { pct?: number | null }).pct;
+        return pct == null || !Number.isFinite(Number(pct)) ? null : Number(pct);
+      }),
+    );
+    if (avg == null) return <span className="wp-avg-na">—</span>;
+    return (
+      <span className="wp-macro-avg">
+        <b>{formatRecordedAverage(avg)}%</b>
+      </span>
+    );
+  }
+  if (row.key !== "calories" && row.key !== "protein" && row.key !== "carbs" && row.key !== "fats") {
+    return <span className="wp-avg-na">—</span>;
+  }
+  const avg = averageRecorded(row.cells.map((cell) => (cell as MacroCell).value));
+  if (avg == null) return <span className="wp-avg-na">—</span>;
+  return (
+    <span className="wp-macro-avg">
+      <b>{formatRecordedAverage(avg)}</b>
+      <small>{MACRO_UNITS[row.key]}</small>
+    </span>
+  );
+}
+
 export function StudentWeekTable({ data }: { data: StudentWeekResponse }) {
   const days = data.table.days;
   const byKey = new Map(data.table.rows.map((row) => [row.key, row]));
@@ -132,6 +161,41 @@ export function StudentWeekTable({ data }: { data: StudentWeekResponse }) {
       {noData ? (
         <p className="wp-inline-empty">Sin registros en la semana</p>
       ) : null}
+      <div className="wp-week-board" aria-label="Semana del alumno">
+        <div className="wp-week-board-head">
+          {days.map((day, i) => (
+            <span key={day.date}>
+              {WEEKDAYS_SHORT[day.weekday] || WEEKDAYS_SHORT[i]}
+              <small>{day.date.slice(8, 10)}</small>
+            </span>
+          ))}
+          <span>
+            Prom.
+            <small>con registro</small>
+          </span>
+        </div>
+        {ROW_ORDER.map((key) => {
+          const row = byKey.get(key as TableRow["key"]);
+          if (!row) return null;
+          const label = rowLabel(row);
+          return (
+            <article key={key} className={key === "daily_total" ? "is-total" : undefined}>
+              <header>
+                <strong>{label.title}</strong>
+                {label.sub ? <small>{label.sub}</small> : null}
+              </header>
+              <div className="wp-week-board-days">
+                {row.cells.map((cell, idx) => (
+                  <div key={days[idx]?.date || idx}>
+                    {renderCell(row, cell, days[idx]?.date || "", days[idx]?.state || "")}
+                  </div>
+                ))}
+                <div className="is-avg">{macroAverageCell(row)}</div>
+              </div>
+            </article>
+          );
+        })}
+      </div>
       <div className="wp-student-table-scroll">
         <table className="wp-student-table">
           <thead>
@@ -143,6 +207,10 @@ export function StudentWeekTable({ data }: { data: StudentWeekResponse }) {
                   <small>{day.date.slice(8, 10)}</small>
                 </th>
               ))}
+              <th>
+                Promedio
+                <small>con registro</small>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -161,6 +229,7 @@ export function StudentWeekTable({ data }: { data: StudentWeekResponse }) {
                       {renderCell(row, cell, days[idx]?.date || "", days[idx]?.state || "")}
                     </td>
                   ))}
+                  <td>{macroAverageCell(row)}</td>
                 </tr>
               );
             })}

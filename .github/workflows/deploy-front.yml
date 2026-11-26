@@ -1,28 +1,34 @@
 # Deploy automático del front a https://90dias.habitofirme.app
 #
+# Hosting: Cloudflare Pages, con subida directa desde Actions (API + wrangler).
+# El sitio ya vive detrás de Cloudflare; el FTPS anterior a ftp.habitofirme.app
+# quedó fuera de DNS, así que ese camino se eliminó.
+#
 # Disparadores:
 #   - pull_request → verify (lint, check:panel, test, build; sin subir)
-#   - push a production → deploy FTPS (main no publica)
+#   - push a production → deploy a Cloudflare Pages (main no publica)
 #   - workflow_dispatch mode=deploy → deploy (solo si la ref es production)
-#   - workflow_dispatch mode=diagnose → solo lista el remoto (NO sube; puede
-#     correrse desde cualquier rama para acertar FTP_REMOTE_DIR)
+#   - workflow_dispatch mode=diagnose → valida secretos y lista proyecto,
+#     últimos deployments y dominios (NO sube; puede correr desde cualquier rama)
 #
-# Build: npm run build → dist/client
-# Subida: curl FTPS explícito (AUTH TLS, TLS ≤ 1.2), como el script manual
-#   curl --ssl -k --tls-max 1.2 … ftp://ftp.habitofirme.app/…
-# Orden: primero todo menos index.html; al final index.html.
-# No borra archivos remotos ajenos al build.
+# Build: npm run build → dist/client, incluyendo public/_redirects (fallback SPA)
+# y public/_headers (caché del shell y de los assets).
+# Subida: npx wrangler@4 pages deploy dist/client --project-name=<proyecto>
+#   --branch=production --commit-dirty=true
+# Verificación: se compara el assets/index-*.js del build con el que sirve el
+#   sitio, con reintentos (Pages tarda unos segundos en propagar).
 #
 # Secretos (Settings → Secrets and variables → Actions):
-#   FTP_SERVER      → hostname, ej. ftp.habitofirme.app
-#   FTP_USERNAME    → usuario FTP (p. ej. 90dias@habitofirme.app, jailed)
-#   FTP_PASSWORD    → contraseña FTP
-#   FTP_REMOTE_DIR  → (opcional) ruta relativa al home del usuario FTP.
-#                     Vacío / "." = raíz del jail (típico para cPanel
-#                     account del subdominio). El usuario FileZilla de
-#                     cuenta principal sí necesita "90dias.habitofirme.app".
-# También se acepta la variable de repo vars.FTP_REMOTE_DIR si el secreto
-# no está definido.
+#   CLOUDFLARE_API_TOKEN   → token con permiso Cloudflare Pages:Edit sobre la
+#                            cuenta (y Account:Read si se listan proyectos)
+#   CLOUDFLARE_ACCOUNT_ID  → id de la cuenta de Cloudflare
+# Variable de repo (opcional):
+#   CF_PAGES_PROJECT       → nombre del proyecto de Pages. Si falta o está vacía,
+#                            .github/scripts/resolve-pages-project.sh lo detecta
+#                            por dominio (90dias.habitofirme.app) o por nombre.
+#
+# Los secretos FTP_* (FTP_SERVER, FTP_USERNAME, FTP_PASSWORD, FTP_REMOTE_DIR)
+# quedaron obsoletos: este workflow ya no los usa. Borrarlos es tarea manual.
 #
 # Build env (fija, no secreto): VITE_API_BASE=https://api.yggdra.cl
 
@@ -35,7 +41,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "diagnose = solo listar remoto (sin subir); deploy = publicar (solo en production)"
+        description: "diagnose = revisar proyecto y deployments (sin subir); deploy = publicar (solo en production)"
         type: choice
         options:
           - diagnose
@@ -83,130 +89,107 @@ jobs:
           VITE_API_BASE: ${{ env.VITE_API_BASE }}
 
   # -------------------------------------------------------------------------
-  # Diagnóstico: login + listados. Nunca sube archivos.
+  # Diagnóstico: valida credenciales y lista proyecto, deployments y dominios.
+  # Nunca sube archivos.
   # -------------------------------------------------------------------------
   diagnose:
     if: github.event_name == 'workflow_dispatch' && inputs.mode == 'diagnose'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Validar secretos FTP
+      - uses: actions/checkout@v4.2.2
+
+      - name: Validar secretos de Cloudflare
         env:
-          FTP_SERVER: ${{ secrets.FTP_SERVER }}
-          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
-          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           missing=0
-          if [ -z "$FTP_SERVER" ]; then echo "::error::Falta FTP_SERVER"; missing=1; fi
-          if [ -z "$FTP_USERNAME" ]; then echo "::error::Falta FTP_USERNAME"; missing=1; fi
-          if [ -z "$FTP_PASSWORD" ]; then echo "::error::Falta FTP_PASSWORD"; missing=1; fi
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then echo "::error::Falta el secreto CLOUDFLARE_API_TOKEN"; missing=1; fi
+          if [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then echo "::error::Falta el secreto CLOUDFLARE_ACCOUNT_ID"; missing=1; fi
           if [ "$missing" -ne 0 ]; then exit 1; fi
-          echo "Secretos FTP presentes."
-          echo "FTP_SERVER enmascarado por Actions; usuario configurado (no se imprime la contraseña)."
+          echo "Secretos de Cloudflare presentes (no se imprimen valores)."
 
-      - name: Resolver FTP_REMOTE_DIR
-        id: remote
+      - name: Resolver proyecto de Pages
+        id: pages_project
         env:
-          FTP_REMOTE_DIR_SECRET: ${{ secrets.FTP_REMOTE_DIR }}
-          FTP_REMOTE_DIR_VAR: ${{ vars.FTP_REMOTE_DIR }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CF_PAGES_PROJECT: ${{ vars.CF_PAGES_PROJECT }}
         run: |
-          REMOTE="${FTP_REMOTE_DIR_SECRET:-}"
-          if [ -z "$REMOTE" ]; then REMOTE="${FTP_REMOTE_DIR_VAR:-}"; fi
-          if [ -z "$REMOTE" ] || [ "$REMOTE" = "/" ]; then REMOTE="."; fi
-          # quitar barra final salvo "."
-          if [ "$REMOTE" != "." ]; then REMOTE="${REMOTE%/}"; fi
-          echo "remote=$REMOTE" >> "$GITHUB_OUTPUT"
-          echo "FTP_REMOTE_DIR efectivo: $REMOTE"
+          set -euo pipefail
+          PROJECT="$(.github/scripts/resolve-pages-project.sh)"
+          echo "project=$PROJECT" >> "$GITHUB_OUTPUT"
+          echo "Proyecto resuelto: $PROJECT"
 
-      - name: Listar remoto con curl (FTPS explícito, sin subir)
+      - name: Listar últimos deployments
         env:
-          FTP_SERVER: ${{ secrets.FTP_SERVER }}
-          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
-          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
-          REMOTE: ${{ steps.remote.outputs.remote }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PROJECT: ${{ steps.pages_project.outputs.project }}
         run: |
-          set +e
-          CURL_BASE=(curl --silent --show-error --ssl-reqd -k --tlsv1.2 --tls-max 1.2 --ftp-pasv --connect-timeout 20 --max-time 60 --user "$FTP_USERNAME:$FTP_PASSWORD")
-
-          list_url() {
-            local label="$1" url="$2"
-            echo ""
-            echo "======== LIST $label ========"
-            echo "URL (sin credenciales): $url"
-            "${CURL_BASE[@]}" --list-only "$url"
-            local rc=$?
-            echo "---- exit=$rc ----"
-            return $rc
-          }
-
-          # Home del usuario (raíz del jail en cPanel account)
-          list_url "home(/)" "ftp://${FTP_SERVER}/"
-          rc_home=$?
-
-          # Valor configurado de FTP_REMOTE_DIR
-          if [ "$REMOTE" = "." ]; then
-            list_url "FTP_REMOTE_DIR(.)" "ftp://${FTP_SERVER}/"
-            rc_cfg=$rc_home
-          else
-            list_url "FTP_REMOTE_DIR($REMOTE)" "ftp://${FTP_SERVER}/${REMOTE}/"
-            rc_cfg=$?
-          fi
-
-          # Candidato histórico del workflow anterior (suele fallar si el user está jailed)
-          list_url "candidato(90dias.habitofirme.app)" "ftp://${FTP_SERVER}/90dias.habitofirme.app/"
-          rc_legacy=$?
-
-          echo ""
-          echo "======== Resumen ========"
-          echo "home(/) exit=$rc_home"
-          echo "FTP_REMOTE_DIR($REMOTE) exit=$rc_cfg"
-          echo "candidato(90dias.habitofirme.app) exit=$rc_legacy"
-          if [ "$rc_home" -eq 0 ] && [ "$rc_legacy" -ne 0 ]; then
-            echo "Diagnóstico: el home del usuario lista OK y 90dias.habitofirme.app no."
-            echo "Para este usuario FTP el path correcto es '.' (raíz del jail)."
-            echo "Deja FTP_REMOTE_DIR vacío o '.' — no uses 90dias.habitofirme.app."
-          elif [ "$rc_legacy" -eq 0 ]; then
-            echo "Diagnóstico: 90dias.habitofirme.app lista OK (usuario tipo cuenta principal)."
-            echo "Configura el secreto/variable FTP_REMOTE_DIR=90dias.habitofirme.app"
-          elif [ "$rc_home" -ne 0 ]; then
-            echo "Diagnóstico: no se pudo listar el home. Revisar login, TLS o modo pasivo."
+          set -euo pipefail
+          API="https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/${PROJECT}/deployments?per_page=3"
+          RESP="$(curl -fsS --max-time 30 -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" "$API")" || {
+            echo "::error::No se pudieron listar los deployments de ${PROJECT}"
             exit 1
-          fi
+          }
+          echo "Últimos deployments de ${PROJECT} (created_on | environment | estado | url):"
+          printf '%s' "$RESP" | node -e '
+          let raw = "";
+          process.stdin.on("data", (c) => { raw += c; });
+          process.stdin.on("end", () => {
+            let body;
+            try { body = JSON.parse(raw); } catch {
+              console.error("La respuesta de deployments no es JSON válido.");
+              process.exit(2);
+            }
+            if (!body || body.success === false) {
+              console.error("La API respondió success=false: " + JSON.stringify((body && body.errors) || []));
+              process.exit(2);
+            }
+            const rows = Array.isArray(body.result) ? body.result : [];
+            if (rows.length === 0) { console.log("(sin deployments)"); return; }
+            for (const d of rows) {
+              const stage = d.latest_stage && d.latest_stage.status ? d.latest_stage.status : "?";
+              console.log([d.created_on || "?", d.environment || "?", stage, d.url || "(sin url)"].join("  |  "));
+            }
+          });
+          '
 
-      - name: Listar remoto con lftp (debug, sin subir)
+      - name: Estado del dominio
         env:
-          FTP_SERVER: ${{ secrets.FTP_SERVER }}
-          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
-          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
-          REMOTE: ${{ steps.remote.outputs.remote }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PROJECT: ${{ steps.pages_project.outputs.project }}
         run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq lftp
-          # debug a archivo; filtramos líneas que puedan arrastrar el password del argv
-          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "ftps://$FTP_SERVER" -e "
-            set ftp:ssl-force true;
-            set ftp:ssl-protect-data true;
-            set ftp:ssl-protect-list true;
-            set ftp:passive-mode true;
-            set ftp:prefer-epsv false;
-            set ssl:verify-certificate no;
-            set ssl:priority NORMAL:-VERS-SSL3.0:-VERS-TLS1.0:-VERS-TLS1.1:+VERS-TLS1.2;
-            set net:max-retries 2;
-            set net:timeout 20;
-            set cmd:verbose true;
-            pwd;
-            cls -la;
-            echo '--- try cd $REMOTE ---';
-            cd $REMOTE;
-            pwd;
-            cls -la;
-            echo '--- try cd 90dias.habitofirme.app ---';
-            cd;
-            cd 90dias.habitofirme.app;
-            pwd;
-            cls -la;
-            bye
-          " 2>&1 | sed -E 's/(-u |USER |PASS |PASSWOR[A-Z]* )[^[:space:]]+/\1***/Ig' | tee /tmp/lftp-diagnose.txt
-          echo "lftp diagnose finished (ver log arriba)."
+          set -euo pipefail
+          API="https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/${PROJECT}/domains"
+          RESP="$(curl -fsS --max-time 30 -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" "$API")" || {
+            echo "::error::No se pudo leer el estado de los dominios de ${PROJECT}"
+            exit 1
+          }
+          echo "Dominios de ${PROJECT} (name | status):"
+          printf '%s' "$RESP" | node -e '
+          let raw = "";
+          process.stdin.on("data", (c) => { raw += c; });
+          process.stdin.on("end", () => {
+            let body;
+            try { body = JSON.parse(raw); } catch {
+              console.error("La respuesta de dominios no es JSON válido.");
+              process.exit(2);
+            }
+            if (!body || body.success === false) {
+              console.error("La API respondió success=false: " + JSON.stringify((body && body.errors) || []));
+              process.exit(2);
+            }
+            const rows = Array.isArray(body.result) ? body.result : [];
+            if (rows.length === 0) { console.log("(sin dominios registrados)"); return; }
+            for (const d of rows) {
+              console.log([d.name || "?", d.status || "?"].join("  |  "));
+            }
+          });
+          '
 
   # -------------------------------------------------------------------------
   # Deploy: solo desde production
@@ -246,105 +229,115 @@ jobs:
 
       - name: Comprobar salida del build
         run: |
-          test -f dist/client/index.html
-          test -d dist/client/assets
-          ls -la dist/client dist/client/assets | head -40
+          set -euo pipefail
+          missing=0
+          if [ ! -f dist/client/index.html ]; then echo "::error::Falta dist/client/index.html"; missing=1; fi
+          if [ ! -d dist/client/assets ]; then echo "::error::Falta dist/client/assets"; missing=1; fi
+          if [ ! -f dist/client/_redirects ]; then echo "::error::Falta dist/client/_redirects (fallback SPA de Pages)"; missing=1; fi
+          if [ ! -f dist/client/_headers ]; then echo "::error::Falta dist/client/_headers (caché del shell)"; missing=1; fi
+          if [ "$missing" -ne 0 ]; then exit 1; fi
+          ls -la dist/client | head -40
 
-      - name: Validar secretos FTP
+      - name: Validar secretos de Cloudflare
         env:
-          FTP_SERVER: ${{ secrets.FTP_SERVER }}
-          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
-          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           missing=0
-          if [ -z "$FTP_SERVER" ]; then echo "::error::Falta el secreto FTP_SERVER"; missing=1; fi
-          if [ -z "$FTP_USERNAME" ]; then echo "::error::Falta el secreto FTP_USERNAME"; missing=1; fi
-          if [ -z "$FTP_PASSWORD" ]; then echo "::error::Falta el secreto FTP_PASSWORD"; missing=1; fi
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then echo "::error::Falta el secreto CLOUDFLARE_API_TOKEN"; missing=1; fi
+          if [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then echo "::error::Falta el secreto CLOUDFLARE_ACCOUNT_ID"; missing=1; fi
           if [ "$missing" -ne 0 ]; then exit 1; fi
-          echo "Secretos FTP presentes."
+          echo "Secretos de Cloudflare presentes (no se imprimen valores)."
 
-      - name: Resolver FTP_REMOTE_DIR
-        id: remote
+      - name: Resolver proyecto de Pages
+        id: pages_project
         env:
-          FTP_REMOTE_DIR_SECRET: ${{ secrets.FTP_REMOTE_DIR }}
-          FTP_REMOTE_DIR_VAR: ${{ vars.FTP_REMOTE_DIR }}
-        run: |
-          REMOTE="${FTP_REMOTE_DIR_SECRET:-}"
-          if [ -z "$REMOTE" ]; then REMOTE="${FTP_REMOTE_DIR_VAR:-}"; fi
-          if [ -z "$REMOTE" ] || [ "$REMOTE" = "/" ]; then REMOTE="."; fi
-          if [ "$REMOTE" != "." ]; then REMOTE="${REMOTE%/}"; fi
-          echo "remote=$REMOTE" >> "$GITHUB_OUTPUT"
-          echo "FTP_REMOTE_DIR efectivo: $REMOTE"
-          if [ "$REMOTE" = "90dias.habitofirme.app" ]; then
-            echo "::warning::Si el usuario FTP es una cuenta cPanel jailed (p. ej. 90dias@…), este path suele ser incorrecto. Corre mode=diagnose."
-          fi
-
-      # Subida con curl FTPS (AUTH TLS), alineada al script manual que funcionó.
-      # --ftp-pasv evita EPSV; --ftp-create-dirs crea assets/ si hace falta.
-      # No hay --delete / mirror destructivo.
-      - name: Subir assets (sin index.html)
-        env:
-          FTP_SERVER: ${{ secrets.FTP_SERVER }}
-          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
-          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
-          REMOTE: ${{ steps.remote.outputs.remote }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CF_PAGES_PROJECT: ${{ vars.CF_PAGES_PROJECT }}
         run: |
           set -euo pipefail
-          if [ "$REMOTE" = "." ]; then
-            PREFIX=""
-          else
-            PREFIX="${REMOTE}/"
-          fi
-          echo "Prefijo remoto: '${PREFIX:-<raíz del jail>}'"
+          PROJECT="$(.github/scripts/resolve-pages-project.sh)"
+          echo "project=$PROJECT" >> "$GITHUB_OUTPUT"
+          echo "Proyecto resuelto: $PROJECT"
 
-          upload() {
-            local src="$1" dest="$2"
-            echo "PUT $src → ftp://<server>/${PREFIX}${dest}"
-            curl --fail --show-error --silent \
-              --ssl-reqd -k --tlsv1.2 --tls-max 1.2 \
-              --ftp-pasv --ftp-create-dirs \
-              --connect-timeout 20 --max-time 120 \
-              --retry 3 --retry-delay 2 \
-              --user "$FTP_USERNAME:$FTP_PASSWORD" \
-              -T "$src" \
-              "ftp://${FTP_SERVER}/${PREFIX}${dest}"
-          }
-
-          while IFS= read -r -d '' f; do
-            rel="${f#dist/client/}"
-            upload "$f" "$rel"
-          done < <(find dist/client -type f ! -name index.html -print0 | sort -z)
-
-          echo "Assets subidos OK."
-
-      - name: Subir index.html al final
+      - name: Publicar en Cloudflare Pages
+        id: publish
         env:
-          FTP_SERVER: ${{ secrets.FTP_SERVER }}
-          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
-          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
-          REMOTE: ${{ steps.remote.outputs.remote }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PROJECT: ${{ steps.pages_project.outputs.project }}
         run: |
           set -euo pipefail
-          if [ "$REMOTE" = "." ]; then
-            PREFIX=""
+          LOG=/tmp/wrangler-pages.log
+          npx --yes wrangler@4 pages deploy dist/client \
+            --project-name="$PROJECT" \
+            --branch=production \
+            --commit-dirty=true 2>&1 | tee "$LOG"
+
+          URL="$(grep -oE 'https://[A-Za-z0-9._-]+\.pages\.dev[^[:space:]]*' "$LOG" | tail -1 || true)"
+          if [ -n "$URL" ]; then
+            echo "deployment_url=$URL" >> "$GITHUB_OUTPUT"
+            echo "::notice::Deployment publicado en $URL"
           else
-            PREFIX="${REMOTE}/"
+            echo "No se pudo extraer la URL del deployment del log; se continúa con la verificación del dominio."
           fi
-          echo "PUT index.html → ftp://<server>/${PREFIX}index.html"
-          curl --fail --show-error --silent \
-            --ssl-reqd -k --tlsv1.2 --tls-max 1.2 \
-            --ftp-pasv --ftp-create-dirs \
-            --connect-timeout 20 --max-time 60 \
-            --retry 3 --retry-delay 2 \
-            --user "$FTP_USERNAME:$FTP_PASSWORD" \
-            -T dist/client/index.html \
-            "ftp://${FTP_SERVER}/${PREFIX}index.html"
-          echo "index.html subido OK."
 
       - name: Verificar despliegue
         run: |
-          sleep 5
-          code=$(curl -sS -o /tmp/live.html -w "%{http_code}" https://90dias.habitofirme.app/)
-          echo "HTTP $code"
-          grep -oE 'assets/index[^"]+' /tmp/live.html | head -5 || true
-          test "$code" = "200"
+          set -euo pipefail
+          # User-Agent de navegador: sin él el host a veces responde la
+          # pantalla anti-bot ("One moment, please") con HTTP 200.
+          UA='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+          SITE='https://90dias.habitofirme.app/'
+          built=$(grep -oE 'assets/index-[^"]+\.js' dist/client/index.html | head -1 || true)
+          if [ -z "$built" ]; then
+            echo "::error::No se encontró assets/index-*.js en dist/client/index.html"
+            exit 1
+          fi
+          echo "build=$built"
+
+          max=10
+          delay=15
+          attempt=1
+          ok=0
+          bot_seen=0
+
+          while [ "$attempt" -le "$max" ]; do
+            echo "Intento $attempt/$max contra $SITE"
+            code="$(curl -sS -A "$UA" -D /tmp/live.hdr -o /tmp/live.html -w "%{http_code}" "$SITE" || true)"
+            if [ -z "$code" ]; then code=000; fi
+            if grep -qi 'One moment, please' /tmp/live.html 2>/dev/null; then
+              bot_seen=1
+              echo "Pantalla anti-bot recibida (HTTP $code); se reintenta."
+            elif [ "$code" = "200" ]; then
+              live="$(grep -oE 'assets/index-[^"]+\.js' /tmp/live.html | head -1 || true)"
+              echo "live=$live"
+              if [ "$built" = "$live" ]; then
+                ok=1
+                break
+              fi
+              echo "El sitio aún sirve otro asset; se reintenta."
+            else
+              echo "HTTP $code; se reintenta."
+            fi
+            attempt=$((attempt + 1))
+            if [ "$attempt" -le "$max" ]; then sleep "$delay"; fi
+          done
+
+          if [ "$ok" -ne 1 ]; then
+            if [ "$bot_seen" -eq 1 ]; then
+              echo "::error::La verificación recibió la pantalla anti-bot, no el index.html del build."
+            fi
+            echo "::error::El sitio no sirvió el asset del build ($built) tras $max intentos."
+            exit 1
+          fi
+
+          echo "El sitio ya sirve $built"
+          if ! grep -Eqi 'cache-control:.*(no-cache|max-age=0)' /tmp/live.hdr; then
+            echo "::error::index.html se sirvió sin Cache-Control no-cache/max-age=0. El navegador puede seguir el shell del deploy anterior."
+            echo "---- headers ----"
+            cat /tmp/live.hdr
+            exit 1
+          fi
+          echo "Cache-Control del shell OK."

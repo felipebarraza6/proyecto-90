@@ -5399,8 +5399,8 @@ export interface paths {
          *
          *     No filtra por request.branch: la org es supra-sucursal
          *     (Organization no tiene FK branch; UniversalFilterMixin no aplica filtro).
-         *     Lectura: owner de la org, OWNER de alguna tienda de la org, o superuser/staff.
-         *     Escritura (create/update/destroy/theme): owner de la org o superuser/staff.
+         *     Lectura: owner de la org, OWNER de alguna tienda de la org, o plataforma.
+         *     Escritura (create/update/destroy/theme): owner de la org o plataforma.
          */
         get: operations["branches_organizations_list"];
         put?: never;
@@ -5409,8 +5409,8 @@ export interface paths {
          *
          *     No filtra por request.branch: la org es supra-sucursal
          *     (Organization no tiene FK branch; UniversalFilterMixin no aplica filtro).
-         *     Lectura: owner de la org, OWNER de alguna tienda de la org, o superuser/staff.
-         *     Escritura (create/update/destroy/theme): owner de la org o superuser/staff.
+         *     Lectura: owner de la org, OWNER de alguna tienda de la org, o plataforma.
+         *     Escritura (create/update/destroy/theme): owner de la org o plataforma.
          */
         post: operations["branches_organizations_create"];
         delete?: never;
@@ -5431,8 +5431,8 @@ export interface paths {
          *
          *     No filtra por request.branch: la org es supra-sucursal
          *     (Organization no tiene FK branch; UniversalFilterMixin no aplica filtro).
-         *     Lectura: owner de la org, OWNER de alguna tienda de la org, o superuser/staff.
-         *     Escritura (create/update/destroy/theme): owner de la org o superuser/staff.
+         *     Lectura: owner de la org, OWNER de alguna tienda de la org, o plataforma.
+         *     Escritura (create/update/destroy/theme): owner de la org o plataforma.
          */
         get: operations["branches_organizations_retrieve"];
         /**
@@ -5440,8 +5440,8 @@ export interface paths {
          *
          *     No filtra por request.branch: la org es supra-sucursal
          *     (Organization no tiene FK branch; UniversalFilterMixin no aplica filtro).
-         *     Lectura: owner de la org, OWNER de alguna tienda de la org, o superuser/staff.
-         *     Escritura (create/update/destroy/theme): owner de la org o superuser/staff.
+         *     Lectura: owner de la org, OWNER de alguna tienda de la org, o plataforma.
+         *     Escritura (create/update/destroy/theme): owner de la org o plataforma.
          */
         put: operations["branches_organizations_update"];
         post?: never;
@@ -5450,8 +5450,8 @@ export interface paths {
          *
          *     No filtra por request.branch: la org es supra-sucursal
          *     (Organization no tiene FK branch; UniversalFilterMixin no aplica filtro).
-         *     Lectura: owner de la org, OWNER de alguna tienda de la org, o superuser/staff.
-         *     Escritura (create/update/destroy/theme): owner de la org o superuser/staff.
+         *     Lectura: owner de la org, OWNER de alguna tienda de la org, o plataforma.
+         *     Escritura (create/update/destroy/theme): owner de la org o plataforma.
          */
         delete: operations["branches_organizations_destroy"];
         options?: never;
@@ -5461,8 +5461,8 @@ export interface paths {
          *
          *     No filtra por request.branch: la org es supra-sucursal
          *     (Organization no tiene FK branch; UniversalFilterMixin no aplica filtro).
-         *     Lectura: owner de la org, OWNER de alguna tienda de la org, o superuser/staff.
-         *     Escritura (create/update/destroy/theme): owner de la org o superuser/staff.
+         *     Lectura: owner de la org, OWNER de alguna tienda de la org, o plataforma.
+         *     Escritura (create/update/destroy/theme): owner de la org o plataforma.
          */
         patch: operations["branches_organizations_partial_update"];
         trace?: never;
@@ -5480,8 +5480,8 @@ export interface paths {
          *
          *     No filtra por request.branch: la org es supra-sucursal
          *     (Organization no tiene FK branch; UniversalFilterMixin no aplica filtro).
-         *     Lectura: owner de la org, OWNER de alguna tienda de la org, o superuser/staff.
-         *     Escritura (create/update/destroy/theme): owner de la org o superuser/staff.
+         *     Lectura: owner de la org, OWNER de alguna tienda de la org, o plataforma.
+         *     Escritura (create/update/destroy/theme): owner de la org o plataforma.
          */
         get: operations["branches_organizations_allowed_apps_retrieve"];
         /**
@@ -5490,8 +5490,8 @@ export interface paths {
          *
          *     No filtra por request.branch: la org es supra-sucursal
          *     (Organization no tiene FK branch; UniversalFilterMixin no aplica filtro).
-         *     Lectura: owner de la org, OWNER de alguna tienda de la org, o superuser/staff.
-         *     Escritura (create/update/destroy/theme): owner de la org o superuser/staff.
+         *     Lectura: owner de la org, OWNER de alguna tienda de la org, o plataforma.
+         *     Escritura (create/update/destroy/theme): owner de la org o plataforma.
          */
         put: operations["branches_organizations_allowed_apps_update"];
         post?: never;
@@ -5516,8 +5516,8 @@ export interface paths {
          *
          *     No filtra por request.branch: la org es supra-sucursal
          *     (Organization no tiene FK branch; UniversalFilterMixin no aplica filtro).
-         *     Lectura: owner de la org, OWNER de alguna tienda de la org, o superuser/staff.
-         *     Escritura (create/update/destroy/theme): owner de la org o superuser/staff.
+         *     Lectura: owner de la org, OWNER de alguna tienda de la org, o plataforma.
+         *     Escritura (create/update/destroy/theme): owner de la org o plataforma.
          */
         post: operations["branches_organizations_attach_store_create"];
         delete?: never;
@@ -5541,8 +5541,8 @@ export interface paths {
          *
          *     No filtra por request.branch: la org es supra-sucursal
          *     (Organization no tiene FK branch; UniversalFilterMixin no aplica filtro).
-         *     Lectura: owner de la org, OWNER de alguna tienda de la org, o superuser/staff.
-         *     Escritura (create/update/destroy/theme): owner de la org o superuser/staff.
+         *     Lectura: owner de la org, OWNER de alguna tienda de la org, o plataforma.
+         *     Escritura (create/update/destroy/theme): owner de la org o plataforma.
          */
         post: operations["branches_organizations_detach_store_create"];
         delete?: never;
@@ -5564,8 +5564,8 @@ export interface paths {
          *
          *     No filtra por request.branch: la org es supra-sucursal
          *     (Organization no tiene FK branch; UniversalFilterMixin no aplica filtro).
-         *     Lectura: owner de la org, OWNER de alguna tienda de la org, o superuser/staff.
-         *     Escritura (create/update/destroy/theme): owner de la org o superuser/staff.
+         *     Lectura: owner de la org, OWNER de alguna tienda de la org, o plataforma.
+         *     Escritura (create/update/destroy/theme): owner de la org o plataforma.
          */
         get: operations["branches_organizations_role_apps_retrieve"];
         /**
@@ -5574,8 +5574,8 @@ export interface paths {
          *
          *     No filtra por request.branch: la org es supra-sucursal
          *     (Organization no tiene FK branch; UniversalFilterMixin no aplica filtro).
-         *     Lectura: owner de la org, OWNER de alguna tienda de la org, o superuser/staff.
-         *     Escritura (create/update/destroy/theme): owner de la org o superuser/staff.
+         *     Lectura: owner de la org, OWNER de alguna tienda de la org, o plataforma.
+         *     Escritura (create/update/destroy/theme): owner de la org o plataforma.
          */
         put: operations["branches_organizations_role_apps_update"];
         post?: never;
@@ -5598,8 +5598,8 @@ export interface paths {
          *
          *     No filtra por request.branch: la org es supra-sucursal
          *     (Organization no tiene FK branch; UniversalFilterMixin no aplica filtro).
-         *     Lectura: owner de la org, OWNER de alguna tienda de la org, o superuser/staff.
-         *     Escritura (create/update/destroy/theme): owner de la org o superuser/staff.
+         *     Lectura: owner de la org, OWNER de alguna tienda de la org, o plataforma.
+         *     Escritura (create/update/destroy/theme): owner de la org o plataforma.
          */
         get: operations["branches_organizations_stores_retrieve"];
         put?: never;
@@ -5623,8 +5623,8 @@ export interface paths {
          *
          *     No filtra por request.branch: la org es supra-sucursal
          *     (Organization no tiene FK branch; UniversalFilterMixin no aplica filtro).
-         *     Lectura: owner de la org, OWNER de alguna tienda de la org, o superuser/staff.
-         *     Escritura (create/update/destroy/theme): owner de la org o superuser/staff.
+         *     Lectura: owner de la org, OWNER de alguna tienda de la org, o plataforma.
+         *     Escritura (create/update/destroy/theme): owner de la org o plataforma.
          */
         get: operations["branches_organizations_theme_retrieve"];
         /**
@@ -5633,8 +5633,8 @@ export interface paths {
          *
          *     No filtra por request.branch: la org es supra-sucursal
          *     (Organization no tiene FK branch; UniversalFilterMixin no aplica filtro).
-         *     Lectura: owner de la org, OWNER de alguna tienda de la org, o superuser/staff.
-         *     Escritura (create/update/destroy/theme): owner de la org o superuser/staff.
+         *     Lectura: owner de la org, OWNER de alguna tienda de la org, o plataforma.
+         *     Escritura (create/update/destroy/theme): owner de la org o plataforma.
          */
         put: operations["branches_organizations_theme_update"];
         post?: never;
@@ -5647,8 +5647,8 @@ export interface paths {
          *
          *     No filtra por request.branch: la org es supra-sucursal
          *     (Organization no tiene FK branch; UniversalFilterMixin no aplica filtro).
-         *     Lectura: owner de la org, OWNER de alguna tienda de la org, o superuser/staff.
-         *     Escritura (create/update/destroy/theme): owner de la org o superuser/staff.
+         *     Lectura: owner de la org, OWNER de alguna tienda de la org, o plataforma.
+         *     Escritura (create/update/destroy/theme): owner de la org o plataforma.
          */
         patch: operations["branches_organizations_theme_partial_update"];
         trace?: never;
@@ -12098,7 +12098,7 @@ export interface paths {
         put?: never;
         /**
          * Cerrar caja
-         * @description Cerrar caja.
+         * @description Cerrar caja con lock de fila para evitar doble cierre.
          */
         post: operations["finance_cash_registers_close_create"];
         delete?: never;
@@ -12156,9 +12156,29 @@ export interface paths {
         };
         /**
          * Listar movimientos de caja
-         * @description Listar movimientos manuales de una caja.
+         * @description Solo movimientos manuales (CASH_IN / CASH_OUT). Para ventas en efectivo + movimientos usa /transactions/.
          */
         get: operations["finance_cash_registers_movements_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/finance/cash-registers/{id}/transactions/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Timeline de transacciones de caja
+         * @description Línea de tiempo unificada de la sesión: pagos en efectivo ligados a la caja (SALE_PAYMENT, con número de orden) más ingresos/retiros manuales (CASH_IN / CASH_OUT). La suma neta de la lista (ventas + ingresos − retiros no anulados) cuadra con expected_amount − opening_amount. El endpoint /movements/ sigue listando solo movimientos manuales y permite anularlos.
+         */
+        get: operations["finance_cash_registers_transactions_list"];
         put?: never;
         post?: never;
         delete?: never;
@@ -13215,11 +13235,12 @@ export interface paths {
          * @description Descargar comprobante de pago en PDF.
          *
          *     Parámetros de query:
-         *     - pdf_format: "thermal" (80mm) o "a4" (A4). Por defecto "thermal".
+         *     - pdf_format: "thermal" (80mm), "thermal_58" (58mm) o "a4" (A4). Por defecto "thermal".
          *     - format: (legacy) También aceptado, pero puede causar conflictos con DRF.
          *
          *     GET /api/finance/payments/{id}/download-voucher/?pdf_format=a4
          *     GET /api/finance/payments/{id}/download-voucher/?pdf_format=thermal
+         *     GET /api/finance/payments/{id}/download-voucher/?pdf_format=thermal_58
          *
          *     Lógica:
          *     - Si hay voucher_file adjunto → descargar ese archivo
@@ -13247,10 +13268,11 @@ export interface paths {
         /**
          * @description Generar PDF de comprobante de pago.
          *     GET /api/finance/payments/{id}/generate-pdf/?pdf_format=thermal
+         *     GET /api/finance/payments/{id}/generate-pdf/?pdf_format=thermal_58
          *     GET /api/finance/payments/{id}/generate-pdf/?pdf_format=a4
          *
          *     Parámetros de query:
-         *     - pdf_format: "thermal" (80mm) o "a4" (A4). Por defecto "thermal".
+         *     - pdf_format: "thermal" (80mm), "thermal_58" (58mm) o "a4" (A4). Por defecto "thermal".
          *     - format: (legacy) También aceptado, pero puede causar conflictos con DRF.
          *
          *     NOTA: Se recomienda usar 'pdf_format' en lugar de 'format' para evitar
@@ -13854,7 +13876,7 @@ export interface paths {
         };
         /**
          * Descargar comprobante de ingreso
-         * @description Descarga el comprobante del ingreso. Si hay archivo adjunto, lo descarga. Si no, genera PDF automáticamente. Soporta formatos: thermal (80mm) o a4.
+         * @description Descarga el comprobante del ingreso. Si hay archivo adjunto, lo descarga. Si no, genera PDF automáticamente. pdf_format: thermal (80mm, default), thermal_58 (58mm) o a4. Alias legacy: format.
          */
         get: operations["finance_revenues_download_voucher_retrieve"];
         put?: never;
@@ -13873,8 +13895,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Generar boleta PDF (80mm o A4)
-         * @description Genera un PDF de boleta para el ingreso. Si el ingreso tiene una orden asociada, usa el generador de órdenes. Si no, crea una orden temporal. Soporta formatos: thermal (80mm) o a4.
+         * Generar boleta PDF (80mm, 58mm o A4)
+         * @description Genera un PDF de boleta para el ingreso. Si el ingreso tiene una orden asociada, usa el generador de órdenes. Si no, crea una orden temporal. pdf_format: thermal (80mm, default), thermal_58 (58mm) o a4. Alias legacy: format.
          */
         get: operations["finance_revenues_generate_boleta_pdf_retrieve"];
         put?: never;
@@ -14730,6 +14752,26 @@ export interface paths {
          * @description ERPBase + viewer Forja. No confía en type_user global.
          */
         patch: operations["forja_students_status_partial_update"];
+        trace?: never;
+    };
+    "/api/forja/students/me/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Ficha del alumno autenticado
+         * @description GET /api/forja/students/me/ — la ficha del rol alumno.
+         */
+        get: operations["forja_students_me_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/forja/subscriptions/": {
@@ -17241,7 +17283,7 @@ export interface paths {
         };
         /**
          * PDF de etiqueta nutricional del producto
-         * @description Descarga el PDF de la receta con cálculo nutricional del producto. Query: page_size=label|a4|letter.
+         * @description Descarga el PDF nutricional del producto. Prioriza una receta con cálculo nutricional; si no hay, usa los 11 valores del producto. Query: page_size=label|a4|letter.
          */
         get: operations["inventory_products_download_nutrition_label_pdf_retrieve"];
         put?: never;
@@ -19475,6 +19517,46 @@ export interface paths {
         patch: operations["p90_panel_config_partial_update"];
         trace?: never;
     };
+    "/api/p90/panel/me/week": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Ficha semanal del alumno autenticado
+         * @description Ficha semanal del alumno autenticado (compute_student_week, sin IA).
+         */
+        get: operations["p90_panel_me_week_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/p90/panel/me/weeks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Semanas del alumno autenticado
+         * @description Listado de semanas del alumno autenticado (sin listado de sucursal).
+         */
+        get: operations["p90_panel_me_weeks_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/p90/panel/messages/broadcast": {
         parameters: {
             query?: never;
@@ -19857,11 +19939,15 @@ export interface paths {
          *
          *     GET /api/plan-checkout/groups/
          *     Superuser/staff: todos los grupos (cualquier estado). Resto: grupos
-         *     que su organización vende (PlanGroup.organization propia).
+         *     de las organizaciones que posee o donde es admin de sucursal.
          */
         get: operations["plan_checkout_groups_list"];
         put?: never;
-        post?: never;
+        /**
+         * Crear grupo de planes de la organización
+         * @description Dueño o admin de sucursal crea el grupo. Staff puede indicar organization.
+         */
+        post: operations["plan_checkout_groups_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -23248,7 +23334,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description Marcar división como pagada. */
+        /**
+         * Cobrar división de cuenta
+         * @description Cobra el monto de la división con las mismas reglas que POST /sales/orders/{id}/pay/: caja abierta, saldo pendiente, referencia obligatoria según el método y permisos sobre la orden.
+         */
         post: operations["sales_order_splits_pay_create"];
         delete?: never;
         options?: never;
@@ -23459,8 +23548,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Generar boleta PDF formato 80mm
-         * @description Genera un PDF de boleta en formato 80mm x 200mm para impresión térmica
+         * Generar boleta PDF térmica (80mm o 58mm)
+         * @description Genera un PDF de boleta para impresión térmica. pdf_format=thermal (default, 80mm) o pdf_format=thermal_58 (rollo 58mm).
          */
         get: operations["sales_orders_generate_boleta_pdf_retrieve"];
         put?: never;
@@ -23479,8 +23568,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Generar comanda PDF formato 80mm
-         * @description Genera un PDF de comanda para cocina en formato térmico 80mm
+         * Generar comanda PDF térmica (80mm o 58mm)
+         * @description Genera un PDF de comanda para cocina. pdf_format=thermal (default, 80mm) o pdf_format=thermal_58 (rollo 58mm).
          */
         get: operations["sales_orders_generate_ticket_pdf_retrieve"];
         put?: never;
@@ -24103,6 +24192,9 @@ export interface paths {
          *
          *     Filtra automáticamente por sucursal (branch) vía BranchMiddleware.
          *     Soporta filtrado por empleado, fecha y rango de fechas.
+         *
+         *     Las propinas ligadas a un cobro (`payment`) son inmutables en monto/método
+         *     y no se pueden soft-deletear: de lo contrario se falsea el arqueo de caja.
          */
         get: operations["sales_tips_list"];
         put?: never;
@@ -24111,6 +24203,9 @@ export interface paths {
          *
          *     Filtra automáticamente por sucursal (branch) vía BranchMiddleware.
          *     Soporta filtrado por empleado, fecha y rango de fechas.
+         *
+         *     Las propinas ligadas a un cobro (`payment`) son inmutables en monto/método
+         *     y no se pueden soft-deletear: de lo contrario se falsea el arqueo de caja.
          */
         post: operations["sales_tips_create"];
         delete?: never;
@@ -24131,6 +24226,9 @@ export interface paths {
          *
          *     Filtra automáticamente por sucursal (branch) vía BranchMiddleware.
          *     Soporta filtrado por empleado, fecha y rango de fechas.
+         *
+         *     Las propinas ligadas a un cobro (`payment`) son inmutables en monto/método
+         *     y no se pueden soft-deletear: de lo contrario se falsea el arqueo de caja.
          */
         get: operations["sales_tips_retrieve"];
         /**
@@ -24138,6 +24236,9 @@ export interface paths {
          *
          *     Filtra automáticamente por sucursal (branch) vía BranchMiddleware.
          *     Soporta filtrado por empleado, fecha y rango de fechas.
+         *
+         *     Las propinas ligadas a un cobro (`payment`) son inmutables en monto/método
+         *     y no se pueden soft-deletear: de lo contrario se falsea el arqueo de caja.
          */
         put: operations["sales_tips_update"];
         post?: never;
@@ -24146,6 +24247,9 @@ export interface paths {
          *
          *     Filtra automáticamente por sucursal (branch) vía BranchMiddleware.
          *     Soporta filtrado por empleado, fecha y rango de fechas.
+         *
+         *     Las propinas ligadas a un cobro (`payment`) son inmutables en monto/método
+         *     y no se pueden soft-deletear: de lo contrario se falsea el arqueo de caja.
          */
         delete: operations["sales_tips_destroy"];
         options?: never;
@@ -24155,6 +24259,9 @@ export interface paths {
          *
          *     Filtra automáticamente por sucursal (branch) vía BranchMiddleware.
          *     Soporta filtrado por empleado, fecha y rango de fechas.
+         *
+         *     Las propinas ligadas a un cobro (`payment`) son inmutables en monto/método
+         *     y no se pueden soft-deletear: de lo contrario se falsea el arqueo de caja.
          */
         patch: operations["sales_tips_partial_update"];
         trace?: never;
@@ -27499,6 +27606,59 @@ export interface paths {
         patch: operations["support_agents_partial_update"];
         trace?: never;
     };
+    "/api/support/branch-products/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar productos de sucursal
+         * @description CRUD del producto/front asignado a la sucursal.
+         */
+        get: operations["support_branch_products_list"];
+        put?: never;
+        /**
+         * Crear producto de sucursal
+         * @description CRUD del producto/front asignado a la sucursal.
+         */
+        post: operations["support_branch_products_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/support/branch-products/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Obtener producto de sucursal
+         * @description CRUD del producto/front asignado a la sucursal.
+         */
+        get: operations["support_branch_products_retrieve"];
+        /**
+         * Actualizar producto de sucursal
+         * @description CRUD del producto/front asignado a la sucursal.
+         */
+        put: operations["support_branch_products_update"];
+        post?: never;
+        /**
+         * Eliminar producto de sucursal
+         * @description CRUD del producto/front asignado a la sucursal.
+         */
+        delete: operations["support_branch_products_destroy"];
+        options?: never;
+        head?: never;
+        /** @description CRUD del producto/front asignado a la sucursal. */
+        patch: operations["support_branch_products_partial_update"];
+        trace?: never;
+    };
     "/api/support/categories/": {
         parameters: {
             query?: never;
@@ -28358,6 +28518,44 @@ export interface paths {
          *             # No es necesario definir permission_classes
          */
         patch: operations["support_ticket_attachments_partial_update"];
+        trace?: never;
+    };
+    "/api/support/ticket-external-links/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Links externos de un ticket (staff / config). */
+        get: operations["support_ticket_external_links_list"];
+        put?: never;
+        /** @description Links externos de un ticket (staff / config). */
+        post: operations["support_ticket_external_links_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/support/ticket-external-links/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Links externos de un ticket (staff / config). */
+        get: operations["support_ticket_external_links_retrieve"];
+        /** @description Links externos de un ticket (staff / config). */
+        put: operations["support_ticket_external_links_update"];
+        post?: never;
+        /** @description Links externos de un ticket (staff / config). */
+        delete: operations["support_ticket_external_links_destroy"];
+        options?: never;
+        head?: never;
+        /** @description Links externos de un ticket (staff / config). */
+        patch: operations["support_ticket_external_links_partial_update"];
         trace?: never;
     };
     "/api/support/ticket-types/": {
@@ -34190,13 +34388,12 @@ export interface components {
              * Dominio personalizado
              * @description Dominio propio para webhooks y widget web embed (ej: agents.smarthydro.cl). Sin http/https. Debe apuntar a este servidor.
              */
-            custom_domain?: string | null;
+            custom_domain?: (string) | null;
             /**
              * Email remitente
-             * Format: email
              * @description Remitente para correos de esta sucursal (reset, invitaciones, etc.). Debe estar autorizado en el proveedor SMTP (SPF/DKIM). Si está vacío, se usa DEFAULT_FROM_EMAIL del sistema.
              */
-            from_email?: string | null;
+            from_email?: (string) | null;
             /**
              * Organización
              * @description Organización (reseller/holding) a la que pertenece esta tienda. Null = sucursal independiente.
@@ -34217,7 +34414,6 @@ export interface components {
             /** Format: uri */
             banner_image?: string | null;
             tagline?: string;
-            /** Format: uri */
             website_url?: string;
             brand_description?: string;
             social_links?: unknown;
@@ -34482,13 +34678,12 @@ export interface components {
              * Dominio personalizado
              * @description Dominio propio para webhooks y widget web embed (ej: agents.smarthydro.cl). Sin http/https. Debe apuntar a este servidor.
              */
-            custom_domain?: string | null;
+            custom_domain?: (string) | null;
             /**
              * Email remitente
-             * Format: email
              * @description Remitente para correos de esta sucursal (reset, invitaciones, etc.). Debe estar autorizado en el proveedor SMTP (SPF/DKIM). Si está vacío, se usa DEFAULT_FROM_EMAIL del sistema.
              */
-            from_email?: string | null;
+            from_email?: (string) | null;
             /**
              * Organización
              * @description Organización (reseller/holding) a la que pertenece esta tienda. Null = sucursal independiente.
@@ -34509,7 +34704,6 @@ export interface components {
             /** Format: uri */
             banner_image?: string | null;
             tagline?: string;
-            /** Format: uri */
             website_url?: string;
             brand_description?: string;
             social_links?: unknown;
@@ -34611,13 +34805,12 @@ export interface components {
              * Dominio personalizado
              * @description Dominio propio para webhooks y widget web embed (ej: agents.smarthydro.cl). Sin http/https. Debe apuntar a este servidor.
              */
-            custom_domain?: string | null;
+            custom_domain?: (string) | null;
             /**
              * Email remitente
-             * Format: email
              * @description Remitente para correos de esta sucursal (reset, invitaciones, etc.). Debe estar autorizado en el proveedor SMTP (SPF/DKIM). Si está vacío, se usa DEFAULT_FROM_EMAIL del sistema.
              */
-            from_email?: string | null;
+            from_email?: (string) | null;
             /**
              * Organización
              * @description Organización (reseller/holding) a la que pertenece esta tienda. Null = sucursal independiente.
@@ -34642,7 +34835,6 @@ export interface components {
             /** Format: binary */
             banner_image?: string | null;
             tagline?: string;
-            /** Format: uri */
             website_url?: string;
             brand_description?: string;
             social_links?: unknown;
@@ -35609,6 +35801,9 @@ export interface components {
              *     * `public_catalog` - Catálogo Público
              *     * `audit` - Auditoría
              *     * `production` - Producción
+             *     * `documents` - Documentos
+             *     * `campaigns` - Campañas
+             *     * `privacy` - Privacidad
              *     * `iot_telemetry` - Telemetría IoT
              *     * `water_management` - Gestión Hídrica
              *     * `nutrition` - Nutrición
@@ -35987,6 +36182,71 @@ export interface components {
              */
             default_delivery_fee?: number;
         };
+        /** @description branch se asigna en la vista desde request.branch (nunca del body). */
+        BranchProduct: {
+            /** Format: uuid */
+            readonly id: string;
+            /**
+             * Sucursal
+             * @description Sucursal a la que pertenece este registro
+             */
+            readonly branch: number;
+            /**
+             * Organización
+             * @description Opcional; por defecto la organización de la sucursal.
+             */
+            organization?: number | null;
+            /**
+             * Slug del front
+             * @description Id estable del consumidor (docs/CONSUMERS.yaml).
+             */
+            slug: string;
+            /**
+             * Repositorio
+             * @description Formato owner/repo (GitHub).
+             */
+            repo: string;
+            /**
+             * Activo
+             * @description Indica si el registro está activo. Use esto en lugar de eliminar.
+             */
+            is_active?: boolean;
+            /**
+             * Created at
+             * Format: date-time
+             * @description Fecha de creacion.
+             */
+            readonly created: string;
+            /**
+             * Modified at
+             * Format: date-time
+             * @description Fecha de modificacion.
+             */
+            readonly modified: string;
+        };
+        /** @description branch se asigna en la vista desde request.branch (nunca del body). */
+        BranchProductRequest: {
+            /**
+             * Organización
+             * @description Opcional; por defecto la organización de la sucursal.
+             */
+            organization?: number | null;
+            /**
+             * Slug del front
+             * @description Id estable del consumidor (docs/CONSUMERS.yaml).
+             */
+            slug: string;
+            /**
+             * Repositorio
+             * @description Formato owner/repo (GitHub).
+             */
+            repo: string;
+            /**
+             * Activo
+             * @description Indica si el registro está activo. Use esto en lugar de eliminar.
+             */
+            is_active?: boolean;
+        };
         /** @description Serializer for branch product type configuration. */
         BranchProductTypeConfig: {
             readonly id: number;
@@ -36164,13 +36424,12 @@ export interface components {
              * Dominio personalizado
              * @description Dominio propio para webhooks y widget web embed (ej: agents.smarthydro.cl). Sin http/https. Debe apuntar a este servidor.
              */
-            custom_domain?: string | null;
+            custom_domain?: (string) | null;
             /**
              * Email remitente
-             * Format: email
              * @description Remitente para correos de esta sucursal (reset, invitaciones, etc.). Debe estar autorizado en el proveedor SMTP (SPF/DKIM). Si está vacío, se usa DEFAULT_FROM_EMAIL del sistema.
              */
-            from_email?: string | null;
+            from_email?: (string) | null;
             /**
              * Organización
              * @description Organización (reseller/holding) a la que pertenece esta tienda. Null = sucursal independiente.
@@ -36195,7 +36454,6 @@ export interface components {
             /** Format: binary */
             banner_image?: string | null;
             tagline?: string;
-            /** Format: uri */
             website_url?: string;
             brand_description?: string;
             social_links?: unknown;
@@ -36472,7 +36730,6 @@ export interface components {
             tagline?: string;
             /**
              * Sitio Web
-             * Format: uri
              * @description URL del sitio web
              */
             website_url?: string;
@@ -36581,7 +36838,7 @@ export interface components {
              * Slug para Login
              * @description URL personalizada para login: /login/{slug}. Ej: 'mi-empresa'
              */
-            login_slug?: string | null;
+            login_slug?: (string) | null;
             /**
              * Mensaje de Bienvenida
              * @description Título que se muestra en la página de login
@@ -36640,7 +36897,6 @@ export interface components {
             tagline?: string;
             /**
              * Sitio Web
-             * Format: uri
              * @description URL del sitio web
              */
             website_url?: string;
@@ -36745,7 +37001,7 @@ export interface components {
              * Slug para Login
              * @description URL personalizada para login: /login/{slug}. Ej: 'mi-empresa'
              */
-            login_slug?: string | null;
+            login_slug?: (string) | null;
             /**
              * Mensaje de Bienvenida
              * @description Título que se muestra en la página de login
@@ -38054,6 +38310,38 @@ export interface components {
             difference?: number | null;
             status: string;
         };
+        /**
+         * @description Línea de tiempo unificada de la sesión de caja.
+         *
+         *     kind=SALE_PAYMENT: cobro en efectivo ligado a la sesión.
+         *     kind=CASH_IN / CASH_OUT: movimiento manual (mismo contrato que movements/).
+         */
+        CashRegisterTransaction: {
+            /**
+             * @description * `SALE_PAYMENT` - SALE_PAYMENT
+             *     * `CASH_IN` - CASH_IN
+             *     * `CASH_OUT` - CASH_OUT
+             * @enum {string}
+             */
+            kind: "SALE_PAYMENT" | "CASH_IN" | "CASH_OUT";
+            id: string;
+            /** Format: double */
+            amount: number;
+            /** Format: date-time */
+            created: string;
+            order_number?: string | null;
+            /** Format: uuid */
+            order_id?: string | null;
+            payment_method?: string | null;
+            payment_method_type?: string | null;
+            reason?: string | null;
+            notes?: string | null;
+            is_cancelled: boolean;
+            movement_id?: number | null;
+            /** Format: uuid */
+            payment_id?: string | null;
+            created_by_name?: string | null;
+        };
         /** @description CategoryProduct serializer. */
         CategoryProduct: {
             readonly id: number;
@@ -38087,6 +38375,11 @@ export interface components {
              * @enum {string|null}
              */
             category_type?: "MEMBERSHIP" | "SUBSCRIPTION" | "CONSULTING" | "TRAINING" | "MAINTENANCE" | "SUPPORT" | "RENTAL" | "COWORKING" | "EVENT" | "OTHER" | "" | null;
+            /**
+             * Activo
+             * @description Indica si el registro está activo. Use esto en lugar de eliminar.
+             */
+            readonly is_active: boolean;
             /**
              * Sucursal
              * @description Sucursal a la que pertenece este registro
@@ -38158,11 +38451,8 @@ export interface components {
              * @description Nombre de quien recibe el certificado
              */
             recipient_name: string;
-            /**
-             * Email del Destinatario
-             * Format: email
-             */
-            recipient_email?: string | null;
+            /** Email del Destinatario */
+            recipient_email?: (string) | null;
             /**
              * Fecha de Emisión
              * Format: date-time
@@ -38298,11 +38588,8 @@ export interface components {
              * @description Nombre de quien recibe el certificado
              */
             recipient_name: string;
-            /**
-             * Email del Destinatario
-             * Format: email
-             */
-            recipient_email?: string | null;
+            /** Email del Destinatario */
+            recipient_email?: (string) | null;
             /**
              * Fecha de Vencimiento
              * Format: date
@@ -38333,11 +38620,8 @@ export interface components {
              * @description Nombre de quien recibe el certificado
              */
             recipient_name: string;
-            /**
-             * Email del Destinatario
-             * Format: email
-             */
-            recipient_email?: string | null;
+            /** Email del Destinatario */
+            recipient_email?: (string) | null;
             /**
              * Fecha de Vencimiento
              * Format: date
@@ -38368,11 +38652,8 @@ export interface components {
              * @description Nombre de quien recibe el certificado
              */
             recipient_name: string;
-            /**
-             * Email del Destinatario
-             * Format: email
-             */
-            recipient_email?: string | null;
+            /** Email del Destinatario */
+            recipient_email?: (string) | null;
             /**
              * Fecha de Vencimiento
              * Format: date
@@ -38653,10 +38934,7 @@ export interface components {
              * @enum {string}
              */
             provider: "meta" | "twilio" | "telegram_bot" | "sendgrid" | "smtp" | "slack_webhook" | "discord_webhook" | "teams_webhook" | "google_chat_webhook" | "custom";
-            /**
-             * Format: uri
-             * @description URL para recibir mensajes (auto-generada)
-             */
+            /** @description URL para recibir mensajes (auto-generada) */
             webhook_url?: string;
             /**
              * Dominio personalizado
@@ -38795,10 +39073,7 @@ export interface components {
              */
             config?: unknown;
             webhook_secret?: string;
-            /**
-             * Format: uri
-             * @description URL para recibir mensajes (auto-generada)
-             */
+            /** @description URL para recibir mensajes (auto-generada) */
             webhook_url?: string;
             /**
              * Dominio personalizado
@@ -39446,11 +39721,11 @@ export interface components {
             /** @description Obtener nombre completo. */
             readonly full_name: string;
             /** RUT/DNI */
-            dni?: string | null;
+            dni?: (string) | null;
             /** Format: email */
             email: string;
             /** Teléfono */
-            phone?: string | null;
+            phone?: (string) | null;
             job_title?: number | null;
             readonly job_title_name: string;
             readonly job_title_level: string;
@@ -39508,11 +39783,11 @@ export interface components {
             /** @description Obtener nombre completo. */
             readonly full_name: string;
             /** RUT/DNI */
-            dni?: string | null;
+            dni?: (string) | null;
             /** Format: email */
             email: string;
             /** Teléfono */
-            phone?: string | null;
+            phone?: (string) | null;
             /**
              * Cargo
              * @description Cargo del contacto (puede ser de cualquier sucursal)
@@ -39568,11 +39843,11 @@ export interface components {
             /** Apellido */
             last_name: string;
             /** RUT/DNI */
-            dni?: string | null;
+            dni?: (string) | null;
             /** Format: email */
             email: string;
             /** Teléfono */
-            phone?: string | null;
+            phone?: (string) | null;
             job_title?: number | null;
             /**
              * Tipo de Contacto
@@ -39612,11 +39887,8 @@ export interface components {
              * @description Imagen del cliente. Se muestra en el avatar.
              */
             photo?: string | null;
-            /**
-             * Format: email
-             * @description Correo electrónico del cliente
-             */
-            email?: string | null;
+            /** @description Correo electrónico del cliente */
+            email?: (string) | null;
             /**
              * Teléfono
              * @description Número de teléfono del cliente
@@ -39697,11 +39969,8 @@ export interface components {
              * @description Imagen del cliente. Se muestra en el avatar.
              */
             photo?: string | null;
-            /**
-             * Format: email
-             * @description Correo electrónico del cliente
-             */
-            email?: string | null;
+            /** @description Correo electrónico del cliente */
+            email?: (string) | null;
             /**
              * Teléfono
              * @description Número de teléfono del cliente
@@ -41458,10 +41727,7 @@ export interface components {
              * @description RUT normalizado (sin puntos, con guión).
              */
             subject_identifier: string;
-            /**
-             * Email del titular
-             * Format: email
-             */
+            /** Email del titular */
             subject_email?: string;
             /**
              * Tipo de solicitud
@@ -41533,10 +41799,7 @@ export interface components {
              * @description RUT normalizado (sin puntos, con guión).
              */
             subject_identifier: string;
-            /**
-             * Email del titular
-             * Format: email
-             */
+            /** Email del titular */
             subject_email?: string;
             /**
              * Tipo de solicitud
@@ -42558,7 +42821,6 @@ export interface components {
             readonly signer_name: string;
             /**
              * Email del Firmante
-             * Format: email
              * @description Para firmantes externos al sistema
              */
             signer_email?: string;
@@ -42617,7 +42879,6 @@ export interface components {
             signer?: number | null;
             /**
              * Email del Firmante
-             * Format: email
              * @description Para firmantes externos al sistema
              */
             signer_email?: string;
@@ -43667,11 +43928,8 @@ export interface components {
             last_name: string;
             /** RUT/DNI */
             dni: string;
-            /**
-             * Correo Electrónico
-             * Format: email
-             */
-            email?: string | null;
+            /** Correo Electrónico */
+            email?: (string) | null;
             /** Teléfono */
             phone?: string | null;
             /** Dirección */
@@ -44117,11 +44375,8 @@ export interface components {
             readonly full_name: string;
             /** RUT/DNI */
             dni: string;
-            /**
-             * Correo Electrónico
-             * Format: email
-             */
-            email?: string | null;
+            /** Correo Electrónico */
+            email?: (string) | null;
             /** Teléfono */
             phone?: string | null;
             /** ID Empleado */
@@ -44187,11 +44442,8 @@ export interface components {
             last_name: string;
             /** RUT/DNI */
             dni: string;
-            /**
-             * Correo Electrónico
-             * Format: email
-             */
-            email?: string | null;
+            /** Correo Electrónico */
+            email?: (string) | null;
             /** Teléfono */
             phone?: string | null;
             /** Dirección */
@@ -45144,7 +45396,6 @@ export interface components {
             icon?: string | null;
             /**
              * Icono (URL)
-             * Format: uri
              * @description URL pública del logo. Se usa si no hay archivo subido.
              */
             icon_url?: string;
@@ -45321,7 +45572,6 @@ export interface components {
             readonly icon: string | null;
             /**
              * Icono (URL)
-             * Format: uri
              * @description URL pública del logo. Se usa si no hay archivo subido.
              */
             icon_url?: string;
@@ -45433,7 +45683,6 @@ export interface components {
             icon?: string | null;
             /**
              * Icono (URL)
-             * Format: uri
              * @description URL pública del logo. Se usa si no hay archivo subido.
              */
             icon_url?: string;
@@ -45471,10 +45720,7 @@ export interface components {
              * @description Módulos de Yggdra donde aplica esta app (ej: ['pos', 'public_checkout']). Valores de referencia en USAGE_CONTEXT_CHOICES.
              */
             usage_contexts?: unknown;
-            /**
-             * URL Base
-             * Format: uri
-             */
+            /** URL Base */
             base_url?: string;
             /**
              * Tipo de Autenticación
@@ -45502,15 +45748,9 @@ export interface components {
              * @description Lista de claves obligatorias en las credenciales de cada instalación (ej: ['api_key', 'secret_key']). Vacío = sin requisito explícito.
              */
             required_credential_keys?: unknown;
-            /**
-             * URL de icono
-             * Format: uri
-             */
+            /** URL de icono */
             icon_url?: string;
-            /**
-             * URL de documentación
-             * Format: uri
-             */
+            /** URL de documentación */
             documentation_url?: string;
             /** Activo */
             is_active?: boolean;
@@ -45635,10 +45875,7 @@ export interface components {
             readonly endpoint_name: string;
             /** Método */
             request_method?: string;
-            /**
-             * URL
-             * Format: uri
-             */
+            /** URL */
             request_url?: string;
             /** Headers */
             request_headers?: unknown;
@@ -45780,10 +46017,7 @@ export interface components {
              * @description Módulos de Yggdra donde aplica esta app (ej: ['pos', 'public_checkout']). Valores de referencia en USAGE_CONTEXT_CHOICES.
              */
             usage_contexts?: unknown;
-            /**
-             * URL Base
-             * Format: uri
-             */
+            /** URL Base */
             base_url?: string;
             /**
              * Tipo de Autenticación
@@ -45811,15 +46045,9 @@ export interface components {
              * @description Lista de claves obligatorias en las credenciales de cada instalación (ej: ['api_key', 'secret_key']). Vacío = sin requisito explícito.
              */
             required_credential_keys?: unknown;
-            /**
-             * URL de icono
-             * Format: uri
-             */
+            /** URL de icono */
             icon_url?: string;
-            /**
-             * URL de documentación
-             * Format: uri
-             */
+            /** URL de documentación */
             documentation_url?: string;
             /** Activo */
             is_active?: boolean;
@@ -46194,7 +46422,6 @@ export interface components {
             /** Format: double */
             load_kg?: number | null;
             notes?: string;
-            /** Format: uri */
             video_url?: string;
         };
         ForjaExerciseRequest: {
@@ -46207,7 +46434,6 @@ export interface components {
             /** Format: double */
             load_kg?: number | null;
             notes?: string;
-            /** Format: uri */
             video_url?: string;
         };
         /**
@@ -46353,7 +46579,6 @@ export interface components {
             readonly user: number | null;
             service?: number | null;
             full_name: string;
-            /** Format: email */
             email?: string;
             phone?: string;
             /**
@@ -46406,7 +46631,6 @@ export interface components {
         ForjaStudentRequest: {
             service?: number | null;
             full_name: string;
-            /** Format: email */
             email?: string;
             phone?: string;
             /**
@@ -48754,7 +48978,6 @@ export interface components {
             /** Apellido */
             last_name?: string;
             readonly full_name: string;
-            /** Format: email */
             email?: string;
             /** Teléfono */
             phone?: string;
@@ -48830,7 +49053,6 @@ export interface components {
             /** Apellido */
             last_name?: string;
             readonly full_name: string;
-            /** Format: email */
             email?: string;
             /** Teléfono */
             phone?: string;
@@ -48891,7 +49113,6 @@ export interface components {
             first_name: string;
             /** Apellido */
             last_name?: string;
-            /** Format: email */
             email?: string;
             /** Teléfono */
             phone?: string;
@@ -49279,10 +49500,9 @@ export interface components {
             is_virtual?: boolean;
             /**
              * URL de la Reunión
-             * Format: uri
              * @description Link para reuniones virtuales
              */
-            meeting_url?: string | null;
+            meeting_url?: (string) | null;
             /**
              * Sucursal
              * @description Sucursal a la que pertenece este registro
@@ -49371,10 +49591,9 @@ export interface components {
             is_virtual?: boolean;
             /**
              * URL de la Reunión
-             * Format: uri
              * @description Link para reuniones virtuales
              */
-            meeting_url?: string | null;
+            meeting_url?: (string) | null;
             /**
              * Sucursal
              * @description Sucursal a la que pertenece este registro
@@ -49425,10 +49644,9 @@ export interface components {
             is_virtual?: boolean;
             /**
              * URL de la Reunión
-             * Format: uri
              * @description Link para reuniones virtuales
              */
-            meeting_url?: string | null;
+            meeting_url?: (string) | null;
             /**
              * Sucursal
              * @description Sucursal a la que pertenece este registro
@@ -49479,10 +49697,9 @@ export interface components {
             is_virtual?: boolean;
             /**
              * URL de la Reunión
-             * Format: uri
              * @description Link para reuniones virtuales
              */
-            meeting_url?: string | null;
+            meeting_url?: (string) | null;
             /**
              * Sucursal
              * @description Sucursal a la que pertenece este registro
@@ -49926,94 +50143,6 @@ export interface components {
             is_default?: boolean;
             /** @description UUID de la sucursal. Solo editable por super administradores. */
             branch?: number | null;
-        };
-        Meter: {
-            readonly id: number;
-            /**
-             * Número de medidor
-             * @description Identificador físico del medidor. Único por APR.
-             */
-            number: string;
-            /**
-             * Socio
-             * @description Socio responsable del punto de medición
-             */
-            client?: number | null;
-            readonly client_name: string;
-            /**
-             * Sector / ruta
-             * @description Sector o ruta de lectura para organizar la toma de datos
-             */
-            sector?: string;
-            /**
-             * Fecha de instalación
-             * Format: date
-             */
-            installed_at?: string | null;
-            /**
-             * Estado
-             * @description * `ACTIVE` - Activo
-             *     * `RETIRED` - Retirado
-             *     * `DAMAGED` - Dañado
-             * @enum {string}
-             */
-            status?: "ACTIVE" | "RETIRED" | "DAMAGED";
-            /**
-             * Lectura inicial
-             * Format: double
-             * @description Lectura con la que se instaló el medidor (m³)
-             */
-            initial_reading?: number;
-            readonly readings_count: number;
-            readonly last_reading: string;
-            /**
-             * Created at
-             * Format: date-time
-             * @description Fecha de creacion.
-             */
-            readonly created: string;
-            /**
-             * Modified at
-             * Format: date-time
-             * @description Fecha de modificacion.
-             */
-            readonly modified: string;
-        };
-        MeterRequest: {
-            /**
-             * Número de medidor
-             * @description Identificador físico del medidor. Único por APR.
-             */
-            number: string;
-            /**
-             * Socio
-             * @description Socio responsable del punto de medición
-             */
-            client?: number | null;
-            /**
-             * Sector / ruta
-             * @description Sector o ruta de lectura para organizar la toma de datos
-             */
-            sector?: string;
-            /**
-             * Fecha de instalación
-             * Format: date
-             */
-            installed_at?: string | null;
-            /**
-             * Estado
-             * @description * `ACTIVE` - Activo
-             *     * `RETIRED` - Retirado
-             *     * `DAMAGED` - Dañado
-             * @enum {string}
-             */
-            status?: "ACTIVE" | "RETIRED" | "DAMAGED";
-            /**
-             * Lectura inicial
-             * Format: double
-             * @description Lectura con la que se instaló el medidor (m³)
-             */
-            initial_reading?: number;
         };
         /** @description Serializer para grupos de modificadores. */
         ModifierGroup: {
@@ -51101,6 +51230,11 @@ export interface components {
             total_amount?: number;
             /**
              * Format: double
+             * @description Monto de descuento promocional persistido; se resta en recalculate_totals
+             */
+            readonly discount_amount: number;
+            /**
+             * Format: double
              * @description Use decimals for monetary precision
              */
             total_cost?: number;
@@ -51265,11 +51399,8 @@ export interface components {
              * @description Número de teléfono del cliente
              */
             phone_number?: string | null;
-            /**
-             * Format: email
-             * @description Correo electrónico del cliente
-             */
-            email?: string | null;
+            /** @description Correo electrónico del cliente */
+            email?: (string) | null;
             /**
              * Rut
              * @description RUT/DNI del cliente
@@ -51302,11 +51433,8 @@ export interface components {
              * @description Número de teléfono del cliente
              */
             phone_number?: string | null;
-            /**
-             * Format: email
-             * @description Correo electrónico del cliente
-             */
-            email?: string | null;
+            /** @description Correo electrónico del cliente */
+            email?: (string) | null;
             /**
              * Rut
              * @description RUT/DNI del cliente
@@ -51378,6 +51506,13 @@ export interface components {
              * @default
              */
             reference: string | null;
+            /**
+             * Format: double
+             * @description Propina opcional. No altera el subtotal/total de la orden. Crea un Tip ligado a la orden, el pago y la caja. Si el método es efectivo, suma a expected_amount de la caja.
+             */
+            tip_amount?: number | null;
+            /** @description Empleado (mesero) que recibe la propina. Si se omite, se usa order.processed_by cuando exista. */
+            tip_employee_id?: number | null;
         };
         /**
          * @description Serializer de lectura para productos de orden.
@@ -51978,6 +52113,24 @@ export interface components {
             /** Notas */
             notes?: string;
         };
+        /** @description Request body de POST /api/sales/order-splits/{id}/pay/. El monto es el de la división. */
+        OrderSplitPayRequest: {
+            /**
+             * Format: uuid
+             * @description ID del método de pago activo de la sucursal.
+             */
+            payment_method?: string | null;
+            /**
+             * Format: uuid
+             * @description Alias de payment_method, igual que en el pago de la orden.
+             */
+            payment_method_id?: string | null;
+            cash_register_id?: number | null;
+            /** @default  */
+            reference: string | null;
+            /** @default  */
+            notes: string | null;
+        };
         /** @description Serializer completo para OrderSplit. */
         OrderSplitRequest: {
             /**
@@ -52039,7 +52192,7 @@ export interface components {
              * Dominio del portal
              * @description Dominio del login reseller (ej: portal.miempresa.cl). Sin http/https. Las tiendas sin dominio propio usan este portal.
              */
-            custom_domain?: string | null;
+            custom_domain?: (string) | null;
             readonly login_slug: string;
             /** Activa */
             is_active?: boolean;
@@ -52091,7 +52244,7 @@ export interface components {
              * Dominio del portal
              * @description Dominio del login reseller (ej: portal.miempresa.cl). Sin http/https. Las tiendas sin dominio propio usan este portal.
              */
-            custom_domain?: string | null;
+            custom_domain?: (string) | null;
             /** Activa */
             is_active?: boolean;
         };
@@ -52113,7 +52266,6 @@ export interface components {
             banner_image?: string | null;
             readonly banner_image_url: string;
             tagline?: string;
-            /** Format: uri */
             website_url?: string;
             brand_description?: string;
             /**
@@ -52144,7 +52296,7 @@ export interface components {
              * Slug para Login Org
              * @description URL: /login/{slug} del portal reseller
              */
-            login_slug?: string | null;
+            login_slug?: (string) | null;
             login_welcome_message?: string;
             login_subtitle?: string;
             show_sponsor_logos?: boolean;
@@ -52179,7 +52331,6 @@ export interface components {
              */
             banner_image?: string | null;
             tagline?: string;
-            /** Format: uri */
             website_url?: string;
             brand_description?: string;
             /**
@@ -52210,7 +52361,7 @@ export interface components {
              * Slug para Login Org
              * @description URL: /login/{slug} del portal reseller
              */
-            login_slug?: string | null;
+            login_slug?: (string) | null;
             login_welcome_message?: string;
             login_subtitle?: string;
             show_sponsor_logos?: boolean;
@@ -52712,6 +52863,21 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["BranchPOSConfig"][];
         };
+        PaginatedBranchProductList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["BranchProduct"][];
+        };
         PaginatedBranchProductTypeConfigList: {
             /** @example 123 */
             count: number;
@@ -52921,6 +53087,21 @@ export interface components {
              */
             previous?: string | null;
             results: components["schemas"]["CashRegisterStation"][];
+        };
+        PaginatedCashRegisterTransactionList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["CashRegisterTransaction"][];
         };
         PaginatedCategoryProductList: {
             /** @example 123 */
@@ -54212,21 +54393,6 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["MessageTemplateList"][];
         };
-        PaginatedMeterList: {
-            /** @example 123 */
-            count: number;
-            /**
-             * Format: uri
-             * @example http://api.example.org/accounts/?page=4
-             */
-            next?: string | null;
-            /**
-             * Format: uri
-             * @example http://api.example.org/accounts/?page=2
-             */
-            previous?: string | null;
-            results: components["schemas"]["Meter"][];
-        };
         PaginatedModifierGroupListList: {
             /** @example 123 */
             count: number;
@@ -54856,21 +55022,6 @@ export interface components {
              */
             previous?: string | null;
             results: components["schemas"]["RawMaterialMeasurement"][];
-        };
-        PaginatedReadingList: {
-            /** @example 123 */
-            count: number;
-            /**
-             * Format: uri
-             * @example http://api.example.org/accounts/?page=4
-             */
-            next?: string | null;
-            /**
-             * Format: uri
-             * @example http://api.example.org/accounts/?page=2
-             */
-            previous?: string | null;
-            results: components["schemas"]["Reading"][];
         };
         PaginatedRecipeIngredientList: {
             /** @example 123 */
@@ -55502,6 +55653,21 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["TicketEscalation"][];
         };
+        PaginatedTicketExternalLinkList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["TicketExternalLink"][];
+        };
         PaginatedTicketListList: {
             /** @example 123 */
             count: number;
@@ -55681,6 +55847,36 @@ export interface components {
              */
             previous?: string | null;
             results: components["schemas"]["WarehouseProduct"][];
+        };
+        PaginatedWaterMeterList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["WaterMeter"][];
+        };
+        PaginatedWaterReadingList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["WaterReading"][];
         };
         PaginatedWebhookEndpointList: {
             /** @example 123 */
@@ -56898,13 +57094,12 @@ export interface components {
              * Dominio personalizado
              * @description Dominio propio para webhooks y widget web embed (ej: agents.smarthydro.cl). Sin http/https. Debe apuntar a este servidor.
              */
-            custom_domain?: string | null;
+            custom_domain?: (string) | null;
             /**
              * Email remitente
-             * Format: email
              * @description Remitente para correos de esta sucursal (reset, invitaciones, etc.). Debe estar autorizado en el proveedor SMTP (SPF/DKIM). Si está vacío, se usa DEFAULT_FROM_EMAIL del sistema.
              */
-            from_email?: string | null;
+            from_email?: (string) | null;
             /**
              * Organización
              * @description Organización (reseller/holding) a la que pertenece esta tienda. Null = sucursal independiente.
@@ -56929,7 +57124,6 @@ export interface components {
             /** Format: binary */
             banner_image?: string | null;
             tagline?: string;
-            /** Format: uri */
             website_url?: string;
             brand_description?: string;
             social_links?: unknown;
@@ -57393,6 +57587,29 @@ export interface components {
              */
             default_delivery_fee?: number;
         };
+        /** @description branch se asigna en la vista desde request.branch (nunca del body). */
+        PatchedBranchProductRequest: {
+            /**
+             * Organización
+             * @description Opcional; por defecto la organización de la sucursal.
+             */
+            organization?: number | null;
+            /**
+             * Slug del front
+             * @description Id estable del consumidor (docs/CONSUMERS.yaml).
+             */
+            slug?: string;
+            /**
+             * Repositorio
+             * @description Formato owner/repo (GitHub).
+             */
+            repo?: string;
+            /**
+             * Activo
+             * @description Indica si el registro está activo. Use esto en lugar de eliminar.
+             */
+            is_active?: boolean;
+        };
         /** @description Serializer for branch product type configuration. */
         PatchedBranchProductTypeConfigRequest: {
             /** Sucursal */
@@ -57509,13 +57726,12 @@ export interface components {
              * Dominio personalizado
              * @description Dominio propio para webhooks y widget web embed (ej: agents.smarthydro.cl). Sin http/https. Debe apuntar a este servidor.
              */
-            custom_domain?: string | null;
+            custom_domain?: (string) | null;
             /**
              * Email remitente
-             * Format: email
              * @description Remitente para correos de esta sucursal (reset, invitaciones, etc.). Debe estar autorizado en el proveedor SMTP (SPF/DKIM). Si está vacío, se usa DEFAULT_FROM_EMAIL del sistema.
              */
-            from_email?: string | null;
+            from_email?: (string) | null;
             /**
              * Organización
              * @description Organización (reseller/holding) a la que pertenece esta tienda. Null = sucursal independiente.
@@ -57540,7 +57756,6 @@ export interface components {
             /** Format: binary */
             banner_image?: string | null;
             tagline?: string;
-            /** Format: uri */
             website_url?: string;
             brand_description?: string;
             social_links?: unknown;
@@ -57640,7 +57855,6 @@ export interface components {
             tagline?: string;
             /**
              * Sitio Web
-             * Format: uri
              * @description URL del sitio web
              */
             website_url?: string;
@@ -57745,7 +57959,7 @@ export interface components {
              * Slug para Login
              * @description URL personalizada para login: /login/{slug}. Ej: 'mi-empresa'
              */
-            login_slug?: string | null;
+            login_slug?: (string) | null;
             /**
              * Mensaje de Bienvenida
              * @description Título que se muestra en la página de login
@@ -58211,11 +58425,8 @@ export interface components {
              * @description Nombre de quien recibe el certificado
              */
             recipient_name?: string;
-            /**
-             * Email del Destinatario
-             * Format: email
-             */
-            recipient_email?: string | null;
+            /** Email del Destinatario */
+            recipient_email?: (string) | null;
             /**
              * Fecha de Vencimiento
              * Format: date
@@ -58407,10 +58618,7 @@ export interface components {
              */
             config?: unknown;
             webhook_secret?: string;
-            /**
-             * Format: uri
-             * @description URL para recibir mensajes (auto-generada)
-             */
+            /** @description URL para recibir mensajes (auto-generada) */
             webhook_url?: string;
             /**
              * Dominio personalizado
@@ -58560,11 +58768,11 @@ export interface components {
             /** Apellido */
             last_name?: string;
             /** RUT/DNI */
-            dni?: string | null;
+            dni?: (string) | null;
             /** Format: email */
             email?: string;
             /** Teléfono */
-            phone?: string | null;
+            phone?: (string) | null;
             job_title?: number | null;
             /**
              * Tipo de Contacto
@@ -59224,10 +59432,7 @@ export interface components {
              * @description RUT normalizado (sin puntos, con guión).
              */
             subject_identifier?: string;
-            /**
-             * Email del titular
-             * Format: email
-             */
+            /** Email del titular */
             subject_email?: string;
             /**
              * Tipo de solicitud
@@ -59628,7 +59833,6 @@ export interface components {
             signer?: number | null;
             /**
              * Email del Firmante
-             * Format: email
              * @description Para firmantes externos al sistema
              */
             signer_email?: string;
@@ -59960,11 +60164,8 @@ export interface components {
             last_name?: string;
             /** RUT/DNI */
             dni?: string;
-            /**
-             * Correo Electrónico
-             * Format: email
-             */
-            email?: string | null;
+            /** Correo Electrónico */
+            email?: (string) | null;
             /** Teléfono */
             phone?: string | null;
             /** Dirección */
@@ -60509,7 +60710,6 @@ export interface components {
             icon?: string | null;
             /**
              * Icono (URL)
-             * Format: uri
              * @description URL pública del logo. Se usa si no hay archivo subido.
              */
             icon_url?: string;
@@ -60613,10 +60813,7 @@ export interface components {
              * @description Módulos de Yggdra donde aplica esta app (ej: ['pos', 'public_checkout']). Valores de referencia en USAGE_CONTEXT_CHOICES.
              */
             usage_contexts?: unknown;
-            /**
-             * URL Base
-             * Format: uri
-             */
+            /** URL Base */
             base_url?: string;
             /**
              * Tipo de Autenticación
@@ -60644,15 +60841,9 @@ export interface components {
              * @description Lista de claves obligatorias en las credenciales de cada instalación (ej: ['api_key', 'secret_key']). Vacío = sin requisito explícito.
              */
             required_credential_keys?: unknown;
-            /**
-             * URL de icono
-             * Format: uri
-             */
+            /** URL de icono */
             icon_url?: string;
-            /**
-             * URL de documentación
-             * Format: uri
-             */
+            /** URL de documentación */
             documentation_url?: string;
             /** Activo */
             is_active?: boolean;
@@ -60850,7 +61041,6 @@ export interface components {
         PatchedForjaStudentRequest: {
             service?: number | null;
             full_name?: string;
-            /** Format: email */
             email?: string;
             phone?: string;
             /**
@@ -61580,7 +61770,6 @@ export interface components {
             first_name?: string;
             /** Apellido */
             last_name?: string;
-            /** Format: email */
             email?: string;
             /** Teléfono */
             phone?: string;
@@ -61743,10 +61932,9 @@ export interface components {
             is_virtual?: boolean;
             /**
              * URL de la Reunión
-             * Format: uri
              * @description Link para reuniones virtuales
              */
-            meeting_url?: string | null;
+            meeting_url?: (string) | null;
             /**
              * Sucursal
              * @description Sucursal a la que pertenece este registro
@@ -61918,42 +62106,6 @@ export interface components {
             is_default?: boolean;
             /** @description UUID de la sucursal. Solo editable por super administradores. */
             branch?: number | null;
-        };
-        PatchedMeterRequest: {
-            /**
-             * Número de medidor
-             * @description Identificador físico del medidor. Único por APR.
-             */
-            number?: string;
-            /**
-             * Socio
-             * @description Socio responsable del punto de medición
-             */
-            client?: number | null;
-            /**
-             * Sector / ruta
-             * @description Sector o ruta de lectura para organizar la toma de datos
-             */
-            sector?: string;
-            /**
-             * Fecha de instalación
-             * Format: date
-             */
-            installed_at?: string | null;
-            /**
-             * Estado
-             * @description * `ACTIVE` - Activo
-             *     * `RETIRED` - Retirado
-             *     * `DAMAGED` - Dañado
-             * @enum {string}
-             */
-            status?: "ACTIVE" | "RETIRED" | "DAMAGED";
-            /**
-             * Lectura inicial
-             * Format: double
-             * @description Lectura con la que se instaló el medidor (m³)
-             */
-            initial_reading?: number;
         };
         /** @description Serializer de escritura para grupos. */
         PatchedModifierGroupWriteRequest: {
@@ -62546,7 +62698,7 @@ export interface components {
              * Dominio del portal
              * @description Dominio del login reseller (ej: portal.miempresa.cl). Sin http/https. Las tiendas sin dominio propio usan este portal.
              */
-            custom_domain?: string | null;
+            custom_domain?: (string) | null;
             /** Activa */
             is_active?: boolean;
         };
@@ -62974,7 +63126,6 @@ export interface components {
             description?: string;
             /**
              * Email de contacto
-             * Format: email
              * @description Contacto demo / mailto fallback del modal de la landing.
              */
             contact_email?: string;
@@ -62994,12 +63145,6 @@ export interface components {
              * @description Lista de {icon, title, description}. El front mapea el icono a su librería.
              */
             landing_features?: unknown;
-            /**
-             * URL del frontend
-             * Format: uri
-             * @description Base de magic-links y sitio de la marca. Vacío = FRONTEND_URL global.
-             */
-            frontend_url?: string;
             /**
              * UF de integración
              * Format: double
@@ -64155,20 +64300,6 @@ export interface components {
              */
             is_active?: boolean;
         };
-        PatchedReadingRequest: {
-            /** Medidor */
-            meter?: number;
-            /**
-             * Período
-             * @description Mes de consumo en formato YYYY-MM
-             */
-            period?: string;
-            /**
-             * Lectura actual (m³)
-             * Format: double
-             */
-            current_reading?: number;
-        };
         /** @description Serializer para ingredientes de recetas. */
         PatchedRecipeIngredientRequest: {
             /**
@@ -64684,11 +64815,8 @@ export interface components {
             is_active?: boolean;
             /** Persona de Contacto */
             contact_person?: string | null;
-            /**
-             * Email de Contacto
-             * Format: email
-             */
-            contact_email?: string | null;
+            /** Email de Contacto */
+            contact_email?: (string) | null;
             /** Teléfono de Contacto */
             contact_phone?: string | null;
             /** Días de Pago */
@@ -64761,10 +64889,7 @@ export interface components {
             business_name?: string;
             /** RUT/RFC */
             tax_id?: string;
-            /**
-             * Correo Electrónico
-             * Format: email
-             */
+            /** Correo Electrónico */
             email?: string;
             /** Teléfono */
             phone?: string;
@@ -64815,11 +64940,8 @@ export interface components {
              * Format: double
              */
             discount_percentage?: number;
-            /**
-             * Sitio Web
-             * Format: uri
-             */
-            website?: string | null;
+            /** Sitio Web */
+            website?: (string) | null;
             /** Notas */
             notes?: string | null;
             /** Creado por */
@@ -64973,10 +65095,7 @@ export interface components {
             survey?: string;
             /** Cliente */
             client?: number | null;
-            /**
-             * Email del Respondente
-             * Format: email
-             */
+            /** Email del Respondente */
             respondent_email?: string;
             /** Nombre del Respondente */
             respondent_name?: string;
@@ -65682,7 +65801,6 @@ export interface components {
             protocol?: "HTTP_REST" | "HTTP_GET" | "MQTT" | "WEBSOCKET" | "CUSTOM";
             /**
              * URL base
-             * Format: uri
              * @description Ej: https://api.twindimension.com/tdata/v1
              */
             base_url?: string;
@@ -65948,9 +66066,8 @@ export interface components {
             /**
              * Código
              * @description Código estable para clientes (ej. feedback, incidencia).
-             * @default
              */
-            code: string;
+            code?: string;
             /** Descripción */
             description?: string;
             /**
@@ -66065,10 +66182,7 @@ export interface components {
             assigned_to?: string | null;
             /** Cliente */
             client?: number | null;
-            /**
-             * Email del Solicitante
-             * Format: email
-             */
+            /** Email del Solicitante */
             requester_email?: string;
             /** Nombre del Solicitante */
             requester_name?: string;
@@ -66081,6 +66195,11 @@ export interface components {
              * @enum {string}
              */
             source?: "INTERNAL" | "WEB_FORM" | "PORTAL" | "CHAT";
+            /**
+             * Recibido por
+             * @description Canal/receptor (org o producto, p. ej. Cauce). Distinto de source.
+             */
+            received_by?: string;
             /** Tipo de Entidad */
             content_type?: number | null;
             /** ID de Entidad */
@@ -66125,6 +66244,20 @@ export interface components {
             reason?: string;
             /** Escalado por */
             escalated_by?: number | null;
+        };
+        PatchedTicketExternalLinkRequest: {
+            /** Format: uuid */
+            ticket?: string;
+            /** Etiqueta */
+            label?: string;
+            url?: string;
+            /**
+             * Repositorio
+             * @description owner/repo si aplica.
+             */
+            repo_full_name?: string;
+            /** Número de issue */
+            issue_number?: number | null;
         };
         PatchedTicketTimerRequest: {
             /** Format: uuid */
@@ -66607,6 +66740,56 @@ export interface components {
             /** @default  */
             notes: string;
         };
+        PatchedWaterMeterRequest: {
+            /**
+             * Número de medidor
+             * @description Identificador físico del medidor. Único por APR.
+             */
+            number?: string;
+            /**
+             * Socio
+             * @description Socio responsable del punto de medición
+             */
+            client?: number | null;
+            /**
+             * Sector / ruta
+             * @description Sector o ruta de lectura para organizar la toma de datos
+             */
+            sector?: string;
+            /**
+             * Fecha de instalación
+             * Format: date
+             */
+            installed_at?: string | null;
+            /**
+             * Estado
+             * @description * `ACTIVE` - Activo
+             *     * `RETIRED` - Retirado
+             *     * `DAMAGED` - Dañado
+             * @enum {string}
+             */
+            status?: "ACTIVE" | "RETIRED" | "DAMAGED";
+            /**
+             * Lectura inicial
+             * Format: double
+             * @description Lectura con la que se instaló el medidor (m³)
+             */
+            initial_reading?: number;
+        };
+        PatchedWaterReadingRequest: {
+            /** Medidor */
+            meter?: number;
+            /**
+             * Período
+             * @description Mes de consumo en formato YYYY-MM
+             */
+            period?: string;
+            /**
+             * Lectura actual (m³)
+             * Format: double
+             */
+            current_reading?: number;
+        };
         PatchedWebhookEndpointRequest: {
             /** Nombre */
             name?: string;
@@ -67065,6 +67248,13 @@ export interface components {
              * @default false
              */
             skip_cash_register_validation: boolean;
+            /**
+             * Format: double
+             * @description Propina opcional. No altera el subtotal de la orden. Crea Tip ligado a orden, pago y caja; en efectivo suma a expected_amount.
+             */
+            tip_amount?: number | null;
+            /** @description Empleado que recibe la propina. Si se omite, se usa order.processed_by cuando exista. */
+            tip_employee_id?: number | null;
         };
         /** @description Serializer para cuotas de pago. */
         PaymentInstallment: {
@@ -68134,6 +68324,32 @@ export interface components {
         PlanCheckoutStatusResponse: {
             status: string;
             payment_url: string | null;
+        };
+        /** @description Alta de un grupo. El slug lo elige quien lo crea. La organización la pone la vista. */
+        PlanGroupCreateRequest: {
+            /**
+             * Slug del grupo
+             * @description Identificador único del grupo (ej: 'frig'). Define la URL pública.
+             */
+            name: string;
+            /**
+             * Nombre visible
+             * @description Marca mostrada en correos y pantallas de pago
+             */
+            display_name?: string;
+            description?: string;
+            /**
+             * Email de contacto
+             * @description Contacto demo / mailto fallback del modal de la landing.
+             */
+            contact_email?: string;
+            /**
+             * URL del frontend
+             * @description Base de magic-links y sitio de la marca. Vacío = FRONTEND_URL global.
+             */
+            frontend_url?: string;
+            is_active?: boolean;
+            organization?: number | null;
         };
         /** @description Detalle completo de un grupo con todos sus planes (activos e inactivos). */
         PlanGroupDetail: {
@@ -71319,7 +71535,6 @@ export interface components {
             visitor_token?: string;
             user_name?: string;
             message: string;
-            /** Format: email */
             email?: string;
         };
         /** @description Serializer para respuesta del chat público. */
@@ -71468,7 +71683,6 @@ export interface components {
             tagline?: string;
             /**
              * Sitio Web
-             * Format: uri
              * @description URL del sitio web
              */
             website_url?: string;
@@ -71566,7 +71780,6 @@ export interface components {
             weight_g: number;
             slug?: string;
             contact_name: string;
-            /** Format: email */
             email?: string;
             phone?: string;
             notes?: string;
@@ -71615,11 +71828,7 @@ export interface components {
             comment: string;
             /** @default  */
             respondent_name: string;
-            /**
-             * Format: email
-             * @default
-             */
-            respondent_email: string;
+            respondent_email?: string;
             /** @default web */
             channel: string;
             client?: number | null;
@@ -72459,64 +72668,6 @@ export interface components {
              * @description Si esta medición está activa
              */
             is_active?: boolean;
-        };
-        Reading: {
-            readonly id: number;
-            /** Medidor */
-            meter: number;
-            readonly meter_number: string;
-            readonly client_name: string;
-            /**
-             * Período
-             * @description Mes de consumo en formato YYYY-MM
-             */
-            period: string;
-            /**
-             * Lectura anterior (m³)
-             * Format: double
-             */
-            readonly previous_reading: number;
-            /**
-             * Lectura actual (m³)
-             * Format: double
-             */
-            current_reading: number;
-            /** Format: double */
-            readonly consumed_m3: number;
-            /**
-             * Origen
-             * @description * `MANUAL` - Captura manual
-             *     * `CSV` - Carga masiva
-             * @enum {string}
-             */
-            readonly source: "MANUAL" | "CSV";
-            /** Leído por */
-            readonly read_by: number | null;
-            /**
-             * Fecha de lectura
-             * Format: date-time
-             */
-            readonly read_at: string;
-            /**
-             * Created at
-             * Format: date-time
-             * @description Fecha de creacion.
-             */
-            readonly created: string;
-        };
-        ReadingRequest: {
-            /** Medidor */
-            meter: number;
-            /**
-             * Período
-             * @description Mes de consumo en formato YYYY-MM
-             */
-            period: string;
-            /**
-             * Lectura actual (m³)
-             * Format: double
-             */
-            current_reading: number;
         };
         /** @description Serializer para recetas. */
         Recipe: {
@@ -73912,10 +74063,7 @@ export interface components {
             business_name?: string;
             /** RUT/RFC */
             tax_id: string;
-            /**
-             * Correo Electrónico
-             * Format: email
-             */
+            /** Correo Electrónico */
             email?: string;
             /** Teléfono */
             phone?: string;
@@ -73966,11 +74114,8 @@ export interface components {
              * Format: double
              */
             discount_percentage?: number;
-            /**
-             * Sitio Web
-             * Format: uri
-             */
-            website?: string | null;
+            /** Sitio Web */
+            website?: (string) | null;
             /** Notas */
             notes?: string | null;
             /** Creado por */
@@ -74025,11 +74170,8 @@ export interface components {
             is_active?: boolean;
             /** Persona de Contacto */
             contact_person?: string | null;
-            /**
-             * Email de Contacto
-             * Format: email
-             */
-            contact_email?: string | null;
+            /** Email de Contacto */
+            contact_email?: (string) | null;
             /** Teléfono de Contacto */
             contact_phone?: string | null;
             /** Días de Pago */
@@ -74067,11 +74209,8 @@ export interface components {
             is_active?: boolean;
             /** Persona de Contacto */
             contact_person?: string | null;
-            /**
-             * Email de Contacto
-             * Format: email
-             */
-            contact_email?: string | null;
+            /** Email de Contacto */
+            contact_email?: (string) | null;
             /** Teléfono de Contacto */
             contact_phone?: string | null;
             /** Días de Pago */
@@ -74094,10 +74233,7 @@ export interface components {
             business_name?: string;
             /** RUT/RFC */
             tax_id: string;
-            /**
-             * Correo Electrónico
-             * Format: email
-             */
+            /** Correo Electrónico */
             email?: string;
             /** Teléfono */
             phone?: string;
@@ -74175,10 +74311,7 @@ export interface components {
             business_name?: string;
             /** RUT/RFC */
             tax_id: string;
-            /**
-             * Correo Electrónico
-             * Format: email
-             */
+            /** Correo Electrónico */
             email?: string;
             /** Teléfono */
             phone?: string;
@@ -74307,10 +74440,7 @@ export interface components {
             business_name?: string;
             /** RUT/RFC */
             tax_id: string;
-            /**
-             * Correo Electrónico
-             * Format: email
-             */
+            /** Correo Electrónico */
             email?: string;
             /** Teléfono */
             phone?: string;
@@ -74361,11 +74491,8 @@ export interface components {
              * Format: double
              */
             discount_percentage?: number;
-            /**
-             * Sitio Web
-             * Format: uri
-             */
-            website?: string | null;
+            /** Sitio Web */
+            website?: (string) | null;
             /** Notas */
             notes?: string | null;
             /** Creado por */
@@ -74833,10 +74960,7 @@ export interface components {
             /** Cliente */
             client?: number | null;
             readonly client_name: string;
-            /**
-             * Email del Respondente
-             * Format: email
-             */
+            /** Email del Respondente */
             respondent_email?: string;
             /** Nombre del Respondente */
             respondent_name?: string;
@@ -74897,10 +75021,7 @@ export interface components {
             survey: string;
             /** Cliente */
             client?: number | null;
-            /**
-             * Email del Respondente
-             * Format: email
-             */
+            /** Email del Respondente */
             respondent_email?: string;
             /** Nombre del Respondente */
             respondent_name?: string;
@@ -77210,7 +77331,6 @@ export interface components {
             protocol?: "HTTP_REST" | "HTTP_GET" | "MQTT" | "WEBSOCKET" | "CUSTOM";
             /**
              * URL base
-             * Format: uri
              * @description Ej: https://api.twindimension.com/tdata/v1
              */
             base_url?: string;
@@ -77297,7 +77417,6 @@ export interface components {
             protocol?: "HTTP_REST" | "HTTP_GET" | "MQTT" | "WEBSOCKET" | "CUSTOM";
             /**
              * URL base
-             * Format: uri
              * @description Ej: https://api.twindimension.com/tdata/v1
              */
             base_url?: string;
@@ -77845,9 +77964,8 @@ export interface components {
             /**
              * Código
              * @description Código estable para clientes (ej. feedback, incidencia).
-             * @default
              */
-            code: string;
+            code?: string;
             /** Descripción */
             description?: string;
             /**
@@ -77898,9 +78016,8 @@ export interface components {
             /**
              * Código
              * @description Código estable para clientes (ej. feedback, incidencia).
-             * @default
              */
-            code: string;
+            code?: string;
             /** Descripción */
             description?: string;
             /**
@@ -78048,14 +78165,16 @@ export interface components {
              * Format: uuid
              */
             assigned_to?: string | null;
+            /**
+             * Asignado a plataforma
+             * @description Agente de plataforma (staff) sin perfil SupportAgent en la sucursal.
+             */
+            readonly platform_assignee: number | null;
             /** Cliente */
             client?: number | null;
             /** Solicitante */
             readonly requester: number | null;
-            /**
-             * Email del Solicitante
-             * Format: email
-             */
+            /** Email del Solicitante */
             requester_email?: string;
             /** Nombre del Solicitante */
             requester_name?: string;
@@ -78068,6 +78187,11 @@ export interface components {
              * @enum {string}
              */
             source?: "INTERNAL" | "WEB_FORM" | "PORTAL" | "CHAT";
+            /**
+             * Recibido por
+             * @description Canal/receptor (org o producto, p. ej. Cauce). Distinto de source.
+             */
+            received_by?: string;
             /** Tipo de Entidad */
             content_type?: number | null;
             /** ID de Entidad */
@@ -78182,10 +78306,7 @@ export interface components {
             assigned_to?: string | null;
             /** Cliente */
             client?: number | null;
-            /**
-             * Email del Solicitante
-             * Format: email
-             */
+            /** Email del Solicitante */
             requester_email?: string;
             /** Nombre del Solicitante */
             requester_name?: string;
@@ -78198,6 +78319,11 @@ export interface components {
              * @enum {string}
              */
             source?: "INTERNAL" | "WEB_FORM" | "PORTAL" | "CHAT";
+            /**
+             * Recibido por
+             * @description Canal/receptor (org o producto, p. ej. Cauce). Distinto de source.
+             */
+            received_by?: string;
             /** Tipo de Entidad */
             content_type?: number | null;
             /** ID de Entidad */
@@ -78311,15 +78437,37 @@ export interface components {
              */
             assigned_to?: string | null;
             readonly assigned_to_name: string;
+            /**
+             * Asignado a plataforma
+             * @description Agente de plataforma (staff) sin perfil SupportAgent en la sucursal.
+             */
+            platform_assignee?: number | null;
+            /**
+             * Producto
+             * Format: uuid
+             */
+            readonly product: string | null;
+            /**
+             * Slug de producto
+             * @description Snapshot del front (CONSUMERS.yaml) al crear el ticket.
+             */
+            readonly product_slug: string;
+            /**
+             * Repo de producto
+             * @description Snapshot owner/repo al crear. No exponer a usuario final.
+             */
+            readonly product_repo: string;
+            /**
+             * Organización
+             * @description Derivada de la sucursal al crear; filtrable.
+             */
+            readonly organization: number | null;
             /** Cliente */
             client?: number | null;
             readonly client_name: string;
             /** Solicitante */
             readonly requester: number | null;
-            /**
-             * Email del Solicitante
-             * Format: email
-             */
+            /** Email del Solicitante */
             requester_email?: string;
             /** Nombre del Solicitante */
             requester_name?: string;
@@ -78332,6 +78480,11 @@ export interface components {
              * @enum {string}
              */
             source?: "INTERNAL" | "WEB_FORM" | "PORTAL" | "CHAT";
+            /**
+             * Recibido por
+             * @description Canal/receptor (org o producto, p. ej. Cauce). Distinto de source.
+             */
+            received_by?: string;
             /** Tipo de Entidad */
             content_type?: number | null;
             /** ID de Entidad */
@@ -78366,6 +78519,7 @@ export interface components {
             readonly comments: components["schemas"]["TicketComment"][];
             readonly escalations: components["schemas"]["TicketEscalation"][];
             readonly timers: components["schemas"]["TicketTimer"][];
+            readonly external_links: components["schemas"]["TicketExternalLink"][];
             /**
              * Activo
              * @description Indica si el registro está activo. Use esto en lugar de eliminar.
@@ -78436,6 +78590,48 @@ export interface components {
             reason: string;
             /** Escalado por */
             escalated_by?: number | null;
+        };
+        TicketExternalLink: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            ticket: string;
+            /** Etiqueta */
+            label?: string;
+            url?: string;
+            /**
+             * Repositorio
+             * @description owner/repo si aplica.
+             */
+            repo_full_name?: string;
+            /** Número de issue */
+            issue_number?: number | null;
+            /**
+             * Created at
+             * Format: date-time
+             * @description Fecha de creacion.
+             */
+            readonly created: string;
+            /**
+             * Modified at
+             * Format: date-time
+             * @description Fecha de modificacion.
+             */
+            readonly modified: string;
+        };
+        TicketExternalLinkRequest: {
+            /** Format: uuid */
+            ticket: string;
+            /** Etiqueta */
+            label?: string;
+            url?: string;
+            /**
+             * Repositorio
+             * @description owner/repo si aplica.
+             */
+            repo_full_name?: string;
+            /** Número de issue */
+            issue_number?: number | null;
         };
         TicketList: {
             /** Format: uuid */
@@ -78521,15 +78717,37 @@ export interface components {
              */
             assigned_to?: string | null;
             readonly assigned_to_name: string;
+            /**
+             * Asignado a plataforma
+             * @description Agente de plataforma (staff) sin perfil SupportAgent en la sucursal.
+             */
+            platform_assignee?: number | null;
+            /**
+             * Producto
+             * Format: uuid
+             */
+            readonly product: string | null;
+            /**
+             * Slug de producto
+             * @description Snapshot del front (CONSUMERS.yaml) al crear el ticket.
+             */
+            readonly product_slug: string;
+            /**
+             * Repo de producto
+             * @description Snapshot owner/repo al crear. No exponer a usuario final.
+             */
+            readonly product_repo: string;
+            /**
+             * Organización
+             * @description Derivada de la sucursal al crear; filtrable.
+             */
+            readonly organization: number | null;
             /** Cliente */
             client?: number | null;
             readonly client_name: string;
             /** Solicitante */
             readonly requester: number | null;
-            /**
-             * Email del Solicitante
-             * Format: email
-             */
+            /** Email del Solicitante */
             requester_email?: string;
             /** Nombre del Solicitante */
             requester_name?: string;
@@ -78542,6 +78760,11 @@ export interface components {
              * @enum {string}
              */
             source?: "INTERNAL" | "WEB_FORM" | "PORTAL" | "CHAT";
+            /**
+             * Recibido por
+             * @description Canal/receptor (org o producto, p. ej. Cauce). Distinto de source.
+             */
+            received_by?: string;
             /**
              * Primera Respuesta
              * Format: date-time
@@ -78651,12 +78874,14 @@ export interface components {
              * Format: uuid
              */
             assigned_to?: string | null;
+            /**
+             * Asignado a plataforma
+             * @description Agente de plataforma (staff) sin perfil SupportAgent en la sucursal.
+             */
+            platform_assignee?: number | null;
             /** Cliente */
             client?: number | null;
-            /**
-             * Email del Solicitante
-             * Format: email
-             */
+            /** Email del Solicitante */
             requester_email?: string;
             /** Nombre del Solicitante */
             requester_name?: string;
@@ -78669,6 +78894,11 @@ export interface components {
              * @enum {string}
              */
             source?: "INTERNAL" | "WEB_FORM" | "PORTAL" | "CHAT";
+            /**
+             * Recibido por
+             * @description Canal/receptor (org o producto, p. ej. Cauce). Distinto de source.
+             */
+            received_by?: string;
             /**
              * Primera Respuesta
              * Format: date-time
@@ -78898,6 +79128,17 @@ export interface components {
              * Format: uuid
              */
             order?: string | null;
+            /**
+             * Pago
+             * Format: uuid
+             * @description Pago de cobro que originó la propina
+             */
+            readonly payment: string | null;
+            /**
+             * Caja
+             * @description Sesión de caja del cobro (para arqueo de propinas en efectivo)
+             */
+            readonly cash_register: number | null;
             /**
              * Empleado
              * @description Mesero o empleado que recibe la propina
@@ -80284,6 +80525,152 @@ export interface components {
             quantity: number;
             /** @default  */
             notes: string;
+        };
+        WaterMeter: {
+            readonly id: number;
+            /**
+             * Número de medidor
+             * @description Identificador físico del medidor. Único por APR.
+             */
+            number: string;
+            /**
+             * Socio
+             * @description Socio responsable del punto de medición
+             */
+            client?: number | null;
+            readonly client_name: string;
+            /**
+             * Sector / ruta
+             * @description Sector o ruta de lectura para organizar la toma de datos
+             */
+            sector?: string;
+            /**
+             * Fecha de instalación
+             * Format: date
+             */
+            installed_at?: string | null;
+            /**
+             * Estado
+             * @description * `ACTIVE` - Activo
+             *     * `RETIRED` - Retirado
+             *     * `DAMAGED` - Dañado
+             * @enum {string}
+             */
+            status?: "ACTIVE" | "RETIRED" | "DAMAGED";
+            /**
+             * Lectura inicial
+             * Format: double
+             * @description Lectura con la que se instaló el medidor (m³)
+             */
+            initial_reading?: number;
+            readonly readings_count: number;
+            readonly last_reading: string;
+            /**
+             * Created at
+             * Format: date-time
+             * @description Fecha de creacion.
+             */
+            readonly created: string;
+            /**
+             * Modified at
+             * Format: date-time
+             * @description Fecha de modificacion.
+             */
+            readonly modified: string;
+        };
+        WaterMeterRequest: {
+            /**
+             * Número de medidor
+             * @description Identificador físico del medidor. Único por APR.
+             */
+            number: string;
+            /**
+             * Socio
+             * @description Socio responsable del punto de medición
+             */
+            client?: number | null;
+            /**
+             * Sector / ruta
+             * @description Sector o ruta de lectura para organizar la toma de datos
+             */
+            sector?: string;
+            /**
+             * Fecha de instalación
+             * Format: date
+             */
+            installed_at?: string | null;
+            /**
+             * Estado
+             * @description * `ACTIVE` - Activo
+             *     * `RETIRED` - Retirado
+             *     * `DAMAGED` - Dañado
+             * @enum {string}
+             */
+            status?: "ACTIVE" | "RETIRED" | "DAMAGED";
+            /**
+             * Lectura inicial
+             * Format: double
+             * @description Lectura con la que se instaló el medidor (m³)
+             */
+            initial_reading?: number;
+        };
+        WaterReading: {
+            readonly id: number;
+            /** Medidor */
+            meter: number;
+            readonly meter_number: string;
+            readonly client_name: string;
+            /**
+             * Período
+             * @description Mes de consumo en formato YYYY-MM
+             */
+            period: string;
+            /**
+             * Lectura anterior (m³)
+             * Format: double
+             */
+            readonly previous_reading: number;
+            /**
+             * Lectura actual (m³)
+             * Format: double
+             */
+            current_reading: number;
+            /** Format: double */
+            readonly consumed_m3: number;
+            /**
+             * Origen
+             * @description * `MANUAL` - Captura manual
+             *     * `CSV` - Carga masiva
+             * @enum {string}
+             */
+            readonly source: "MANUAL" | "CSV";
+            /** Leído por */
+            readonly read_by: number | null;
+            /**
+             * Fecha de lectura
+             * Format: date-time
+             */
+            readonly read_at: string;
+            /**
+             * Created at
+             * Format: date-time
+             * @description Fecha de creacion.
+             */
+            readonly created: string;
+        };
+        WaterReadingRequest: {
+            /** Medidor */
+            meter: number;
+            /**
+             * Período
+             * @description Mes de consumo en formato YYYY-MM
+             */
+            period: string;
+            /**
+             * Lectura actual (m³)
+             * Format: double
+             */
+            current_reading: number;
         };
         WebhookEndpoint: {
             /** Format: uuid */
@@ -104377,6 +104764,47 @@ export interface operations {
             };
         };
     };
+    finance_cash_registers_transactions_list: {
+        parameters: {
+            query?: {
+                branch?: number;
+                date?: string;
+                format?: "binary" | "json";
+                /** @description Qué campo usar para ordenar los resultados. */
+                ordering?: string;
+                /** @description Un número de página dentro del conjunto de resultados paginado. */
+                page?: number;
+                /** @description Número de resultados a devolver por página. */
+                page_size?: number;
+                /** @description Un término de búsqueda. */
+                search?: string;
+                station?: number;
+                /**
+                 * @description * `OPEN` - Abierta
+                 *     * `CLOSED` - Cerrada
+                 */
+                status?: "CLOSED" | "OPEN";
+            };
+            header?: never;
+            path: {
+                /** @description Un valor de entero único que identifique este Registro de Caja. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedCashRegisterTransactionList"];
+                    "*/*": components["schemas"]["PaginatedCashRegisterTransactionList"];
+                };
+            };
+        };
+    };
     finance_cash_registers_current_retrieve: {
         parameters: {
             query?: {
@@ -107636,6 +108064,8 @@ export interface operations {
         parameters: {
             query?: {
                 format?: "binary" | "json";
+                /** @description thermal=80mm (default), thermal_58=58mm, a4=A4. */
+                pdf_format?: "a4" | "thermal" | "thermal_58";
             };
             header?: never;
             path: {
@@ -107670,6 +108100,8 @@ export interface operations {
         parameters: {
             query?: {
                 format?: "binary" | "json";
+                /** @description thermal=80mm (default), thermal_58=58mm, a4=A4. */
+                pdf_format?: "a4" | "thermal" | "thermal_58";
             };
             header?: never;
             path: {
@@ -109653,6 +110085,28 @@ export interface operations {
                 "multipart/form-data": components["schemas"]["PatchedForjaStudentRequest"];
             };
         };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ForjaStudent"];
+                    "*/*": components["schemas"]["ForjaStudent"];
+                };
+            };
+        };
+    };
+    forja_students_me_retrieve: {
+        parameters: {
+            query?: {
+                format?: "binary" | "json";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {
@@ -115078,6 +115532,8 @@ export interface operations {
                 ordering?: string;
                 /** @description Un número de página dentro del conjunto de resultados paginado. */
                 page?: number;
+                /** @description Número de resultados a devolver por página. */
+                page_size?: number;
                 /**
                  * @description Define cómo se gestiona el inventario
                  *
@@ -121025,6 +121481,48 @@ export interface operations {
             };
         };
     };
+    p90_panel_me_week_retrieve: {
+        parameters: {
+            query?: {
+                format?: "binary" | "json";
+                week?: string;
+                week_start?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    p90_panel_me_weeks_retrieve: {
+        parameters: {
+            query?: {
+                format?: "binary" | "json";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     p90_panel_messages_broadcast_create: {
         parameters: {
             query?: {
@@ -121621,6 +122119,48 @@ export interface operations {
                     "application/json": components["schemas"]["PlanGroupList"][];
                     "*/*": components["schemas"]["PlanGroupList"][];
                 };
+            };
+        };
+    };
+    plan_checkout_groups_create: {
+        parameters: {
+            query?: {
+                format?: "binary" | "json";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlanGroupCreateRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PlanGroupCreateRequest"];
+                "multipart/form-data": components["schemas"]["PlanGroupCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanGroupDetail"];
+                    "*/*": components["schemas"]["PlanGroupDetail"];
+                };
+            };
+            /** @description No response body */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No response body */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -128952,11 +129492,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody: {
+        requestBody?: {
             content: {
-                "application/json": components["schemas"]["OrderSplitRequest"];
-                "application/x-www-form-urlencoded": components["schemas"]["OrderSplitRequest"];
-                "multipart/form-data": components["schemas"]["OrderSplitRequest"];
+                "application/json": components["schemas"]["OrderSplitPayRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["OrderSplitPayRequest"];
+                "multipart/form-data": components["schemas"]["OrderSplitPayRequest"];
             };
         };
         responses: {
@@ -129489,6 +130029,8 @@ export interface operations {
         parameters: {
             query?: {
                 format?: "binary" | "json";
+                /** @description thermal=80mm (default), thermal_58=58mm. Alias: format. */
+                pdf_format?: "thermal" | "thermal_58";
             };
             header?: never;
             path: {
@@ -129523,6 +130065,8 @@ export interface operations {
         parameters: {
             query?: {
                 format?: "binary" | "json";
+                /** @description thermal=80mm (default), thermal_58=58mm. Alias: format. */
+                pdf_format?: "thermal" | "thermal_58";
             };
             header?: never;
             path: {
@@ -137757,6 +138301,179 @@ export interface operations {
             };
         };
     };
+    support_branch_products_list: {
+        parameters: {
+            query?: {
+                branch?: number;
+                format?: "binary" | "json";
+                is_active?: boolean;
+                /** @description Qué campo usar para ordenar los resultados. */
+                ordering?: string;
+                organization?: number;
+                /** @description Un número de página dentro del conjunto de resultados paginado. */
+                page?: number;
+                /** @description Número de resultados a devolver por página. */
+                page_size?: number;
+                repo?: string;
+                /** @description Un término de búsqueda. */
+                search?: string;
+                slug?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedBranchProductList"];
+                    "*/*": components["schemas"]["PaginatedBranchProductList"];
+                };
+            };
+        };
+    };
+    support_branch_products_create: {
+        parameters: {
+            query?: {
+                format?: "binary" | "json";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BranchProductRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["BranchProductRequest"];
+                "multipart/form-data": components["schemas"]["BranchProductRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BranchProduct"];
+                    "*/*": components["schemas"]["BranchProduct"];
+                };
+            };
+        };
+    };
+    support_branch_products_retrieve: {
+        parameters: {
+            query?: {
+                format?: "binary" | "json";
+            };
+            header?: never;
+            path: {
+                /** @description Un Cadena UUID que identifique este Producto de sucursal. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BranchProduct"];
+                    "*/*": components["schemas"]["BranchProduct"];
+                };
+            };
+        };
+    };
+    support_branch_products_update: {
+        parameters: {
+            query?: {
+                format?: "binary" | "json";
+            };
+            header?: never;
+            path: {
+                /** @description Un Cadena UUID que identifique este Producto de sucursal. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BranchProductRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["BranchProductRequest"];
+                "multipart/form-data": components["schemas"]["BranchProductRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BranchProduct"];
+                    "*/*": components["schemas"]["BranchProduct"];
+                };
+            };
+        };
+    };
+    support_branch_products_destroy: {
+        parameters: {
+            query?: {
+                format?: "binary" | "json";
+            };
+            header?: never;
+            path: {
+                /** @description Un Cadena UUID que identifique este Producto de sucursal. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    support_branch_products_partial_update: {
+        parameters: {
+            query?: {
+                format?: "binary" | "json";
+            };
+            header?: never;
+            path: {
+                /** @description Un Cadena UUID que identifique este Producto de sucursal. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedBranchProductRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedBranchProductRequest"];
+                "multipart/form-data": components["schemas"]["PatchedBranchProductRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BranchProduct"];
+                    "*/*": components["schemas"]["BranchProduct"];
+                };
+            };
+        };
+    };
     support_categories_list: {
         parameters: {
             query?: {
@@ -139022,6 +139739,176 @@ export interface operations {
             };
         };
     };
+    support_ticket_external_links_list: {
+        parameters: {
+            query?: {
+                branch?: number;
+                format?: "binary" | "json";
+                issue_number?: number;
+                /** @description Qué campo usar para ordenar los resultados. */
+                ordering?: string;
+                /** @description Un número de página dentro del conjunto de resultados paginado. */
+                page?: number;
+                /** @description Número de resultados a devolver por página. */
+                page_size?: number;
+                repo_full_name?: string;
+                ticket?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedTicketExternalLinkList"];
+                    "*/*": components["schemas"]["PaginatedTicketExternalLinkList"];
+                };
+            };
+        };
+    };
+    support_ticket_external_links_create: {
+        parameters: {
+            query?: {
+                format?: "binary" | "json";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TicketExternalLinkRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["TicketExternalLinkRequest"];
+                "multipart/form-data": components["schemas"]["TicketExternalLinkRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketExternalLink"];
+                    "*/*": components["schemas"]["TicketExternalLink"];
+                };
+            };
+        };
+    };
+    support_ticket_external_links_retrieve: {
+        parameters: {
+            query?: {
+                format?: "binary" | "json";
+            };
+            header?: never;
+            path: {
+                /** @description Un Cadena UUID que identifique este Link externo de ticket. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketExternalLink"];
+                    "*/*": components["schemas"]["TicketExternalLink"];
+                };
+            };
+        };
+    };
+    support_ticket_external_links_update: {
+        parameters: {
+            query?: {
+                format?: "binary" | "json";
+            };
+            header?: never;
+            path: {
+                /** @description Un Cadena UUID que identifique este Link externo de ticket. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TicketExternalLinkRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["TicketExternalLinkRequest"];
+                "multipart/form-data": components["schemas"]["TicketExternalLinkRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketExternalLink"];
+                    "*/*": components["schemas"]["TicketExternalLink"];
+                };
+            };
+        };
+    };
+    support_ticket_external_links_destroy: {
+        parameters: {
+            query?: {
+                format?: "binary" | "json";
+            };
+            header?: never;
+            path: {
+                /** @description Un Cadena UUID que identifique este Link externo de ticket. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    support_ticket_external_links_partial_update: {
+        parameters: {
+            query?: {
+                format?: "binary" | "json";
+            };
+            header?: never;
+            path: {
+                /** @description Un Cadena UUID que identifique este Link externo de ticket. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedTicketExternalLinkRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedTicketExternalLinkRequest"];
+                "multipart/form-data": components["schemas"]["PatchedTicketExternalLinkRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketExternalLink"];
+                    "*/*": components["schemas"]["TicketExternalLink"];
+                };
+            };
+        };
+    };
     support_ticket_types_list: {
         parameters: {
             query?: {
@@ -139206,10 +140093,12 @@ export interface operations {
                 is_active?: boolean;
                 /** @description Qué campo usar para ordenar los resultados. */
                 ordering?: string;
+                organization?: number;
                 /** @description Un número de página dentro del conjunto de resultados paginado. */
                 page?: number;
                 /** @description Número de resultados a devolver por página. */
                 page_size?: number;
+                platform_assignee?: number;
                 /**
                  * @description * `LOW` - Baja
                  *     * `MEDIUM` - Media
@@ -139217,6 +140106,9 @@ export interface operations {
                  *     * `CRITICAL` - Crítica
                  */
                 priority?: "CRITICAL" | "HIGH" | "LOW" | "MEDIUM";
+                product?: string;
+                product_slug?: string;
+                received_by?: string;
                 requester?: number;
                 requester_email?: string;
                 /** @description Un término de búsqueda. */
@@ -142390,7 +143282,7 @@ export interface operations {
             };
             header?: never;
             path: {
-                id: string;
+                id: number;
             };
             cookie?: never;
         };
@@ -142457,8 +143349,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedMeterList"];
-                    "*/*": components["schemas"]["PaginatedMeterList"];
+                    "application/json": components["schemas"]["PaginatedWaterMeterList"];
+                    "*/*": components["schemas"]["PaginatedWaterMeterList"];
                 };
             };
         };
@@ -142474,9 +143366,9 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["MeterRequest"];
-                "application/x-www-form-urlencoded": components["schemas"]["MeterRequest"];
-                "multipart/form-data": components["schemas"]["MeterRequest"];
+                "application/json": components["schemas"]["WaterMeterRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["WaterMeterRequest"];
+                "multipart/form-data": components["schemas"]["WaterMeterRequest"];
             };
         };
         responses: {
@@ -142485,8 +143377,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Meter"];
-                    "*/*": components["schemas"]["Meter"];
+                    "application/json": components["schemas"]["WaterMeter"];
+                    "*/*": components["schemas"]["WaterMeter"];
                 };
             };
         };
@@ -142510,8 +143402,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Meter"];
-                    "*/*": components["schemas"]["Meter"];
+                    "application/json": components["schemas"]["WaterMeter"];
+                    "*/*": components["schemas"]["WaterMeter"];
                 };
             };
         };
@@ -142530,9 +143422,9 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["MeterRequest"];
-                "application/x-www-form-urlencoded": components["schemas"]["MeterRequest"];
-                "multipart/form-data": components["schemas"]["MeterRequest"];
+                "application/json": components["schemas"]["WaterMeterRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["WaterMeterRequest"];
+                "multipart/form-data": components["schemas"]["WaterMeterRequest"];
             };
         };
         responses: {
@@ -142541,8 +143433,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Meter"];
-                    "*/*": components["schemas"]["Meter"];
+                    "application/json": components["schemas"]["WaterMeter"];
+                    "*/*": components["schemas"]["WaterMeter"];
                 };
             };
         };
@@ -142584,9 +143476,9 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["PatchedMeterRequest"];
-                "application/x-www-form-urlencoded": components["schemas"]["PatchedMeterRequest"];
-                "multipart/form-data": components["schemas"]["PatchedMeterRequest"];
+                "application/json": components["schemas"]["PatchedWaterMeterRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedWaterMeterRequest"];
+                "multipart/form-data": components["schemas"]["PatchedWaterMeterRequest"];
             };
         };
         responses: {
@@ -142595,8 +143487,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Meter"];
-                    "*/*": components["schemas"]["Meter"];
+                    "application/json": components["schemas"]["WaterMeter"];
+                    "*/*": components["schemas"]["WaterMeter"];
                 };
             };
         };
@@ -142628,8 +143520,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedReadingList"];
-                    "*/*": components["schemas"]["PaginatedReadingList"];
+                    "application/json": components["schemas"]["PaginatedWaterReadingList"];
+                    "*/*": components["schemas"]["PaginatedWaterReadingList"];
                 };
             };
         };
@@ -142645,9 +143537,9 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ReadingRequest"];
-                "application/x-www-form-urlencoded": components["schemas"]["ReadingRequest"];
-                "multipart/form-data": components["schemas"]["ReadingRequest"];
+                "application/json": components["schemas"]["WaterReadingRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["WaterReadingRequest"];
+                "multipart/form-data": components["schemas"]["WaterReadingRequest"];
             };
         };
         responses: {
@@ -142656,8 +143548,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Reading"];
-                    "*/*": components["schemas"]["Reading"];
+                    "application/json": components["schemas"]["WaterReading"];
+                    "*/*": components["schemas"]["WaterReading"];
                 };
             };
         };
@@ -142681,8 +143573,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Reading"];
-                    "*/*": components["schemas"]["Reading"];
+                    "application/json": components["schemas"]["WaterReading"];
+                    "*/*": components["schemas"]["WaterReading"];
                 };
             };
         };
@@ -142701,9 +143593,9 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ReadingRequest"];
-                "application/x-www-form-urlencoded": components["schemas"]["ReadingRequest"];
-                "multipart/form-data": components["schemas"]["ReadingRequest"];
+                "application/json": components["schemas"]["WaterReadingRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["WaterReadingRequest"];
+                "multipart/form-data": components["schemas"]["WaterReadingRequest"];
             };
         };
         responses: {
@@ -142712,8 +143604,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Reading"];
-                    "*/*": components["schemas"]["Reading"];
+                    "application/json": components["schemas"]["WaterReading"];
+                    "*/*": components["schemas"]["WaterReading"];
                 };
             };
         };
@@ -142755,9 +143647,9 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["PatchedReadingRequest"];
-                "application/x-www-form-urlencoded": components["schemas"]["PatchedReadingRequest"];
-                "multipart/form-data": components["schemas"]["PatchedReadingRequest"];
+                "application/json": components["schemas"]["PatchedWaterReadingRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedWaterReadingRequest"];
+                "multipart/form-data": components["schemas"]["PatchedWaterReadingRequest"];
             };
         };
         responses: {
@@ -142766,8 +143658,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Reading"];
-                    "*/*": components["schemas"]["Reading"];
+                    "application/json": components["schemas"]["WaterReading"];
+                    "*/*": components["schemas"]["WaterReading"];
                 };
             };
         };

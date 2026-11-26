@@ -1,0 +1,5 @@
+# Fallback SPA para Cloudflare Pages: cualquier ruta sin archivo propio
+# (/reset, /checkout/result, /checkout/<id>) devuelve el shell.
+# Los assets que existen en el deploy (p. ej. /assets/index-*.js) tienen
+# prioridad sobre esta regla, así que no se reescriben.
+/*    /index.html   200

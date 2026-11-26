@@ -49,27 +49,34 @@ En el build de GitHub Actions el workflow fija `VITE_API_BASE` en la API públic
 `panel_enabled` de la API no apaga la pantalla del panel. `app/weekly-panel` forma parte del build.
 
 
-## Deploy (como está hoy)
+## Deploy
 
-`.github/workflows/deploy-front.yml`:
+`.github/workflows/deploy-front.yml` publica la SPA en **Cloudflare Pages** con subida directa (API token + `wrangler`). El sitio `https://90dias.habitofirme.app` está detrás de Cloudflare; el FTPS anterior a `ftp.habitofirme.app` quedó fuera de DNS y ya no se usa.
 
 | Disparo | Qué hace |
 |---------|----------|
-| Pull request | Lint, `check:panel`, tests y build. No sube archivos |
-| Push a `main` | El mismo build y subida FTPS al hosting de 90dias.habitofirme.app |
-| `workflow_dispatch` con `mode=diagnose` | Lista el remoto. Puede correr desde otra rama. No publica |
-| `workflow_dispatch` con `mode=deploy` | Publica solo si la ref es `main` |
+| Pull request | Lint, `check:panel`, tests y build. No publica |
+| Push a `production` | El mismo build y `wrangler pages deploy` de `dist/client` |
+| `workflow_dispatch` con `mode=diagnose` | Valida secretos y lista proyecto, últimos deployments y dominios. Puede correr desde otra rama. No publica |
+| `workflow_dispatch` con `mode=deploy` | Publica solo si la ref es `production` |
 
-Orden de subida: primero todo menos `index.html`, después `index.html`. No borra archivos remotos que no estén en el build. El build usa `VITE_API_BASE=https://api.yggdra.cl`.
+Solo la rama `production` publica. `main` y `dev` no.
 
-Nombres de secretos y de la variable opcional, sin valores: `FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD`, `FTP_REMOTE_DIR`. `FTP_REMOTE_DIR` también se acepta como variable de repo.
+`public/_redirects` da el fallback SPA: rutas profundas como `/reset`, `/checkout/result` y `/checkout/<id>` devuelven `index.html` con 200, y los assets existentes tienen prioridad. `public/_headers` deja el shell con `Cache-Control: no-cache` y `/assets/*` inmutable por un año. El build usa `VITE_API_BASE=https://api.yggdra.cl`.
 
-`docs/CONSUMERS.yaml` registra el dominio `90dias.habitofirme.app`, deploy FTP desde `main`. Hay un fork nombrado en ese inventario: `marcelomoyavallejos-dotcom/proyecto-90`.
+Nombres de secretos y de la variable opcional, sin valores:
+
+| Nombre | Uso |
+|--------|-----|
+| `CLOUDFLARE_API_TOKEN` | Token con permiso `Cloudflare Pages:Edit` sobre la cuenta (más `Account:Read` para listar proyectos) |
+| `CLOUDFLARE_ACCOUNT_ID` | Id de la cuenta de Cloudflare |
+| `CF_PAGES_PROJECT` (variable de repo) | Nombre del proyecto de Pages. Si falta, `.github/scripts/resolve-pages-project.sh` lo detecta por dominio o por nombre |
+
+Antes de publicar conviene correr `mode=diagnose` desde Actions: resuelve el proyecto, muestra los últimos 3 deployments y el estado del dominio.
+
+`docs/CONSUMERS.yaml` registra el dominio `90dias.habitofirme.app` y que el deploy sale de `production`. Hay un fork nombrado en ese inventario: `marcelomoyavallejos-dotcom/proyecto-90`.
 
 El `Dockerfile` puede servir la SPA con nginx. No es el camino del sitio público.
-
-
-Este PR de documentación no cambia workflows, secretos ni el destino del deploy.
 
 ## Relación con la API Ginnung
 

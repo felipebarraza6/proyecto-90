@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { fetchAnalysis, fetchStudentWeek } from "./api";
 import { AnalysisPanel } from "./AnalysisPanel";
+import { liveMacroAverages } from "./macroWeekAverage";
 import { CommentsThread } from "./CommentsThread";
 import { FeedbackBox } from "./FeedbackBox";
 import { HabitPlanEditor } from "./HabitPlanEditor";
@@ -8,6 +9,8 @@ import { canEditMacroTargets } from "./macroEditAccess";
 import { MacroTargetsEditor } from "./MacroTargetsEditor";
 import { StudentFacts } from "./StudentFacts";
 import { StudentWeekTable } from "./StudentWeekTable";
+import { canOpenInsights, StaffInsights } from "./InsightsPanel";
+import type { ParticipantWeightSource } from "./weightCards";
 import { RetryError, SkeletonTable } from "./ui";
 import { WeekSelector } from "./WeekSelector";
 import type {
@@ -38,6 +41,8 @@ export function StudentDrawer({
   onWeekChange,
   onSelectClient,
   onClose,
+  participantWeight = null,
+  today,
 }: {
   clientId: number;
   weekStart: string;
@@ -59,6 +64,8 @@ export function StudentDrawer({
   onWeekChange: (start: string) => void;
   onSelectClient: (id: number) => void;
   onClose: () => void;
+  participantWeight?: ParticipantWeightSource | null;
+  today: string;
 }) {
   const [data, setData] = useState<StudentWeekResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -211,7 +218,9 @@ export function StudentDrawer({
                 showRoutine={showRoutine}
                 showNutrition={showNutrition}
                 weekClosed={weekClosed}
+                participantWeight={participantWeight}
               />
+              {canOpenInsights(role, specialty) ? <StaffInsights clientId={clientId} today={today} /> : null}
               <StudentWeekTable data={data} />
               {roleCanEditHabits ? (
                 <details className="wp-habit-details">
@@ -232,9 +241,10 @@ export function StudentDrawer({
               ) : null}
               {showNutrition && roleCanEditMacros ? (
                 <details className="wp-habit-details">
-                  <summary>Editar metas de macros por tramo (1–30 / 31–60 / 61–90)</summary>
+                  <summary>Editar metas de macros por fecha (tramos opcionales)</summary>
                   <MacroTargetsEditor
                     clientId={clientId}
+                    challengeStart={data.profile.challenge_start}
                     onSaved={() => {
                       analysisRefresh.current = true;
                       setReload((n) => n + 1);
@@ -250,6 +260,7 @@ export function StudentDrawer({
             loading={analysisLoading}
             error={analysisError}
             weekClosed={weekClosed}
+            liveMacroAverages={data ? liveMacroAverages(data.table.rows) : undefined}
             onRetry={() => {
               analysisRefresh.current = true;
               setAnalysisReload((n) => n + 1);

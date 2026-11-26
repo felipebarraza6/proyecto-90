@@ -2,7 +2,19 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { participantAdherenceDisplay } from "./adherence-label";
+import { sortSessionsDesc } from "./session-order";
+import { formatStageLine, formatWeightTrail, participantSummaryCsv, stageCells } from "./participant-summary";
 import { formatHeightCm } from "./height";
+import { filterPeopleByStatus, statusLabel, type StatusFilter } from "./participant-status";
+import {
+  filterPeopleByProgramType,
+  normalizeProgramType,
+  programDurationLabel,
+  programTypeLabel,
+  PROGRAM_TYPES,
+  validateProgramType,
+  type ProgramTypeFilter,
+} from "./program-types";
 import {
   loadPanelWeekAdherence,
   personClientId,
@@ -12,11 +24,18 @@ import { fetchWeek, fetchWeeks } from "./weekly-panel/api";
 import { formatPct } from "./weekly-panel/format";
 import { habitWeightsFormulaText, PANEL_CONFIG_DEFAULTS } from "./weekly-panel/panelConfig";
 import type { PanelConfig } from "./weekly-panel/types";
+import {
+  clearNutritionFilterIntent,
+  isNutritionPending,
+  readNutritionFilterIntent,
+} from "./centro-control";
+import { ConfirmDialog } from "./confirm-dialog";
+import { participantDeleteMessage } from "./confirm-dialog-logic";
 
 const API_BASE=(import.meta.env.VITE_API_BASE as string||"");
 
 type Row = Record<string, unknown>;
-type OpenModal = "participant"|"participant-edit"|"participant-body"|"intake-view"|"professional-student"|"nutrition"|"session"|"meeting-review";
+type OpenModal = "participant"|"participant-edit"|"intake-view"|"professional-student"|"nutrition"|"session"|"meeting-review";
 type Open = (modal: OpenModal, row?: Row) => void;
 type Act = (payload: Row) => Promise<unknown>;
 type Finding={code:string;label:string;evidence:string};
@@ -24,6 +43,7 @@ type Assessment={age:number|null;bmi:number|null;bmiCategory:string;bmr:number|n
 const clientNow=Date.now();
 function localStamp(date:Date){const pad=(n:number)=>String(n).padStart(2,"0");return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`}
 async function downloadCsv(participantId?:string){const params=participantId?`?participantId=${encodeURIComponent(participantId)}`:"";const res=await fetch(`${API_BASE}/api/export${params}`,{headers:{Authorization:`Token ${localStorage.getItem("p90_token")||""}`,"X-Branch-ID":localStorage.getItem("p90_branch")||""}});if(!res.ok){alert("No fue posible descargar el CSV");return}const url=URL.createObjectURL(await res.blob());const link=document.createElement("a");link.href=url;link.download=participantId?`proyecto-90-${participantId}.csv`:"proyecto-90-formularios.csv";link.click();URL.revokeObjectURL(url)}
+function downloadSummaryCsv(people:Row[]){const blob=new Blob([participantSummaryCsv(people)],{type:"text/csv;charset=utf-8"});const url=URL.createObjectURL(blob);const link=document.createElement("a");link.href=url;link.download="proyecto-90-participantes.csv";link.click();URL.revokeObjectURL(url)}
 
 function nameOf(row: Row) { return `${row.first_name || ""} ${row.last_name || ""}`.trim() || String(row.email || "Participante"); }
 function initials(row: Row) { return nameOf(row).split(" ").slice(0,2).map(x=>x[0]?.toUpperCase()).join("") || "90"; }
@@ -37,33 +57,74 @@ const stateCopy:Record<string,string>={uncalculated:"Sin calcular",review:"Por r
 export function assessmentOf(row:Row):Assessment|null{try{return row.nutrition_assessment?JSON.parse(String(row.nutrition_assessment)) as Assessment:null}catch{return null}}
 function meetingPlatform(link:unknown){const value=String(link||"").toLowerCase();return value.includes("zoom")?"Zoom":value.includes("meet.google")?"Google Meet":"videollamada"}
 
-export function ParticipantDirectory({people,programs,selected,setSelected,open,act,canCreate=true,canAssignProgram=true,canEditBody=false,profileModal="intake-view",panelConfig}:{people:Row[];programs:Row[];selected:string[];setSelected:(ids:string[])=>void;open:Open;act:Act;canCreate?:boolean;canAssignProgram?:boolean;canEditBody?:boolean;profileModal?:"intake-view"|"professional-student";panelConfig?:PanelConfig|null}) {
-  const [query,setQuery]=useState(""); const [program,setProgram]=useState("");
+/**
+ * Diálogo mínimo para convertir un participante de 90 días a otro tipo de
+ * programa sin reiniciar historial ni `challenge_start` (yggdra_arq#509).
+ */
+function ProgramTypeDialog({person,act,onClose}:{person:Row;act:Act;onClose:()=>void}) {
+  const [type,setType]=useState(()=>normalizeProgramType(person.program_type));
+  const [duration,setDuration]=useState(()=>person.program_duration_days==null?"":String(person.program_duration_days));
+  const [label,setLabel]=useState(()=>String(person.program_type_label||""));
+  const [error,setError]=useState(""); const [saving,setSaving]=useState(false);
+  async function save(){
+    const check=validateProgramType({type,durationDays:duration,label});
+    if(!check.ok){setError(check.error||"Revisa el tipo de programa.");return}
+    setSaving(true);setError("");
+    try{
+      await act({action:"participant.program_type.set",id:person.id,programType:type,programDurationDays:check.durationDays??null,programTypeLabel:check.programTypeLabel||""});
+      onClose();
+    }catch(err){setError(err instanceof Error?err.message:"No fue posible cambiar el tipo de programa.")}
+    finally{setSaving(false)}
+  }
+  return <div className="modal-backdrop" onMouseDown={e=>e.target===e.currentTarget&&onClose()}><section className="editor-modal program-type-dialog" role="dialog" aria-modal="true" aria-label="Cambiar tipo de programa"><div className="modal-head"><div><span className="eyebrow">TIPO DE PROGRAMA</span><h2>Cambiar tipo de programa</h2><p>{nameOf(person)} · se conserva todo el historial y el día 1 del desafío.</p></div><button type="button" onClick={onClose}>×</button></div><div className="program-type-fields"><label>Tipo de programa<select value={type} onChange={e=>setType(e.target.value)}>{PROGRAM_TYPES.map(item=><option key={item.value} value={item.value}>{item.label}</option>)}</select></label>{type==="custom"&&<label>Duración (días)<input type="number" min={7} max={365} value={duration} onChange={e=>setDuration(e.target.value)}/></label>}{type==="other"&&<label>Nombre del programa<input value={label} onChange={e=>setLabel(e.target.value)} placeholder="Ej. Programa de mantenimiento"/></label>}</div>{type==="90_days"&&<p className="modal-context">El programa de 90 días mantiene su duración fija; no reinicia el historial.</p>}{type==="other"&&<p className="modal-context">La duración de «Otro» la define la sucursal.</p>}{error&&<p className="upload-error" role="alert">{error}</p>}<div className="editor-actions"><button type="button" className="secondary" onClick={onClose}>Cancelar</button><button type="button" className="primary" disabled={saving} onClick={()=>void save()}>{saving?"Guardando…":"Cambiar tipo"}</button></div></section></div>;
+}
+
+export function ParticipantDirectory({people,programs,selected,setSelected,open,act,canCreate=true,canAssignProgram=true,canChangeProgramType=true,profileModal="intake-view",panelConfig}:{people:Row[];programs:Row[];selected:string[];setSelected:(ids:string[])=>void;open:Open;act:Act;canCreate?:boolean;canAssignProgram?:boolean;canChangeProgramType?:boolean;profileModal?:"intake-view"|"professional-student";panelConfig?:PanelConfig|null}) {
+  const [query,setQuery]=useState(""); const [program,setProgram]=useState(""); const [statusFilter,setStatusFilter]=useState<StatusFilter>("active");
+  const [programTypeFilter,setProgramTypeFilter]=useState<ProgramTypeFilter>("all");
+  const [programTypeTarget,setProgramTypeTarget]=useState<Row|null>(null);
+  const [pendingDelete,setPendingDelete]=useState<Row|null>(null); const [deleting,setDeleting]=useState(false);
   const [panelWeek,setPanelWeek]=useState<PanelWeekPctIndex|null|undefined>(undefined);
   useEffect(()=>{
     const ac=new AbortController();
     loadPanelWeekAdherence(fetchWeeks,fetchWeek,ac.signal).then(setPanelWeek).catch(()=>setPanelWeek(null));
     return()=>ac.abort();
   },[]);
-  const rows=people.filter(p=>`${nameOf(p)} ${p.email||""}`.toLowerCase().includes(query.toLowerCase()));
+  const rows=useMemo(()=>people.filter(p=>`${nameOf(p)} ${p.email||""}`.toLowerCase().includes(query.toLowerCase())),[people,query]);
+  const statusCounts=useMemo(()=>({all:people.length,active:filterPeopleByStatus(people,"active").length,paused:filterPeopleByStatus(people,"paused").length,finished:filterPeopleByStatus(people,"finished").length,other:filterPeopleByStatus(people,"other").length}),[people]);
+  const programTypeCounts=useMemo(()=>({all:people.length,"90_days":filterPeopleByProgramType(people,"90_days").length,custom:filterPeopleByProgramType(people,"custom").length,other:filterPeopleByProgramType(people,"other").length}),[people]);
+  const filteredRows=useMemo(()=>filterPeopleByProgramType(filterPeopleByStatus(rows,statusFilter),programTypeFilter),[rows,statusFilter,programTypeFilter]);
   const challengeLen=panelConfig?.challenge_length_days??PANEL_CONFIG_DEFAULTS.challenge_length_days;
   const formulaNote=habitWeightsFormulaText(panelConfig?.habit_weights||PANEL_CONFIG_DEFAULTS.habit_weights, panelConfig?.adherence_equal_weights_as_40_40_20);
   const pctDecimals=panelConfig?.percent_decimals??PANEL_CONFIG_DEFAULTS.percent_decimals;
-  return <><div className="admin-title"><div><span className="eyebrow">GESTIÓN DE ALUMNOS</span><h1>Participantes</h1><p>Selecciona una ficha para ver el formulario completo o descarga la base de respuestas.</p></div>{canCreate&&<div className="inline-actions"><button className="secondary" onClick={()=>downloadCsv()}>↓ Descargar formularios CSV</button><button className="primary" onClick={()=>open("participant")}>＋ Crear participante</button></div>}</div>
+  async function deleteParticipant(){
+    if(!pendingDelete)return;
+    setDeleting(true);
+    try{await act({action:"participant.delete",id:pendingDelete.id})}
+    catch{/* act muestra el error en el flujo global */}
+    finally{setDeleting(false);setPendingDelete(null)}
+  }
+  return <><div className="admin-title"><div><span className="eyebrow">GESTIÓN DE ALUMNOS</span><h1>Participantes</h1><p>Selecciona una ficha para ver el formulario completo o descarga la base de respuestas.</p></div>{canCreate&&<div className="inline-actions"><button className="secondary" onClick={()=>downloadCsv()}>↓ Descargar formularios CSV</button><button className="secondary" onClick={()=>downloadSummaryCsv(rows)}>↓ Descargar resumen CSV</button><button className="primary" onClick={()=>open("participant")}>＋ Crear participante</button></div>}</div>
     <div className="directory-toolbar"><label className="search-field">⌕<input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Buscar por alumno o correo"/></label><span>{rows.length} participantes</span></div>
+    <div className="status-filter" role="group" aria-label="Filtrar por estado">{[["all","Todos"],["active","Activos"],["paused","Pausados"],["finished","Finalizados"],["other","Otros"]].map(([key,label])=><button key={key} type="button" className={statusFilter===key?"active":""} aria-pressed={statusFilter===key} onClick={()=>setStatusFilter(key as StatusFilter)}><span>{label}</span><b>{statusCounts[key as keyof typeof statusCounts]}</b></button>)}</div>
+    <div className="status-filter program-type-filter" role="group" aria-label="Filtrar por tipo de programa">{[["all","Todos"],["90_days","90 días"],["custom","Personalizados"],["other","Otros"]].map(([key,label])=><button key={key} type="button" className={programTypeFilter===key?"active":""} aria-pressed={programTypeFilter===key} onClick={()=>setProgramTypeFilter(key as ProgramTypeFilter)}><span>{label}</span><b>{programTypeCounts[key as keyof typeof programTypeCounts]}</b></button>)}</div>
     {canAssignProgram&&selected.length>0&&<div className="bulk-bar"><b>{selected.length} seleccionados</b><select value={program} onChange={e=>setProgram(e.target.value)}><option value="">Asignar programa…</option>{programs.map(p=><option value={String(p.id)} key={String(p.id)}>{String(p.name)}</option>)}</select><button className="primary" disabled={!program} onClick={async()=>{await act({action:"program.assign",userIds:selected,programId:program});setSelected([]);setProgram("")}}>Asignar</button><button onClick={()=>setSelected([])}>Cancelar</button></div>}
-    <div className="table-card participant-table"><table><thead><tr>{canAssignProgram&&<th><input type="checkbox" aria-label="Seleccionar todos" checked={rows.length>0&&selected.length===rows.length} onChange={e=>setSelected(e.target.checked?rows.map(x=>String(x.id)):[])}/></th>}<th>Participante</th><th>Día</th><th>Peso inicial / último</th><th>Programa</th><th>Nutrición</th><th>Entreno</th><th>Macros</th><th>Agua</th><th>Adherencia</th><th></th></tr></thead><tbody>{rows.map(p=>{const cid=personClientId(p);const ad=panelWeek===undefined?{text:"…",label:"Cargando semana del panel",isWeeklyPanel:false}:participantAdherenceDisplay(p,panelConfig,panelWeek?{pct:panelWeek.byClientId.has(cid)?(panelWeek.byClientId.get(cid)??null):null,weekLabel:panelWeek.weekLabel}:null);return <tr key={String(p.id)}>{canAssignProgram&&<td><input type="checkbox" checked={selected.includes(String(p.id))} onChange={e=>setSelected(e.target.checked?[...selected,String(p.id)]:selected.filter(x=>x!==String(p.id)))}/></td>}<td><button className="person person-link" onClick={()=>open(profileModal,p)}><span className="avatar">{initials(p)}</span><span><b>{nameOf(p)}</b><small>{String(p.email)}</small></span></button></td><td><span className="day-chip">{dayOf(p,challengeLen)?`${dayOf(p,challengeLen)}/${challengeLen}`:"—"}</span></td><td><b>{p.weight?`${p.weight} kg`:"No informado"}</b><small className="weight-arrow">Último: {p.latest_weight?`${p.latest_weight} kg`:"no informado"}</small></td><td>{p.program_name?String(p.program_name):<span className="muted">Sin asignar</span>}</td><td><span className={`status ${nutritionState(p)}`}>{stateCopy[nutritionState(p)]}</span></td><td><b>{pct(p.training_pct,pctDecimals)}</b></td><td><b>{pct(p.macros_pct,pctDecimals)}</b></td><td><b>{pct(p.water_pct,pctDecimals)}</b></td><td><b className="green-text">{ad.text}</b><small className="weight-arrow">{ad.label} · {formulaNote}</small></td><td><div className="row-actions"><button className="row-action" onClick={()=>open(profileModal,p)}>Ficha</button>{canCreate&&<><button className="row-action" onClick={()=>downloadCsv(String(p.id))}>CSV</button><button className="row-action" onClick={()=>open("participant-edit",p)}>Editar</button>{canEditBody&&<button className="row-action" title="Corregir peso, estatura, fecha de nacimiento, género y pesos 30/60/90" onClick={()=>open("participant-body",p)}>Editar datos</button>}<button className="danger-link" onClick={()=>confirm(`¿Eliminar a ${nameOf(p)} y todos sus datos? Esta acción no se puede deshacer.`)&&act({action:"participant.delete",id:p.id})}>Eliminar</button></>}</div></td></tr>;})}</tbody></table></div>
+    <div className="table-card participant-table"><table><thead><tr>{canAssignProgram&&<th><input type="checkbox" aria-label="Seleccionar todos" checked={rows.length>0&&selected.length===rows.length} onChange={e=>setSelected(e.target.checked?rows.map(x=>String(x.id)):[])}/></th>}<th>Participante</th><th>Día</th><th>Estado</th><th>Peso inicial / último</th><th>Programa</th><th>Nutrición</th><th>Entreno</th><th>Macros</th><th>Agua</th><th>Adherencia</th><th></th></tr></thead><tbody>{filteredRows.length===0?<tr><td colSpan={canAssignProgram?12:11}><div className="empty-state compact"><h3>No hay participantes en este estado</h3><p>Cambia el filtro para ver otros participantes.</p><button className="secondary" onClick={()=>{setStatusFilter("all");setProgramTypeFilter("all")}}>Ver todos</button></div></td></tr>:filteredRows.map(p=>{const cid=personClientId(p);const ad=panelWeek===undefined?{text:"…",label:"Cargando semana del panel",isWeeklyPanel:false}:participantAdherenceDisplay(p,panelConfig,panelWeek?{pct:panelWeek.byClientId.has(cid)?(panelWeek.byClientId.get(cid)??null):null,weekLabel:panelWeek.weekLabel}:null);return <tr key={String(p.id)}>{canAssignProgram&&<td><input type="checkbox" checked={selected.includes(String(p.id))} onChange={e=>setSelected(e.target.checked?[...selected,String(p.id)]:selected.filter(x=>x!==String(p.id)))}/></td>}<td><button className="person person-link" onClick={()=>open(profileModal,p)}><span className="avatar">{initials(p)}</span><span><b>{nameOf(p)}</b><small>{String(p.email)}</small></span></button></td><td><span className="day-chip">{dayOf(p,challengeLen)?`${dayOf(p,challengeLen)}/${challengeLen}`:"—"}</span></td><td><span className={`status-badge ${String(p.status||"invited").trim().toLowerCase().replace(/\s+/g,"-")}`}>{statusLabel(p.status||"invited")}</span></td><td><b>{formatWeightTrail(p).text}</b><small className="weight-arrow">{formatWeightTrail(p).delta}</small></td><td><span className="program-type-badge">{programTypeLabel(p)}</span><small className="weight-arrow">{programDurationLabel(p)}</small>{p.program_name?<small className="weight-arrow">{String(p.program_name)}</small>:<small className="muted">Sin rutina</small>}</td><td><span className={`status ${nutritionState(p)}`}>{stateCopy[nutritionState(p)]}</span></td><td><b>{pct(p.training_pct,pctDecimals)}</b></td><td><b>{pct(p.macros_pct,pctDecimals)}</b></td><td><b>{pct(p.water_pct,pctDecimals)}</b></td><td><b className="green-text">{ad.text}</b><small className="weight-arrow">{ad.label} · {formulaNote}</small><div className="stage-chips" aria-label={`Adherencia por tramo: ${formatStageLine(p)}`}>{stageCells(p).map(s=><span key={s.label} className={`stage-chip${s.inProgress?" in-progress":""}`}><small>{s.label}</small><b>{s.value}</b></span>)}</div></td><td><div className="row-actions"><button className="row-action" onClick={()=>open(profileModal,p)}>Ficha</button>{canChangeProgramType&&<button className="row-action" onClick={()=>setProgramTypeTarget(p)}>Cambiar tipo de programa</button>}{canCreate&&<><button className="row-action" onClick={()=>downloadCsv(String(p.id))}>CSV</button><button className="row-action" onClick={()=>open("participant-edit",p)}>Editar</button><button className="danger-link" onClick={()=>setPendingDelete(p)}>Eliminar</button></>}</div></td></tr>;})}</tbody></table></div>
+    {programTypeTarget&&<ProgramTypeDialog person={programTypeTarget} act={act} onClose={()=>setProgramTypeTarget(null)}/>}
+    <ConfirmDialog open={pendingDelete!==null} title="Eliminar participante" message={pendingDelete?participantDeleteMessage(nameOf(pendingDelete)):""} busy={deleting} onConfirm={()=>{void deleteParticipant()}} onCancel={()=>{if(!deleting)setPendingDelete(null)}}/>
   </>;
 }
 
-export function NutritionWorkspace({people,open,profileModal="nutrition"}:{people:Row[];open:Open;profileModal?:"nutrition"|"professional-student"}) {
-  const [state,setState]=useState("all"); const [risk,setRisk]=useState("all"); const [student,setStudent]=useState("all");
-  const counts=useMemo(()=>({all:people.length,uncalculated:people.filter(p=>nutritionState(p)==="uncalculated").length,review:people.filter(p=>["review","rejected"].includes(nutritionState(p))).length,approved:people.filter(p=>nutritionState(p)==="approved").length}),[people]);
-  const inState=people.filter(p=>state==="all"||nutritionState(p)===state||(state==="review"&&nutritionState(p)==="rejected"));
+export type NutritionFilter = "all" | "pending" | "uncalculated" | "review" | "approved";
+export function NutritionWorkspace({people,open,profileModal="nutrition",initialFilter}:{people:Row[];open:Open;profileModal?:"nutrition"|"professional-student";initialFilter?:NutritionFilter}) {
+  const [state,setState]=useState<NutritionFilter>(()=>initialFilter??readNutritionFilterIntent()??"all"); const [risk,setRisk]=useState("all"); const [student,setStudent]=useState("all");
+  useEffect(()=>{clearNutritionFilterIntent()},[]);
+  const counts=useMemo(()=>({all:people.length,pending:people.filter(isNutritionPending).length,uncalculated:people.filter(p=>nutritionState(p)==="uncalculated").length,review:people.filter(p=>["review","rejected"].includes(nutritionState(p))).length,approved:people.filter(p=>nutritionState(p)==="approved").length}),[people]);
+  const inState=people.filter(p=>state==="all"||(state==="pending"&&isNutritionPending(p))||(state==="review"&&["review","rejected"].includes(nutritionState(p)))||(state==="uncalculated"&&nutritionState(p)==="uncalculated")||(state==="approved"&&nutritionState(p)==="approved"));
   const inRisk=inState.filter(p=>risk==="all"||(risk==="red"&&Number(p.red_flag_count)>0)||(risk==="habits"&&Number(p.deficient_habit_count)>0)||(risk==="mandatory"&&p.automation_status==="mandatory_review"));
   const rows=inRisk.filter(p=>student==="all"||String(p.id)===student);
   return <><div className="admin-title"><div><span className="eyebrow">FLUJO PROFESIONAL</span><h1>Nutrición</h1><p>La propuesta se calcula al enviar el formulario. Revísala, ajústala si hace falta y aprueba.</p></div></div>
-    <div className="nutrition-filter-bar">{[["all","Todos"],["uncalculated","Sin calcular"],["review","Por revisar"],["approved","Aprobados"]].map(([key,label])=><button key={key} className={state===key?"active":""} onClick={()=>{setState(key);setStudent("all")}}><span>{label}</span><b>{counts[key as keyof typeof counts]}</b></button>)}</div>
+    <div className="nutrition-filter-bar">{[["all","Todos"],["pending","Pendientes"],["uncalculated","Sin calcular"],["review","Por revisar"],["approved","Aprobados"]].map(([key,label])=><button key={key} className={state===key?"active":""} onClick={()=>{setState(key as NutritionFilter);setStudent("all")}}><span>{label}</span><b>{counts[key as keyof typeof counts]}</b></button>)}</div>
     <div className="nutrition-risk-filter">{[["all","Todos los criterios"],["red","Alertas rojas"],["habits","Hábitos deficientes"],["mandatory","Revisión obligatoria"]].map(([key,label])=><button key={key} className={risk===key?"active":""} onClick={()=>{setRisk(key);setStudent("all")}}>{label}<b>{key==="all"?people.length:key==="red"?people.filter(p=>Number(p.red_flag_count)>0).length:key==="habits"?people.filter(p=>Number(p.deficient_habit_count)>0).length:people.filter(p=>p.automation_status==="mandatory_review").length}</b></button>)}</div>
     <div className="nutrition-toolbar"><label>Alumno<select value={student} onChange={e=>setStudent(e.target.value)}><option value="all">Todos los alumnos</option>{inRisk.map(p=><option value={String(p.id)} key={String(p.id)}>{nameOf(p)}</option>)}</select></label><span>Mostrando {rows.length} de {people.length}</span></div>
     <section className="nutrition-cards">{rows.map(p=><NutritionCard key={String(p.id)} person={p} open={open} profileModal={profileModal}/>)}{rows.length===0&&<article className="empty-state compact"><h3>No hay alumnos en este estado</h3><p>Cambia los filtros para revisar otro grupo.</p></article>}</section>
@@ -88,17 +149,22 @@ export function NutritionAssessmentPanel({person,override,proposal=false}:{perso
   return <section className="professional-file-section nutrition-screening"><div className="professional-file-heading"><div><span className="eyebrow">EVALUACIÓN AUTOMÁTICA EXPLICABLE</span><h3>Criterios de la pauta nutricional</h3><p>Cada hallazgo muestra la respuesta que lo activó. No reemplaza la evaluación profesional.</p></div><div className="screening-badges">{proposal&&<span className="screening-decision proposal">Propuesta recalculada · sin guardar</span>}<span className={`screening-decision ${item.automationStatus}`}>{item.automationLabel}</span></div></div>{blockers.length>0&&<div className="professional-file-empty compact"><b>Propuesta no calculada</b><p>{blockers.map(finding=>finding.label).join(" · ")}</p></div>}<div className="calculation-story"><span><small>Edad / IMC</small><b>{item.age??"—"} años · {item.bmi??"—"}</b><em>{item.bmiCategory}</em></span><span><small>{manualBmr?"TMB manual":"TMB Harris-Benedict"}</small><b>{item.bmr?`${item.bmr} kcal`:"No calculable"}</b><em>{manualBmr?"Ingresada por la nutricionista · ":""}Factor {item.activityFactor} · {item.activityLabel}</em></span><span className="calc-get"><span><small>GET estimado</small><b>{item.maintenanceCalories?`${item.maintenanceCalories} kcal`:"—"}</b><em>{item.goalLabel} · {item.goalAdjustmentPct>0?"+":""}{item.goalAdjustmentPct}%</em></span><span className="calc-height"><small>Estatura</small><b>{formatHeightCm(heightCm)}</b>{weightKg?<em>Peso {weightKg} kg</em>:null}</span></span><span><small>Peso de referencia</small><b>{item.referenceWeight?`${item.referenceWeight} kg`:"—"}</b><em>{item.referenceWeightLabel}</em></span></div><div className="screening-grid">{block("Alertas rojas",item.redFlags,"red")}{block("Hábitos base deficientes",item.deficientHabits,"amber")}{block("Revisión clínica",item.clinicalReview,"clinical")}{block("Validación de macros",item.macroChecks,"neutral")}</div><details className="screening-method"><summary>Ver método y límites de cobertura</summary><p>{item.formulaNote}</p>{item.coverageNotes.map((note,index)=><p key={index}>• {note}</p>)}</details></section>;
 }
 
-export function SessionWorkspace({sessions,meetings,open,act,showMeetings=true,viewerId,viewerRole,viewerName}:{sessions:Row[];meetings:Row[];open:Open;act:Act;showMeetings?:boolean;viewerId?:string;viewerRole?:string;viewerName?:string}) {
-  const visible=viewerRole==="admin"||!viewerId?sessions:sessions.filter(row=>{
-    const byUser=String(row.professional_user_id||"");
-    if(byUser)return byUser===String(viewerId);
-    const label=String(row.professional||"").trim().toLowerCase();
-    const mine=String(viewerName||"").trim().toLowerCase();
-    return Boolean(label&&mine&&label===mine);
-  });
-  return <><div className="admin-title"><div><span className="eyebrow">AGENDA Y ACOMPAÑAMIENTO</span><h1>Sesiones</h1><p>{showMeetings?"Gestiona sesiones grupales y solicitudes individuales en un mismo lugar.":"Consulta y gestiona las sesiones que debes realizar durante el programa."}</p></div><button className="primary" onClick={()=>open("session")}>＋ Nueva sesión</button></div>
-    {showMeetings&&<section className="meeting-section"><div className="section-heading"><div><span className="eyebrow">REUNIONES 1 A 1</span><h2>Solicitudes de alumnos</h2></div><span>{meetings.filter(x=>x.status==="pending").length} pendientes</span></div>{meetings.length===0?<article className="empty-state compact"><h3>Sin solicitudes</h3><p>Las solicitudes aparecerán aquí.</p></article>:<div className="meeting-grid">{meetings.map(x=><article className="meeting-card" key={String(x.id)}><div><span className={`status ${String(x.status)}`}>{String(x.status)==="pending"?"Pendiente":String(x.status)==="confirmed"?"Confirmada":String(x.status)==="rescheduled"?"Reprogramada":"Rechazada"}</span><h3>{nameOf(x)}</h3><p>{String(x.email)}</p><small>Solicita: {new Date(String(x.requested_at)).toLocaleString("es-CL")}</small></div>{Boolean(x.meeting_link)&&<a className="secondary" href={String(x.meeting_link)} target="_blank" rel="noreferrer">Abrir reunión ↗</a>}<button className="primary" onClick={()=>open("meeting-review",x)}>Gestionar</button></article>)}</div>}</section>}
-    <section><div className="section-heading"><div><span className="eyebrow">CALENDARIO GENERAL</span><h2>Sesiones del programa</h2></div></div>{visible.length===0?<article className="empty-state compact"><h3>No hay sesiones</h3><p>{viewerRole==="professional"?"Aún no tienes sesiones asignadas.":"Crea la primera sesión de la generación."}</p></article>:<div className="session-list">{visible.map(x=><article className="next-session" key={String(x.id)}><div className="calendar-box"><b>{new Date(String(x.starts_at)).getDate()}</b><span>{new Date(String(x.starts_at)).toLocaleDateString("es-CL",{month:"short"}).toUpperCase()}</span></div><div><h3>{String(x.title)}</h3><p>{String(x.professional||"")} · {new Date(String(x.starts_at)).toLocaleString("es-CL")}</p></div>{Boolean(x.link)&&<a className="secondary" href={String(x.link)} target="_blank" rel="noreferrer">Abrir enlace ↗</a>}<button className="row-action" onClick={()=>open("session",x)}>Editar</button><button className="danger-link" onClick={()=>act({action:"session.delete",id:x.id})}>Eliminar</button></article>)}</div>}</section>
+export function SessionWorkspace({sessions,meetings,open,act,showMeetings=true,viewerId,viewerRole,viewerName,readOnly=false}:{sessions:Row[];meetings:Row[];open:Open;act:Act;showMeetings?:boolean;viewerId?:string;viewerRole?:string;viewerName?:string;readOnly?:boolean}) {
+  const visible=useMemo(()=>{
+    const scoped=viewerRole==="admin"||!viewerId?sessions:sessions.filter(row=>{
+      const byUser=String(row.professional_user_id||"");
+      if(byUser)return byUser===String(viewerId);
+      const label=String(row.professional||"").trim().toLowerCase();
+      const mine=String(viewerName||"").trim().toLowerCase();
+      return Boolean(label&&mine&&label===mine);
+    });
+    return sortSessionsDesc(scoped);
+  },[sessions,viewerId,viewerRole,viewerName]);
+  // Solicitudes de reunión: la más reciente primero (misma copia ordenada, sin tocar estado ni botones).
+  const orderedMeetings=useMemo(()=>sortSessionsDesc(meetings,"requested_at"),[meetings]);
+  return <><div className="admin-title"><div><span className="eyebrow">AGENDA Y ACOMPAÑAMIENTO</span><h1>Sesiones</h1><p>{showMeetings?"Gestiona sesiones grupales y solicitudes individuales en un mismo lugar.":"Consulta y gestiona las sesiones que debes realizar durante el programa."}</p></div>{!readOnly&&<button className="primary" onClick={()=>open("session")}>＋ Nueva sesión</button>}</div>
+    {showMeetings&&<section className="meeting-section"><div className="section-heading"><div><span className="eyebrow">REUNIONES 1 A 1</span><h2>Solicitudes de alumnos</h2></div><span>{meetings.filter(x=>x.status==="pending").length} pendientes</span></div>{meetings.length===0?<article className="empty-state compact"><h3>Sin solicitudes</h3><p>Las solicitudes aparecerán aquí.</p></article>:<div className="meeting-grid">{orderedMeetings.map(x=><article className="meeting-card" key={String(x.id)}><div><span className={`status ${String(x.status)}`}>{String(x.status)==="pending"?"Pendiente":String(x.status)==="confirmed"?"Confirmada":String(x.status)==="rescheduled"?"Reprogramada":"Rechazada"}</span><h3>{nameOf(x)}</h3><p>{String(x.email)}</p><small>Solicita: {new Date(String(x.requested_at)).toLocaleString("es-CL")}</small></div>{Boolean(x.meeting_link)&&<a className="secondary" href={String(x.meeting_link)} target="_blank" rel="noreferrer">Abrir reunión ↗</a>}{!readOnly&&<button className="primary" onClick={()=>open("meeting-review",x)}>Gestionar</button>}</article>)}</div>}</section>}
+    <section><div className="section-heading"><div><span className="eyebrow">CALENDARIO GENERAL</span><h2>Sesiones del programa</h2></div></div>{visible.length===0?<article className="empty-state compact"><h3>No hay sesiones</h3><p>{viewerRole==="professional"?"Aún no tienes sesiones asignadas.":"Crea la primera sesión de la generación."}</p></article>:<div className="session-list">{visible.map(x=><article className="next-session" key={String(x.id)}><div className="calendar-box"><b>{new Date(String(x.starts_at)).getDate()}</b><span>{new Date(String(x.starts_at)).toLocaleDateString("es-CL",{month:"short"}).toUpperCase()}</span></div><div><h3>{String(x.title)}</h3><p>{String(x.professional||"")} · {new Date(String(x.starts_at)).toLocaleString("es-CL")}</p></div>{Boolean(x.link)&&<a className="secondary" href={String(x.link)} target="_blank" rel="noreferrer">Abrir enlace ↗</a>}{!readOnly&&<><button className="row-action" onClick={()=>open("session",x)}>Editar</button><button className="danger-link" onClick={()=>act({action:"session.delete",id:x.id})}>Eliminar</button></>}</article>)}</div>}</section>
   </>;
 }
 

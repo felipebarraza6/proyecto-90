@@ -34,12 +34,16 @@ export function DailyClosure({
   nutritionRecords,
   habits,
   panelConfig,
+  act,
+  canClose = true,
 }: {
   people: Row[];
   records: Row[];
   nutritionRecords: Row[];
   habits: ClosureHabit[];
   panelConfig?: PanelConfig | null;
+  act?: (payload: Row) => Promise<unknown>;
+  canClose?: boolean;
 }) {
   const [date, setDate] = useState(chileToday());
   const [onlyMissing, setOnlyMissing] = useState(true);
@@ -139,6 +143,44 @@ export function DailyClosure({
     setTimeout(() => setCopied(false), 1800);
   }
 
+  const [closing, setClosing] = useState(false);
+  const [closeMessage, setCloseMessage] = useState("");
+  const [closeError, setCloseError] = useState("");
+  async function registerClosure() {
+    if (!act) return;
+    setClosing(true);
+    setCloseError("");
+    setCloseMessage("");
+    const text = summary();
+    const missing = rows
+      .filter((row) => row.missing.length > 0)
+      .map((row) => ({
+        id: String(row.person.id),
+        name: nameOf(row.person),
+        habits: row.missingLabels,
+      }));
+    try {
+      const result = (await act({
+        action: "day.close",
+        date,
+        summary: text,
+        missing,
+      })) as { notified?: unknown } | undefined;
+      const notified = Array.isArray(result?.notified) ? result.notified.length : 0;
+      setCloseMessage(
+        notified > 0
+          ? `Cierre registrado. Aviso enviado a ${notified} correo${notified === 1 ? "" : "s"}.`
+          : "Cierre registrado. No se enviaron correos.",
+      );
+    } catch (error) {
+      setCloseError(
+        error instanceof Error ? error.message : "No fue posible registrar el cierre.",
+      );
+    } finally {
+      setClosing(false);
+    }
+  }
+
   return (
     <section className="daily-closure">
       <header className="daily-closure-head">
@@ -169,8 +211,23 @@ export function DailyClosure({
           <button className="secondary" onClick={copySummary}>
             {copied ? "✓ Resumen copiado" : "Copiar resumen"}
           </button>
+          {act && canClose && (
+            <button className="primary" onClick={registerClosure} disabled={closing}>
+              {closing ? "Registrando…" : "Registrar cierre"}
+            </button>
+          )}
         </div>
       </header>
+      {closeMessage && (
+        <p className="daily-closure-status" role="status">
+          {closeMessage}
+        </p>
+      )}
+      {closeError && (
+        <p className="daily-closure-error" role="alert">
+          {closeError}
+        </p>
+      )}
       <div className="daily-closure-summary">
         <span>
           <b>{rows.length}</b>
