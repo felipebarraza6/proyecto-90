@@ -21,7 +21,7 @@ flowchart TB
   pago[Pago de cuota] --> api
 ```
 
-El proxy de desarrollo evita CORS contra `localhost:8000`. El build de producción deja la base de la API en el bundle vía `VITE_API_BASE` y se publica por FTPS. El contenedor nginx del `Dockerfile` es un camino alternativo de laboratorio: el workflow del sitio no lo usa.
+El proxy de desarrollo evita CORS contra `localhost:8000`. El build de producción deja la base de la API en el bundle vía `VITE_API_BASE` y se publica a Cloudflare Pages (proyecto `p90-habitofirme`) con el workflow `Deploy Front (90dias)`. El contenedor nginx del `Dockerfile` es un camino alternativo de laboratorio: el workflow del sitio no lo usa.
 
 ## Panel
 

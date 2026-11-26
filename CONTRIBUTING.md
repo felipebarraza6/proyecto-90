@@ -5,8 +5,8 @@
 | Rama | Rol |
 |------|-----|
 | `main` | Rama por defecto. No publica el sitio. |
-| `production` | Publica el sitio con el push (FTPS). |
-| `dev` | Se mantiene en el mismo commit que `main`. El workflow no publica desde ella. |
+| `production` | Publica el sitio con el push (Cloudflare Pages). |
+| `dev` | Se mantiene con el mismo contenido que `main` (mismo árbol; el historial puede diferir por un merge). El workflow no publica desde ella. |
 | Ramas de feature | PR hacia `main`. El PR corre la verificación y no sube archivos. |
 
 La rama de documentación de este estándar es `docs/estandar`. No se mergea sola.
